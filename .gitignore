@@ -2,3 +2,5 @@
 .env
 chromedriver
 env.txt
+/temp
+.DS_Store

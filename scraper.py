@@ -3,16 +3,30 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
+import pandas as pd
+import zipfile
 import os
 import time
 import psycopg2
+import shutil
 
 # Load .env file
 load_dotenv()
 
+# set download directory to working directory
+download_dir = os.getcwd() + "/temp"
+
+# download preferences
+prefs = {
+    "download.default_directory": download_dir,
+    "download.prompt_for_download": False,
+}
+
 chrome_options = Options()
-chrome_options.add_argument("--headless")
+chrome_options.add_experimental_option("prefs", prefs)
 
 # set up Chrome webdriver
 driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
@@ -59,22 +73,63 @@ for row in rows:
     row_data = [cell.text for cell in cells]
     current_flight_id = row_data[0]
 
+    # TODO: break criteria ################ will activate this once database schema is set up
     # query database for this flight ID
     #cur.execute('SELECT flight_id FROM flights WHERE flight_id = %s', (current_flight_id, ))
     #flight_id = cur.fetchone()
 
-    # if the flight id is in the database, skip it
+    # if the flight id is in the database, stop checking for new data
     #if flight_id is not None:
-    #    continue
+    #    break
     # otherwise add the flight details to database
     #else:
         # click this row
         # row.click()
+
+    ###########################################
     row.click()
-
-    # get the link to download CSV
-    download_csv_link = driver.find_element(By.LINK_TEXT, "Download CSV file")
-    time.sleep(4)
-    download_csv_link.click()
-    break
-
+    
+    download_csv_link = driver.find_elements(By.LINK_TEXT, "Download CSV file")
+    # if the file is currently processing, there will be no download link, so skip this one for now
+    if not download_csv_link:
+      driver.back()
+    else:       
+      # get the download link
+      current_download_link = download_csv_link[0].get_attribute("href")
+      # get the name of the file to download
+      current_file_name = os.path.basename(current_download_link)
+      # click the link
+      download_csv_link[0].click()
+      downloaded = False
+      new_file_path = os.path.join(download_dir, current_file_name)
+      timeout = 0
+      # wait until the file downloads
+      while not os.path.exists(new_file_path):
+        time.sleep(0.05)
+        timeout += 0.05
+        # timeout the download at 25 seconds
+        if timeout == 25:
+          raise Exception("Timeout of 25 seconds reached to download. Please try again.")
+      # extract the downloaded file
+      with zipfile.ZipFile(new_file_path, 'r') as zip:
+        zip.extractall(download_dir)
+      # open all new files as pandas data frames
+      normal_data_path = new_file_path[:-4] + ".csv"
+      battery_1_data_path = new_file_path[:-4] + "_1.csv"
+      battery_2_data_path = new_file_path[:-4] + "_2.csv"
+      warns_data_path = new_file_path[:-4] + "_warns.csv"
+      normal_df = pd.read_csv(normal_data_path)
+      battery_1_df = pd.read_csv(battery_1_data_path)
+      battery_2_df = pd.read_csv(battery_2_data_path)
+      warns_df = pd.read_csv(warns_data_path)
+      print(normal_df.head())
+      print(battery_1_df.head())
+      print(battery_2_df.head())
+      print(warns_df.head())
+      # delete the temp files from disk
+      # shutil.rmtree(download_dir)
+      break # NOTE: the break should be removed once the database check is uncommented
+      
+    # Re-locate the row after page refresh
+    time.sleep(0.1)
+    rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
