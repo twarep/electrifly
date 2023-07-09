@@ -115,17 +115,8 @@ for row in rows:
         zip.extractall(download_dir)
       # open all new files as pandas data frames
       normal_data_path = new_file_path[:-4] + ".csv"
-      battery_1_data_path = new_file_path[:-4] + "_1.csv"
-      battery_2_data_path = new_file_path[:-4] + "_2.csv"
-      warns_data_path = new_file_path[:-4] + "_warns.csv"
-      normal_df = pd.read_csv(normal_data_path)
-      battery_1_df = pd.read_csv(battery_1_data_path)
-      battery_2_df = pd.read_csv(battery_2_data_path)
-      warns_df = pd.read_csv(warns_data_path)
-      print(normal_df.head())
-      print(battery_1_df.head())
-      print(battery_2_df.head())
-      print(warns_df.head())
+      df = pd.read_csv(normal_data_path)
+      print(df.head())
       # delete the temp files from disk
       # shutil.rmtree(download_dir)
       break # NOTE: the break should be removed once the database check is uncommented
