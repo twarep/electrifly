@@ -65,8 +65,15 @@ aircraft_details = driver.find_element(By.CLASS_NAME, "clickable-aircraft").clic
 # then get each data row for the given plane
 rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
 
-# Iterate over the rows and extract the data from each column
-for row in rows:
+# tracks if there is a next page in the table
+is_next_page = True
+
+# get flight data while we have more pages of data to look through
+while is_next_page:
+  
+  # Iterate over the rows and extract the data from each column
+  for row in rows:
+    print(row)
     # find all of the table elements in the given row
     cells = row.find_elements(By.TAG_NAME, "td")
     # get the data from each row into a list
@@ -100,7 +107,6 @@ for row in rows:
       current_file_name = os.path.basename(current_download_link)
       # click the link
       download_csv_link[0].click()
-      downloaded = False
       new_file_path = os.path.join(download_dir, current_file_name)
       timeout = 0
       # wait until the file downloads
@@ -117,10 +123,24 @@ for row in rows:
       normal_data_path = new_file_path[:-4] + ".csv"
       df = pd.read_csv(normal_data_path)
       print(df.head())
+      time.sleep(0.5)
+      print("downloaded: " + str(normal_data_path))
       # delete the temp files from disk
-      # shutil.rmtree(download_dir)
-      break # NOTE: the break should be removed once the database check is uncommented
+      shutil.rmtree(download_dir)
       
-    # Re-locate the row after page refresh
+      driver.back()
+      
+    # locate the row after page refresh
     time.sleep(0.1)
     rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
+
+  # check for more pages of data
+  next_page = driver.find_elements(By.LINK_TEXT, "Next")
+  print(next_page)
+  # if there is, go to the next page, otherwise 
+  if next_page:
+    time.sleep(5)
+    next_page[0].click()
+    rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
+  else:
+    break
