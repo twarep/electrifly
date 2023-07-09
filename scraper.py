@@ -73,12 +73,15 @@ while is_next_page:
   
   # Iterate over the rows and extract the data from each column
   for row in rows:
-    print(row)
     # find all of the table elements in the given row
     cells = row.find_elements(By.TAG_NAME, "td")
     # get the data from each row into a list
     row_data = [cell.text for cell in cells]
     current_flight_id = row_data[0]
+    current_flight_type = row_data[2]
+    # skip all rows except for flight tests
+    if current_flight_type not in ["Flight test and charging", "Flight test"]:
+      continue
 
     # TODO: break criteria ################ will activate this once database schema is set up
     # query database for this flight ID
@@ -122,12 +125,8 @@ while is_next_page:
       # open all new files as pandas data frames
       normal_data_path = new_file_path[:-4] + ".csv"
       df = pd.read_csv(normal_data_path)
-      print(df.head())
-      time.sleep(0.5)
-      print("downloaded: " + str(normal_data_path))
       # delete the temp files from disk
       shutil.rmtree(download_dir)
-      
       driver.back()
       
     # locate the row after page refresh
@@ -136,7 +135,6 @@ while is_next_page:
 
   # check for more pages of data
   next_page = driver.find_elements(By.LINK_TEXT, "Next")
-  print(next_page)
   # if there is, go to the next page, otherwise 
   if next_page:
     time.sleep(5)
