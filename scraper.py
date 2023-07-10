@@ -1,10 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
 import pandas as pd
 import zipfile
@@ -12,6 +11,61 @@ import os
 import time
 import psycopg2
 import shutil
+from datetime import datetime
+import re
+
+# converts the string time given by Pipistrel UI to a datetime object
+def convert_str_to_datetime(str_datetime):
+  if re.search(":", str_datetime):
+    # convert a.m. and p.m. to readable format
+    if str_datetime[-4:] == "a.m.":
+      str_datetime = str_datetime[:-4] + "AM"
+    elif str_datetime[-4:] == "p.m.":
+      str_datetime = str_datetime[:-4] + "PM"
+  else:
+    if str_datetime[-4:] == "a.m.":
+      str_datetime = str_datetime[:-5] + ":00 AM"
+    elif str_datetime[-4:] == "p.m.":
+      str_datetime = str_datetime[:-5] + ":00 PM"
+
+  format = "%B %d, %Y, %I:%M %p"
+  return datetime.strptime(str_datetime, format)
+
+# returns the relevant weather data for the given scraped flights
+def weather_data(date_list):
+  print(date_list)
+  # get the weather data
+  driver.get("https://mesonet.agron.iastate.edu/request/download.phtml?network=CA_ON_ASOS")
+  # get the oldest date
+  oldest_datetime = min(date_list)
+  # extract each part of the date
+  year = oldest_datetime.strftime("%Y")
+  month = oldest_datetime.strftime("%m")
+  day = oldest_datetime.strftime("%d")
+  print(year)
+  print(month)
+  print(day)
+  # find the relevant date dropdowns
+  year_select = Select(driver.find_element(By.NAME, "year1"))
+  month_select = Select(driver.find_element(By.NAME, "month1"))
+  day_select = Select(driver.find_element(By.NAME, "day1"))
+  time.sleep(3)
+  # select data from that oldest date
+  year_select.select_by_value(year)
+  month_select.select_by_value(month[1:])
+  if int(day) < 10:
+    day_select.select_by_value(day[1:])
+  else:
+    day_select.select_by_value(day)
+  # select the waterloo airport only (cykf)
+  waterloo_airport_option = Select(driver.find_element(By.ID, "stations_in"))
+  waterloo_airport_option.select_by_value("CYKF")
+  # click on the correct download option
+  download_option = Select(driver.find_element(By.NAME, "direct"))
+  download_option.select_by_value("yes")
+  
+
+
 
 # Load .env file
 load_dotenv()
@@ -68,6 +122,9 @@ rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
 # tracks if there is a next page in the table
 is_next_page = True
 
+# list of dates to determine how far back to scrape weather data
+date_list = []
+
 # get flight data while we have more pages of data to look through
 while is_next_page:
   
@@ -78,6 +135,8 @@ while is_next_page:
     # get the data from each row into a list
     row_data = [cell.text for cell in cells]
     current_flight_id = row_data[0]
+    current_flight_str_datetime = row_data[1]
+    current_flight_datetime = convert_str_to_datetime(current_flight_str_datetime)
     current_flight_type = row_data[2]
     # skip all rows except for flight tests
     if current_flight_type not in ["Flight test and charging", "Flight test"]:
@@ -93,10 +152,14 @@ while is_next_page:
     #    break
     # otherwise add the flight details to database
     #else:
+        # date_list.append(current_flight_datetime)
         # click this row
         # row.click()
 
     ###########################################
+    # if we are scraping this record, add the time to the list of times
+    date_list.append(current_flight_datetime)
+    break
     row.click()
     
     download_csv_link = driver.find_elements(By.LINK_TEXT, "Download CSV file")
@@ -142,3 +205,5 @@ while is_next_page:
     rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
   else:
     break
+
+weather_data(date_list)
