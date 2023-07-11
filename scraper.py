@@ -33,7 +33,6 @@ def convert_str_to_datetime(str_datetime):
 
 # returns the relevant weather data for the given scraped flights
 def weather_data(date_list):
-  print(date_list)
   # get the weather data
   driver.get("https://mesonet.agron.iastate.edu/request/download.phtml?network=CA_ON_ASOS")
   # get the oldest date
@@ -42,9 +41,6 @@ def weather_data(date_list):
   year = oldest_datetime.strftime("%Y")
   month = oldest_datetime.strftime("%m")
   day = oldest_datetime.strftime("%d")
-  print(year)
-  print(month)
-  print(day)
   # find the relevant date dropdowns
   year_select = Select(driver.find_element(By.NAME, "year1"))
   month_select = Select(driver.find_element(By.NAME, "month1"))
@@ -60,12 +56,19 @@ def weather_data(date_list):
   # select the waterloo airport only (cykf)
   waterloo_airport_option = Select(driver.find_element(By.ID, "stations_in"))
   waterloo_airport_option.select_by_value("CYKF")
+  driver.find_element(By.ID, "stations_add").click()
   # click on the correct download option
   download_option = Select(driver.find_element(By.NAME, "direct"))
   download_option.select_by_value("yes")
-  
-
-
+  # click on the get data button
+  driver.find_element(By.XPATH, "/html/body/main/div/div[3]/div[2]/input[4]").click()
+  time.sleep(5)
+  # read the new data into pandas df
+  weather_data_path = os.getcwd() + "/temp/CYKF.csv"
+  df = pd.read_csv(weather_data_path)
+  print(df.head())
+  # delete the temp files from disk
+  shutil.rmtree(download_dir)
 
 # Load .env file
 load_dotenv()
@@ -159,7 +162,6 @@ while is_next_page:
     ###########################################
     # if we are scraping this record, add the time to the list of times
     date_list.append(current_flight_datetime)
-    break
     row.click()
     
     download_csv_link = driver.find_elements(By.LINK_TEXT, "Download CSV file")
@@ -188,6 +190,7 @@ while is_next_page:
       # open all new files as pandas data frames
       normal_data_path = new_file_path[:-4] + ".csv"
       df = pd.read_csv(normal_data_path)
+      print(df.head())
       # delete the temp files from disk
       shutil.rmtree(download_dir)
       driver.back()
