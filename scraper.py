@@ -95,7 +95,7 @@ conn = psycopg2.connect(connection_string)
 cur = conn.cursor()
 
 # get login credentials for Pipistrel UI
-username = os.getenv("username")
+username = os.getenv("user")
 password = os.getenv("password")
 
 # go to Pipistrel UI
