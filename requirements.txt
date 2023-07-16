@@ -45,4 +45,5 @@ watchfiles==0.19.0
 webdriver-manager==3.8.6
 websockets==11.0.3
 wsproto==1.2.0
+shinyswatch
 Jinja2==3.1.2

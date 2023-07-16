@@ -1,12 +1,22 @@
+from shiny import App, render, ui, Inputs, Outputs, Session, reactive
+from shiny.types import NavSetArg
+from typing import List
+from htmltools import css
+import shinyswatch
+
 import asyncio
 from datetime import date
-
 import numpy as np
 
-from shiny import App, Inputs, Outputs, Session, ui
+app_ui = ui.page_navbar(
+    shinyswatch.theme.zephyr(),
+    ui.nav("Upload Data",
+           ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
+           "\n "),
+    ui.nav("Data Analysis", "data analysis content"),
+    ui.nav("Recommendations", "recommendations content"),
+    title="Electrifly UI",
 
-app_ui = ui.page_fluid(
-    ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
 )
 
 #arbitrarly downloads this random doc -> functionality needs to change
