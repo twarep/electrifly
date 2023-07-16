@@ -1,7 +1,5 @@
 ## Checklist
 - [ ] Did I add this pull request into the appropriate Notion ticket? If not, create a ticket for this PR.
-- [x] Does the code run and accomplish its goal
-
 **Note:** Put an x into the box like this [x] to check these off
 
 ## What I Did
