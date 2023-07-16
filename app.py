@@ -10,7 +10,9 @@ import numpy as np
 
 app_ui = ui.page_navbar(
     shinyswatch.theme.zephyr(),
-    ui.nav("Upload Data","upload data content"),
+    ui.nav("Upload Data",
+           ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
+           "\n upload data content"),
     ui.nav("Data Analysis", "data analysis content"),
     ui.nav("Reccomendations", "reccomendations content"),
     title="Electrifly UI",
