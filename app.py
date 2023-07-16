@@ -12,9 +12,9 @@ app_ui = ui.page_navbar(
     shinyswatch.theme.zephyr(),
     ui.nav("Upload Data",
            ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
-           "\n upload data content"),
+           "\n "),
     ui.nav("Data Analysis", "data analysis content"),
-    ui.nav("Reccomendations", "reccomendations content"),
+    ui.nav("Recommendations", "recommendations content"),
     title="Electrifly UI",
 
 )
