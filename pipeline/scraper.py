@@ -13,7 +13,7 @@ import psycopg2
 import shutil
 from datetime import datetime
 import re
-from pipeline.transformation import transform_overview_data
+from transformation import transform_overview_data
 
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime):
