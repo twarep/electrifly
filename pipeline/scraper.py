@@ -13,6 +13,7 @@ import psycopg2
 import shutil
 from datetime import datetime
 import re
+from transformation import transform_overview_data
 
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime):
@@ -190,7 +191,8 @@ while is_next_page:
       # open all new files as pandas data frames
       normal_data_path = new_file_path[:-4] + ".csv"
       df = pd.read_csv(normal_data_path)
-      print(df.head())
+      # transform the data into something to put into the database
+      transform_overview_data(df)
       # delete the temp files from disk
       shutil.rmtree(download_dir)
       driver.back()

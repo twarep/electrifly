@@ -5,3 +5,5 @@ env.txt
 /temp
 .DS_Store
 /__pycache__
+/pipeline/temp
+/pipeline/__pycache__
