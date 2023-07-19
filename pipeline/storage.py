@@ -1,6 +1,7 @@
 # this file has all commands related to storing data in the database
 
 import psycopg2
+from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv
 
@@ -71,5 +72,21 @@ def push_flight_metadata(id, datetime, notes):
 
 # takes in flight data df, and pushes it to its own data table
 def push_flight_data(df, flight_id):
-  print(list(df.columns.values))
-  print(flight_id)
+  columns = list(df.columns.values)
+  # lowercase and underscore the spaces
+  modified_columns = [col.replace(" ", "_").lower() for col in columns]
+  # fix the time columns
+  modified_columns[0] = "time_min"
+  modified_columns[36] = "time_stamp"
+  # replace the initial column names in the df
+  df = df.set_axis(modified_columns, axis="columns")
+  # add the flight_id column to df
+  df.insert(0, "flight_id", int(flight_id))
+  # table name
+  table_name = "flightdata_" + str(flight_id)
+  # create sqlalchemy connection
+  engine_string = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
+  engine = create_engine(engine_string)
+  # add new table to db
+  df.to_sql(table_name, engine, if_exists="fail", index=False)
+  engine.dispose()

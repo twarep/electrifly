@@ -205,7 +205,6 @@ while is_next_page:
       print(df)
       # push the flight data into the database
       push_flight_data(df, current_flight_id)
-      break
       # delete the temp files from disk
       shutil.rmtree(download_dir)
       driver.back()
