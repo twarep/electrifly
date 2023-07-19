@@ -14,7 +14,7 @@ import shutil
 from datetime import datetime
 import re
 from transformation import transform_overview_data
-from storage import table_exists, db_connect, create_table 
+from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data
 import queries
 
 # converts the string time given by Pipistrel UI to a datetime object
@@ -139,7 +139,7 @@ create_queries = {'flights': queries.CREATE_FLIGHTS,
 for table in table_list:
   conn = db_connect()
   if not table_exists(table, conn):
-    create_table(create_queries[table])
+    execute(create_queries[table])
 
 # get flight data while we have more pages of data to look through
 while is_next_page:
@@ -154,6 +154,7 @@ while is_next_page:
     current_flight_str_datetime = row_data[1]
     current_flight_datetime = convert_str_to_datetime(current_flight_str_datetime)
     current_flight_type = row_data[2]
+    current_flight_notes = row_data[4]
     # skip all rows except for flight tests
     if current_flight_type not in ["Flight test and charging", "Flight test"]:
       continue
@@ -162,13 +163,13 @@ while is_next_page:
     # query database for this flight ID
     cur.execute('SELECT 1 FROM flights WHERE id = %s', (int(current_flight_id), ))
     flight_id = cur.fetchone()
-    print(flight_id)
 
     # if the flight id is in the database, stop checking for new data
     if flight_id is not None:
         break
     # otherwise add the flight details to database
     else:
+        push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes)
         date_list.append(current_flight_datetime)
         # click this row
         row.click()
@@ -202,6 +203,8 @@ while is_next_page:
       # transform the data into something to put into the database
       df = transform_overview_data(df)
       print(df)
+      # push the flight data into the database
+      push_flight_data(df, current_flight_id)
       break
       # delete the temp files from disk
       shutil.rmtree(download_dir)
