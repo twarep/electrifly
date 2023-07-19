@@ -19,7 +19,7 @@ app_ui = ui.page_navbar(
            ui.include_css("bootstrap.css"),
            x.ui.card(
                 x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-                x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
+                # x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
                 ),
             ),
     ui.nav("Recommendations", "In Construction! ML Predictions on the way!"),
