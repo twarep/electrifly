@@ -86,8 +86,7 @@ CREATE TABLE flightdata_4710 (
   time_stamp INTEGER NOT NULL,
   heading DOUBLE PRECISION NOT NULL,
   stall_diff_pressure DOUBLE PRECISION NOT NULL,
-  heading DOUBLE PRECISION NOT NULL,
   qng DOUBLE PRECISION NOT NULL,
   oat REAL NOT NULL,
-  iso_leakage_current SMALLINT NOT NULL,
+  iso_leakage_current SMALLINT NOT NULL
 );
