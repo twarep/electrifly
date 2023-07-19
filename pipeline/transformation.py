@@ -7,6 +7,7 @@ def transform_overview_data(df):
   df = drop_cell_temps(df)
   df = drop_remaining_columns(df)
   # print(df.head())
+  return df
 
 # drops the cell temperatures for both batteries
 def drop_cell_temps(df):

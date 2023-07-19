@@ -14,6 +14,8 @@ import shutil
 from datetime import datetime
 import re
 from transformation import transform_overview_data
+from storage import table_exists, db_connect, create_table 
+import queries
 
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime):
@@ -129,6 +131,16 @@ is_next_page = True
 # list of dates to determine how far back to scrape weather data
 date_list = []
 
+# create tables if they don't exist
+table_list = ['flights', 'weather', 'flight_weather']
+create_queries = {'flights': queries.CREATE_FLIGHTS, 
+                  'weather': queries.CREATE_WEATHER, 
+                  'flight_weather': queries.CREATE_FLIGHT_WEATHER}
+for table in table_list:
+  conn = db_connect()
+  if not table_exists(table, conn):
+    create_table(create_queries[table])
+
 # get flight data while we have more pages of data to look through
 while is_next_page:
   
@@ -146,24 +158,20 @@ while is_next_page:
     if current_flight_type not in ["Flight test and charging", "Flight test"]:
       continue
 
-    # TODO: break criteria ################ will activate this once database schema is set up
+    # break criteria
     # query database for this flight ID
-    #cur.execute('SELECT flight_id FROM flights WHERE flight_id = %s', (current_flight_id, ))
-    #flight_id = cur.fetchone()
+    cur.execute('SELECT 1 FROM flights WHERE id = %s', (int(current_flight_id), ))
+    flight_id = cur.fetchone()
+    print(flight_id)
 
     # if the flight id is in the database, stop checking for new data
-    #if flight_id is not None:
-    #    break
+    if flight_id is not None:
+        break
     # otherwise add the flight details to database
-    #else:
-        # date_list.append(current_flight_datetime)
+    else:
+        date_list.append(current_flight_datetime)
         # click this row
-        # row.click()
-
-    ###########################################
-    # if we are scraping this record, add the time to the list of times
-    date_list.append(current_flight_datetime)
-    row.click()
+        row.click()
     
     download_csv_link = driver.find_elements(By.LINK_TEXT, "Download CSV file")
     # if the file is currently processing, there will be no download link, so skip this one for now
@@ -192,7 +200,9 @@ while is_next_page:
       normal_data_path = new_file_path[:-4] + ".csv"
       df = pd.read_csv(normal_data_path)
       # transform the data into something to put into the database
-      transform_overview_data(df)
+      df = transform_overview_data(df)
+      print(df)
+      break
       # delete the temp files from disk
       shutil.rmtree(download_dir)
       driver.back()
