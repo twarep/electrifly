@@ -23,7 +23,7 @@ app_ui = ui.page_navbar(
                 ),
             ),
     ui.nav("Recommendations", "In Construction! ML Predictions on the way!"),
-    title="Electrifly UI",
+    title="ElectriFly UI",
 
 )
 
