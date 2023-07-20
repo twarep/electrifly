@@ -1,4 +1,5 @@
 from shiny import App, render, ui, Inputs, Outputs, Session, reactive
+from htmltools import HTML, div
 from shiny.types import NavSetArg
 from typing import List
 from htmltools import css
@@ -28,6 +29,7 @@ def get_test_data(only_data = True):
     for file in data_file_names:
         data_df = pd.read_csv(join(mypath, file))
         soc = (data_df[' bat 1 soc'].to_numpy() + data_df[' bat 2 soc'].to_numpy()) / 2
+        soc[soc < 20] = 100
         time_minutes = data_df[' time(min)'].to_numpy()
         data[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'soc': soc, 'time': time_minutes}
     # Return data
@@ -42,7 +44,7 @@ app_ui = ui.page_navbar(
            "\n "
         ),
     ui.nav("Data Analysis", 
-            ui.div("SOC vs. Time Across Multiple Flights"), 
+            div("SOC vs. Time Across Multiple Flights"), 
             ui.layout_sidebar(
                 ui.panel_sidebar(
                     ui.input_select(
@@ -51,7 +53,12 @@ app_ui = ui.page_navbar(
                         get_test_data(),
                         selected=get_test_data()[0],
                         multiple=True,
-                    )
+                    ),
+                    div(HTML("<p>To select multiple dates on <b>Windows</b>: </p>")),
+                    div("1. Press `ctrl` + select the dates"),
+                    div(HTML("<hr>")),
+                    div(HTML("<p>To select multiple dates on <b>Mac</b>: </p>")),
+                    div("1. Press `cmd` + select the dates"),
                 ),
                 ui.panel_main(
                     ui.output_plot("interactive")
