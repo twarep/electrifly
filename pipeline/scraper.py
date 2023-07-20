@@ -14,7 +14,7 @@ import shutil
 from datetime import datetime
 import re
 from transformation import transform_overview_data, weather_transformation
-from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data
+from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
 import queries
 
 # converts the string time given by Pipistrel UI to a datetime object
@@ -35,7 +35,7 @@ def convert_str_to_datetime(str_datetime):
   return datetime.strptime(str_datetime, format)
 
 # returns the relevant weather data for the given scraped flights
-def weather_data(date_list):
+def weather_data(date_list, ids_list):
   # get the weather data
   driver.get("https://mesonet.agron.iastate.edu/request/download.phtml?network=CA_ON_ASOS")
   # get the oldest date
@@ -69,10 +69,13 @@ def weather_data(date_list):
   # read the new data into pandas df
   weather_data_path = os.getcwd() + "/temp/CYKF.csv"
   df = pd.read_csv(weather_data_path)
-  print(df.head())
   # transform the weather_data into DB format
   df = weather_transformation(df)
-  print(df.head())
+  # print(df.head())  
+  # TODO: map out each weather data field to a flight
+  relevant_weather(df, ids_list)
+  # TODO: push the weather data to DB
+
   # delete the temp files from disk
   shutil.rmtree(download_dir)
 
@@ -133,6 +136,8 @@ is_next_page = True
 
 # list of dates to determine how far back to scrape weather data
 date_list = []
+# list of flight ids added to db to properly link weather to flights
+ids_list = []
 
 # create tables if they don't exist
 table_list = ['flights', 'weather', 'flight_weather']
@@ -162,17 +167,18 @@ while is_next_page:
     if current_flight_type not in ["Flight test and charging", "Flight test"]:
       continue
 
-    # break criteria
     # query database for this flight ID
     cur.execute('SELECT 1 FROM flights WHERE id = %s', (int(current_flight_id), ))
     flight_id = cur.fetchone()
 
     # if the flight id is in the database, stop checking for new data
     if flight_id is not None:
+        is_next_page = False
         break
     # otherwise add the flight details to database
     else:
         push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes)
+        ids_list.append(current_flight_id)
         date_list.append(current_flight_datetime)
         # click this row
         row.click()
@@ -218,12 +224,13 @@ while is_next_page:
 
   # check for more pages of data
   next_page = driver.find_elements(By.LINK_TEXT, "Next")
-  # if there is, go to the next page, otherwise 
+  # if there is, go to the next page, otherwise break
   if next_page:
-    time.sleep(5)
+    time.sleep(0.05)
     next_page[0].click()
     rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
   else:
+    is_next_page = False
     break
 
-weather_data(date_list)
+weather_data(date_list, ids_list)

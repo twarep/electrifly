@@ -4,6 +4,8 @@ import psycopg2
 from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
+import pandas as pd
 
 # this function creates and returns a connection to the database
 def db_connect():
@@ -61,6 +63,23 @@ def execute(query, data=None):
   cursor.close()
   db_disconnect(conn)
 
+# this function executes the given select query
+def select(query, params=None):
+  conn = db_connect()
+  # create a cursor object to interact with the database
+  cursor = conn.cursor()
+  
+  # execute the query
+  cursor.execute(query, params)
+
+  result = cursor.fetchone()
+  
+  # close the cursor and the connection
+  cursor.close()
+  db_disconnect(conn)
+
+  return result
+
 # takes in flight metadata and pushes it to the flights table
 def push_flight_metadata(id, datetime, notes):
   # separate date and time
@@ -90,3 +109,36 @@ def push_flight_data(df, flight_id):
   # add new table to db
   df.to_sql(table_name, engine, if_exists="fail", index=False)
   engine.dispose()
+
+# query weather df for all records in between the given times
+def query_weather_df(df, date, start_time, end_time):
+  # Filter the DataFrame based on the conditions
+  filtered_df = df[
+      (df['weather_date'] == date) &
+      (df['weather_time_utc'] >= start_time) &
+      (df['weather_time_utc'] <= end_time)
+  ]
+  return filtered_df
+
+# takes in weather dataframe and id list, queries flights to 
+# determine which weather data corresponds to which flight
+def relevant_weather(df, id_list):
+  id_query = "SELECT flight_date, flight_time_utc FROM flights WHERE id= %s"
+  # loop through each id and get the flight date and time
+  for id in id_list:
+    flight_info = select(id_query, (id,))
+    print(flight_info)
+    current_date = flight_info[0]
+    current_time = flight_info[1]
+    # query how long this flight was in minutes
+    flight_len_query = "SELECT MAX(time_min) FROM flightdata_" + str(id)
+    flight_len = select(flight_len_query)
+    print(flight_len[0])
+    datetime_obj = datetime.combine(current_date, current_time)
+    # calculate the end time of the flight
+    flight_end_datetime = datetime_obj + timedelta(minutes=flight_len[0])
+    flight_end_time = flight_end_datetime.time()
+    print(flight_end_time)
+    # given the start and end times, query the weather df for all records in that time period
+    filtered_df = query_weather_df(df, current_date, current_time, flight_end_time)
+    print("ID: " + str(id))
