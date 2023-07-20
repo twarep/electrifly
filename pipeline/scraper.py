@@ -58,6 +58,7 @@ def weather_data(date_list, ids_list):
     day_select.select_by_value(day)
   # select the waterloo airport only (cykf)
   waterloo_airport_option = Select(driver.find_element(By.ID, "stations_in"))
+  time.sleep(0.5)
   waterloo_airport_option.select_by_value("CYKF")
   driver.find_element(By.ID, "stations_add").click()
   # click on the correct download option
@@ -175,11 +176,8 @@ while is_next_page:
     if flight_id is not None:
         is_next_page = False
         break
-    # otherwise add the flight details to database
+    # otherwise click on flight details
     else:
-        push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes)
-        ids_list.append(current_flight_id)
-        date_list.append(current_flight_datetime)
         # click this row
         row.click()
     
@@ -187,7 +185,10 @@ while is_next_page:
     # if the file is currently processing, there will be no download link, so skip this one for now
     if not download_csv_link:
       driver.back()
-    else:       
+    else:    
+      push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes)
+      ids_list.append(current_flight_id)
+      date_list.append(current_flight_datetime)   
       # get the download link
       current_download_link = download_csv_link[0].get_attribute("href")
       # get the name of the file to download
@@ -211,7 +212,6 @@ while is_next_page:
       df = pd.read_csv(normal_data_path)
       # transform the data into something to put into the database
       df = transform_overview_data(df)
-      print(df)
       # push the flight data into the database
       push_flight_data(df, current_flight_id)
       # delete the temp files from disk
@@ -232,5 +232,7 @@ while is_next_page:
   else:
     is_next_page = False
     break
-
-weather_data(date_list, ids_list)
+if ids_list:
+  weather_data(date_list, ids_list)
+else:
+  print("There are no new flights to push to database.")

@@ -43,8 +43,6 @@ CREATE TABLE weather (
 CREATE_FLIGHT_WEATHER = """
 CREATE TABLE flight_weather (
   flight_id INTEGER REFERENCES flights(id),
-  weather_id INTEGER REFERENCES weather(id),
-  start_time TIME NOT NULL, 
-  end_time TIME NOT NULL
+  weather_id INTEGER REFERENCES weather(id)
 );
 """

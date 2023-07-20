@@ -36,9 +36,7 @@ CREATE TABLE weather (
 -- Purpose: be able to link weather data to the correct flight
 CREATE TABLE flight_weather (
   flight_id INTEGER REFERENCES flights(id),
-  weather_id INTEGER REFERENCES weather(id),
-  start_time TIME NOT NULL, 
-  end_time TIME NOT NULL
+  weather_id INTEGER REFERENCES weather(id)
   );
 
 -- Create flight data table
