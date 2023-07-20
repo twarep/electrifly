@@ -1,5 +1,6 @@
 # the methods in this script transform scraped flight and weather data into required format
 from datetime import datetime
+import numpy as np
 
 # takes a pandas df of the overview data as input, drops unneeded columns
 def transform_overview_data(df):
@@ -79,9 +80,25 @@ def weather_column_names(df):
   df = df.set_axis(new_columns, axis="columns")
   return df
 
+# cleans data to be ingestible to db
+def data_format_cleaning(df):
+  # replace "M" values with null
+  df.replace("M", np.nan, inplace=True)
+  # convert smallint columns to int
+  df['wind_direction'] = df['wind_direction'].astype(float).round().astype(int, errors="ignore")
+  df['wind_speed'] = df['wind_speed'].astype(float).round().astype(int, errors="ignore")
+  df['wind_gust'] = df['wind_gust'].astype(float).round().astype(int, errors="ignore")
+  df['sky_level_1'] = df['sky_level_1'].astype(float).round().astype(int, errors="ignore")
+  df['sky_level_2'] = df['sky_level_2'].astype(float).round().astype(int, errors="ignore")
+  df['sky_level_3'] = df['sky_level_3'].astype(float).round().astype(int, errors="ignore")
+  df['sky_level_4'] = df['sky_level_4'].astype(float).round().astype(int, errors="ignore")
+  return df
+
 # combine the transformation functions into one
 def weather_transformation(df):
   df = drop_weather_columns(df)
   df = weather_datetime_parsing(df)
   df = weather_column_names(df)
+  df = data_format_cleaning(df)
+  
   return df

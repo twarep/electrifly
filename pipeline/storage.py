@@ -108,7 +108,7 @@ def push_flight_data(df, flight_id):
   engine = create_engine(engine_string)
   # add new table to db
   df.to_sql(table_name, engine, if_exists="fail", index=False)
-  engine.dispose()
+  engine.dispose()  
 
 # query weather df for all records in between the given times
 def query_weather_df(df, date, start_time, end_time):
@@ -127,18 +127,20 @@ def relevant_weather(df, id_list):
   # loop through each id and get the flight date and time
   for id in id_list:
     flight_info = select(id_query, (id,))
-    print(flight_info)
     current_date = flight_info[0]
     current_time = flight_info[1]
     # query how long this flight was in minutes
     flight_len_query = "SELECT MAX(time_min) FROM flightdata_" + str(id)
     flight_len = select(flight_len_query)
-    print(flight_len[0])
     datetime_obj = datetime.combine(current_date, current_time)
     # calculate the end time of the flight
     flight_end_datetime = datetime_obj + timedelta(minutes=flight_len[0])
     flight_end_time = flight_end_datetime.time()
-    print(flight_end_time)
     # given the start and end times, query the weather df for all records in that time period
     filtered_df = query_weather_df(df, current_date, current_time, flight_end_time)
-    print("ID: " + str(id))
+    # create sqlalchemy connection
+    engine_string = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
+    engine = create_engine(engine_string)
+    # add new table to db
+    filtered_df.to_sql("weather", engine, if_exists="append", index=False)
+    engine.dispose()    
