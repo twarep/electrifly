@@ -11,7 +11,7 @@ import os
 import time
 import psycopg2
 import shutil
-from datetime import datetime
+from datetime import datetime, date
 import re
 from transformation import transform_overview_data, weather_transformation
 from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
@@ -40,6 +40,8 @@ def weather_data(date_list, ids_list):
   driver.get("https://mesonet.agron.iastate.edu/request/download.phtml?network=CA_ON_ASOS")
   # get the oldest date
   oldest_datetime = min(date_list)
+  newest_date = max(date_list).date()
+  newest_day = newest_date.day
   # extract each part of the date
   year = oldest_datetime.strftime("%Y")
   month = oldest_datetime.strftime("%m")
@@ -49,6 +51,13 @@ def weather_data(date_list, ids_list):
   month_select = Select(driver.find_element(By.NAME, "month1"))
   day_select = Select(driver.find_element(By.NAME, "day1"))
   time.sleep(3)
+  # if the newest flight was done today, select data from the most recent day:
+  if newest_date == date.today():
+    new_day_select = Select(driver.find_element(By.NAME, "day2"))
+    if int(newest_day) < 10:
+      new_day_select.select_by_value(str(newest_day[1:]))
+    else:
+      new_day_select.select_by_value(str(newest_day))
   # select data from that oldest date
   year_select.select_by_value(year)
   month_select.select_by_value(month[1:])
