@@ -13,7 +13,7 @@ import psycopg2
 import shutil
 from datetime import datetime
 import re
-from transformation import transform_overview_data
+from transformation import transform_overview_data, weather_transformation
 from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data
 import queries
 
@@ -69,6 +69,9 @@ def weather_data(date_list):
   # read the new data into pandas df
   weather_data_path = os.getcwd() + "/temp/CYKF.csv"
   df = pd.read_csv(weather_data_path)
+  print(df.head())
+  # transform the weather_data into DB format
+  df = weather_transformation(df)
   print(df.head())
   # delete the temp files from disk
   shutil.rmtree(download_dir)
