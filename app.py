@@ -12,9 +12,8 @@ from datetime import date
 import numpy as np
 from os import listdir
 from os.path import isfile, join
-
+import shiny.experimental as x
 mypath = "./test_data/"
-
 
 def get_test_data(only_data = True):
     # Set up data names variable
@@ -35,8 +34,6 @@ def get_test_data(only_data = True):
     # Return data
     return data
 
-
-# ui.output_plot("basic_plot"),
 app_ui = ui.page_navbar(
     shinyswatch.theme.zephyr(),
     ui.nav("Upload Data",
@@ -44,6 +41,11 @@ app_ui = ui.page_navbar(
            "\n "
         ),
     ui.nav("Data Analysis", 
+            ui.include_css("bootstrap.css"),
+            x.ui.card(
+                x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
+                # x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
+                ),
             div("SOC vs. Time Across Multiple Flights"), 
             ui.layout_sidebar(
                 ui.panel_sidebar(
@@ -66,7 +68,7 @@ app_ui = ui.page_navbar(
             ),
         ),  
     ui.nav("Recommendations", 
-           "recommendations content"),
+           "In Construction! ML Predictions on the way!"),
     title="Electrifly UI",
 )
 
@@ -86,7 +88,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     def interactive():
         # Get the data from the 
         data = get_test_data(False)
-
         # Plot the graphs
         for date in input.state():
             if date in data.keys():
