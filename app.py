@@ -28,7 +28,6 @@ def get_test_data(only_data = True):
     for file in data_file_names:
         data_df = pd.read_csv(join(mypath, file))
         soc = (data_df[' bat 1 soc'].to_numpy() + data_df[' bat 2 soc'].to_numpy()) / 2
-        soc[soc < 20] = 100
         time_minutes = data_df[' time(min)'].to_numpy()
         data[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'soc': soc, 'time': time_minutes}
     # Return data
@@ -44,7 +43,7 @@ app_ui = ui.page_navbar(
             ui.include_css("bootstrap.css"),
             x.ui.card(
                 x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-                # x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
+                x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
                 ),
             div("SOC vs. Time Across Multiple Flights"), 
             ui.layout_sidebar(
