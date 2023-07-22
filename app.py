@@ -15,23 +15,16 @@ from os.path import isfile, join
 import shiny.experimental as x
 mypath = "./test_data/"
 
-def get_test_data(only_data = True):
-    # Set up data names variable
-    data_file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-    # Return if only names were specified
-    if only_data:
-        return [name[14:name.index('.')].replace('.csv', '').replace('-', ' ').capitalize()
-                for name in data_file_names]
-    # Data variables
-    data = {}
-    # Get all data from files and store in data dictionary
-    for file in data_file_names:
-        data_df = pd.read_csv(join(mypath, file))
-        soc = (data_df[' bat 1 soc'].to_numpy() + data_df[' bat 2 soc'].to_numpy()) / 2
-        time_minutes = data_df[' time(min)'].to_numpy()
-        data[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'soc': soc, 'time': time_minutes}
-    # Return data
-    return data
+data_file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+data_file_changed_names = [name[14:name.index('.')].replace('.csv', '').replace('-', ' ').capitalize() for name in data_file_names]
+
+data = {}
+# Get all data from files and store in data dictionary
+for file in data_file_names:
+    data_df = pd.read_csv(join(mypath, file))
+    soc = (data_df[' bat 1 soc'].to_numpy() + data_df[' bat 2 soc'].to_numpy()) / 2
+    time_minutes = data_df[' time(min)'].to_numpy()
+    data[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'soc': soc, 'time': time_minutes}
 
 app_ui = ui.page_navbar(
     shinyswatch.theme.zephyr(),
@@ -51,8 +44,8 @@ app_ui = ui.page_navbar(
                     ui.input_select(
                         "state",
                         "Choose flight date(s):",
-                        get_test_data(),
-                        selected=get_test_data()[0],
+                        data_file_changed_names,
+                        selected=data_file_changed_names[0],
                         multiple=True,
                     ),
                     div(HTML("<p>To select multiple dates on <b>Windows</b>: </p>")),
@@ -85,8 +78,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @output
     @render.plot(alt="An interactive plot")
     def interactive():
-        # Get the data from the 
-        data = get_test_data(False)
         # Plot the graphs
         for date in input.state():
             if date in data.keys():
