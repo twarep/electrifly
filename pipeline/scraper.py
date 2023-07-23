@@ -17,6 +17,17 @@ from transformation import transform_overview_data, weather_transformation
 from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
 import queries
 
+
+# Firefox imports
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+
+
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime):
   if re.search(":", str_datetime):
@@ -93,7 +104,7 @@ def weather_data(date_list, ids_list):
 load_dotenv()
 
 # set download directory to working directory
-download_dir = os.getcwd() + "/temp"
+download_dir = os.getcwd() + "/temp/"
 
 # download preferences
 prefs = {
@@ -101,11 +112,17 @@ prefs = {
     "download.prompt_for_download": False,
 }
 
-chrome_options = Options()
-chrome_options.add_experimental_option("prefs", prefs)
+# chrome_options = Options()
+# chrome_options.add_experimental_option("prefs", prefs)
+
+firefox_options = FirefoxOptions()
+firefox_options.set_preference("browser.download.dir", download_dir)
+# firefox_options.set_preference("browser.helperApps.neverAsk.saveToDisk", download_dir)
 
 # set up Chrome webdriver
-driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+
+# driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=firefox_options)
 
 # get the connection string from the environment variable
 connection_string = os.getenv('DATABASE_URL')
@@ -131,12 +148,27 @@ user_form.send_keys(username)
 # find password field and enter the password
 pass_form = driver.find_element(By.ID, "id_password")
 pass_form.send_keys(password)
-
+print("Added Password")
 # click sign in
 driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/form/button").click()
 
 # click on the aircraft to get details for the plane we are flying
-aircraft_details = driver.find_element(By.CLASS_NAME, "clickable-aircraft").click()
+# aircraft_details = driver.find_element(By.CLASS_NAME, "clickable-aircraft").click()
+
+# aircraft_details = driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/table/tbody/tr[2]").click()
+aircraft_details = driver.get(str(os.getenv("PIPISTREL_PLANE")))
+# element = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "clickable-aircraft")))
+# driver.execute_script("arguments[0].scrollIntoView();", element)
+# element.send_keys(Keys.NULL)  # Simulate a key press on the element to ensure it receives focus
+# aircraft_details = element.click()
+
+
+# actions = ActionChains(driver)
+# actions.move_to_element(element).perform()
+# aircraft_details = element.click()
+
+# driver.execute_script("arguments[0].scrollIntoView();", element)
+# aircraft_details = element.click()
 
 # then get each data row for the given plane
 rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
