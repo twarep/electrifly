@@ -23,10 +23,7 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
-
+from selenium.webdriver.support import expected_conditions
 
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime):
@@ -148,27 +145,15 @@ user_form.send_keys(username)
 # find password field and enter the password
 pass_form = driver.find_element(By.ID, "id_password")
 pass_form.send_keys(password)
-print("Added Password")
+
 # click sign in
 driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/form/button").click()
 
 # click on the aircraft to get details for the plane we are flying
-# aircraft_details = driver.find_element(By.CLASS_NAME, "clickable-aircraft").click()
-
-# aircraft_details = driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/table/tbody/tr[2]").click()
-aircraft_details = driver.get(str(os.getenv("PIPISTREL_PLANE")))
-# element = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "clickable-aircraft")))
-# driver.execute_script("arguments[0].scrollIntoView();", element)
-# element.send_keys(Keys.NULL)  # Simulate a key press on the element to ensure it receives focus
-# aircraft_details = element.click()
-
-
-# actions = ActionChains(driver)
-# actions.move_to_element(element).perform()
-# aircraft_details = element.click()
-
-# driver.execute_script("arguments[0].scrollIntoView();", element)
-# aircraft_details = element.click()
+aircraft_details = WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.CLASS_NAME, "clickable-aircraft")))
+#aircraft_details = driver.find_element(By.CLASS_NAME, "clickable-aircraft").click()
+aircraft_details.click()
+# aircraft_details = driver.get(str(os.getenv("PIPISTREL_PLANE")))
 
 # then get each data row for the given plane
 rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
@@ -196,8 +181,10 @@ while is_next_page:
   
   # Iterate over the rows and extract the data from each column
   for row in rows:
+
     # find all of the table elements in the given row
     cells = row.find_elements(By.TAG_NAME, "td")
+
     # get the data from each row into a list
     row_data = [cell.text for cell in cells]
     current_flight_id = row_data[0]
@@ -205,6 +192,7 @@ while is_next_page:
     current_flight_datetime = convert_str_to_datetime(current_flight_str_datetime)
     current_flight_type = row_data[2]
     current_flight_notes = row_data[4]
+
     # skip all rows except for flight tests
     if current_flight_type not in ["Flight test and charging", "Flight test"]:
       continue
