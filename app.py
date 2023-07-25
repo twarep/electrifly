@@ -2,6 +2,8 @@ from shiny import App, render, ui, Inputs, Outputs, Session, reactive
 from htmltools import HTML, div
 from shiny.types import NavSetArg
 from typing import List
+from flight_querying import query_flights
+from weather_querying import query_weather
 from htmltools import css
 import shinyswatch
 import numpy as np
@@ -26,6 +28,20 @@ for file in data_file_names:
     soc = (data_df[' bat 1 soc'].to_numpy() + data_df[' bat 2 soc'].to_numpy()) / 2
     time_minutes = data_df[' time(min)'].to_numpy()
     data[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'soc': soc, 'time': time_minutes}
+
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_flights(date: bool):
+
+    flights = query_flights()
+
+    flight_data = flights.get_flight_id_and_dates()
+
+    if date:
+        return list(flight_data.keys())
+    
+    return flight_data
+
 
 # Table data
 weather_data_df = pd.DataFrame(
@@ -66,7 +82,9 @@ app_ui = ui.page_navbar(
                 x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
                 x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
                 ),
-            div("SOC vs. Time Across Multiple Flights"), 
+            div(HTML("<hr>")),
+            div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
+            div(HTML("<hr>")),
             ui.layout_sidebar(
                 ui.panel_sidebar(
                     ui.input_select(
@@ -86,6 +104,23 @@ app_ui = ui.page_navbar(
                 ui.panel_main(
                     ui.output_plot("interactive")
                 ),
+            ),
+            div(HTML("<hr>")),
+            div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
+            div(HTML("<hr>")),
+            ui.layout_sidebar(
+                ui.panel_sidebar(
+                    ui.input_select(
+                        "weather_state",
+                        "Choose flight date(s):",
+                        get_flights(True),
+                        selected=get_flights(True)[0],
+                    ),
+                ),
+                ui.panel_main(
+                    ui.output_table("weather_interactive")
+                ),
+                position='right'
             ),
         ),  
     ui.nav("Recommendations", 
@@ -112,6 +147,15 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.table
     def plane_data_result():
         return plane_data_df
+
+    @output
+    @render.table
+    def weather_interactive(): 
+        # Get the flight ID corresponding to the chosen date
+        flight_date = input.weather_state()
+        flight_id = get_flights(False)[flight_date]
+        weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        return weather_df 
 
     @output
     @render.plot(alt="An interactive plot")
