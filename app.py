@@ -72,7 +72,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             data_df = data()
             collapsed_columns = data_df.loc[:,["flight_id", "time_min", "bat_1_current",
                                                "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
-                                               "bat_2_soc","requested_torque","motor_power", "motor_temp", "pitch", "roll"]]
+                                               "bat_2_soc","motor_power", "motor_temp"]]
             return collapsed_columns
 
 app = App(app_ui, server)
