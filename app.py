@@ -22,11 +22,10 @@ import sqlalchemy as sa
 #     return conn
 
 def connect_to_db(provider: str):
-    if provider == "PostgreSQL":
-        return "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
-    else:
-        raise Exception("Invalid DB Provider!")
-
+    provider == "PostgreSQL"
+    db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
+    engine = sa.create_engine(db_url)
+    return engine
 
 
 plane_data_df = pd.DataFrame(
@@ -38,8 +37,6 @@ plane_data_df = pd.DataFrame(
                  "Indicated Airspeed (Knots)": [0, 59.71556, 71.93128, 83.11363,0,0,0,0,0,0,0,0,0,0], 
                  "Requested Torque": [0, 857, 758, 385,0,0,0,0,0,0,0,0,0,0]})
  # Define the list of columns to be initially shown in the collapsed view
-collapsed_columns = plane_data_df.loc[:,["Id", "Indicated Airspeed (Knots)","Requested Torque","Battery 2 Average Temperature (°C)"]]
-
 
 
 app_ui = ui.page_navbar(
@@ -61,27 +58,35 @@ app_ui = ui.page_navbar(
             #        ui.input_switch("expandDataGrid", "Expand Table", False),
             #        style="margin-top: 20px;"),
 
-            ui.h2("Shiny for Python Database Connections"),
-            ui.input_select(id="select_db", label="Selected Database:", choices=["MySQL", "PostgreSQL"], selected="MySQL"),
-            ui.hr(),
-            ui.output_text(id="out_db_details"),
-            ui.output_table(id="out_table"),
+            # ui.h2("Shiny for Python Database Connections"),
+            # #ui.input_select(id="select_db", label="Selected Database:", choices=["MySQL", "PostgreSQL"], selected="MySQL"),
+            # ui.hr(),
+            # ui.output_text(id="out_db_details"),
+            # ui.output_table(id="out_table"),
            
-            ui.page_fixed(
+            # ui.page_fixed(
+            # ui.div(
+                # ui.include_css("bootstrap.css"), ui.h1("Most Recent Records"), 
+                # style="margin-top: 20px;"),
+            ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
+                style="margin-top:40px;"),
             ui.row(
-            ui.column(4,
+            ui.column(4.5,
             ui.div(
-                ui.include_css("bootstrap.css"), ui.h2("Most Recent Records"), 
-                style="margin-top: 20px;"),
+                ui.include_css("bootstrap.css"), ui.h4("Most Recent Flight and Weather Data Records"), 
+                style="margin-top: 3px;"),
             ),
-            ui.column(4,
-                ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
-                style="margin-top: 28px;"),
-            ),),style="float:left"),
+            # ui.column(2,
+            #     ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
+            #     style="margin-top: 10px;"),
+            # ),
+            
+            ),
+            # style="float:left" ),
            
-            ui.div(ui.output_data_frame("plane_data"),
+            ui.div(ui.output_data_frame("data_df"),
                     ui.include_css("bootstrap.css"),
-                    style="margin-top: 3px;",
+                    style="margin-top: 2px; max-height: 3000px;",
                    ),
             
         #     ui.panel_fixed(
@@ -137,38 +142,35 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.Calc
     def data():
-        db_provider = input.select_db()
-        if db_provider == "PostgreSQL":
-            engine = sa.create_engine(connect_to_db(db_provider))
-            # Rest of your code to execute queries using SQLAlchemy
-        else:
-            raise Exception(f"Invalid DB Provider: {db_provider}")
+        engine = connect_to_db("PostgreSQL")
+            
+        # # Define the table names outside of the data() function
+        # metadata = sa.MetaData()
+        # flight_weather_table = sa.Table('flight_weather', metadata, autoload=True, autoload_with=engine)
+        # weather_table = sa.Table('weather', metadata, autoload=True, autoload_with=engine)
         
-        #engine = sa.create_engine(connect_to_db(provider=input.select_db()))
+        # # Define the function to get flight data
+        # def get_flight_data(flight_id):
+        #     table_name = f"flightdata_{flight_id}"
+        #     flightdata_table = sa.Table(table_name, metadata, autoload=True, autoload_with=engine)
+        #     return sa.select([flightdata_table]).where(flightdata_table.c.flight_id == flight_id)
         
-        # Define the table names outside of the data() function
-        metadata = sa.MetaData(bind=engine)
-        flight_weather_table = sa.Table('flight_weather', metadata, autoload=True)
-        weather_table = sa.Table('weather', metadata, autoload=True)
-        
-        # Define the function to get flight data
-        def get_flight_data(flight_id):
-            table_name = f"flightdata_{flight_id}"
-            flightdata_table = sa.Table(table_name, metadata, autoload=True)
-            return sa.select([flightdata_table]).where(flightdata_table.c.flight_id == flight_id)
-        
-        # Define the main query
-        combined_query = sa.select([
-            flight_weather_table.c.flight_id.label('fw_flight_id'),
-            *get_flight_data(flight_weather_table.c.flight_id).columns,
-            weather_table
-        ]).select_from(
-            flight_weather_table.join(weather_table, flight_weather_table.c.weather_id == weather_table.c.id)
-        ).apply_labels()
+        # # Define the main query
+        # combined_query = sa.select([
+        #     flight_weather_table.c.flight_id.label('fw_flight_id'),
+        #     *get_flight_data(flight_weather_table.c.flight_id).columns,
+        #     weather_table
+        # ]).select_from(
+        #     flight_weather_table.join(weather_table, flight_weather_table.c.weather_id == weather_table.c.id)
+        # ).apply_labels()
+
+        query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
         
         # Execute the query and fetch the data into a DataFrame
-        df = pd.read_sql(combined_query, con=engine)
-        return df
+        data_df = pd.read_sql(query, con=engine)
+        return data_df
+
+
 
 
     # @output
@@ -176,19 +178,23 @@ def server(input: Inputs, output: Outputs, session: Session):
     # def out_db_details():
     #     return f"Current database: {db_info()}"
 
-    @output
-    @render.table
-    def out_table():
-        return data()
+    # @output
+    # @render.table
+    # def out_table():
+    #     return data()
     
     # df: reactive.Value[pd.DataFrame] = reactive.Value(plane_data_df)
    
     @output
     @render.data_frame
-    def plane_data():
+    def data_df():
         if input.expandDataGrid():
-            return plane_data_df
-        else: 
+            return data()
+        else:
+            data_df = data()
+            collapsed_columns = data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+                                               "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+                                               "bat_2_soc","requested_torque","motor_power", "motor_temp", "pitch", "roll"]]
             return collapsed_columns
         
     # def grid():
