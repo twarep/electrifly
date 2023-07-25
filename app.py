@@ -8,17 +8,37 @@ import asyncio
 from datetime import date
 import numpy as np
 import shiny.experimental as x
+from mysql import connector
+import psycopg2
+import sqlalchemy as sa
+
+# def connect_to_db(provider: str):
+#     conn = psycopg2.connect(
+#         user="user",
+#         password="YU37CrnJMLjG",
+#         host="ep-snowy-pond-543889.us-east-2.aws.neon.tech",
+#         port="5432",
+#         database="electrifly-db")
+#     return conn
+
+def connect_to_db(provider: str):
+    if provider == "PostgreSQL":
+        return "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
+    else:
+        raise Exception("Invalid DB Provider!")
+
+
 
 plane_data_df = pd.DataFrame(
-                {"Id": [2345, 2346, 2347, 2348], 
-                 "Battery 1 SOC": [100, 87, 61, 43], 
-                 "Battery 2 SOC": [100, 88, 61, 43], 
-                 "Battery 1 Average Temperature (°C)": [19, 21, 24, 25], 
-                 "Battery 2 Average Temperature (°C)": [19, 20, 24, 25],
-                 "Indicated Airspeed (Knots)": [0, 59.71556, 71.93128, 83.11363], 
-                 "Requested Torque": [0, 857, 758, 385]})
+                {"Id": [2345, 2346, 2347, 2348,0,0,0,0,0,0,0,0,0,0], 
+                 "Battery 1 SOC": [100, 87, 61, 43,0,0,0,0,0,0,0,0,0,0], 
+                 "Battery 2 SOC": [100, 88, 61, 43,0,0,0,0,0,0,0,0,0,0], 
+                 "Battery 1 Average Temperature (°C)": [19, 21, 24, 25,0,0,0,0,0,0,0,0,0,0], 
+                 "Battery 2 Average Temperature (°C)": [19, 20, 24, 25,0,0,0,0,0,0,0,0,0,0],
+                 "Indicated Airspeed (Knots)": [0, 59.71556, 71.93128, 83.11363,0,0,0,0,0,0,0,0,0,0], 
+                 "Requested Torque": [0, 857, 758, 385,0,0,0,0,0,0,0,0,0,0]})
  # Define the list of columns to be initially shown in the collapsed view
-collapsed_columns = plane_data_df.loc[:,["Indicated Airspeed (Knots)","Requested Torque","Battery 2 Average Temperature (°C)"]]
+collapsed_columns = plane_data_df.loc[:,["Id", "Indicated Airspeed (Knots)","Requested Torque","Battery 2 Average Temperature (°C)"]]
 
 
 
@@ -36,21 +56,41 @@ app_ui = ui.page_navbar(
             # ui.input_switch("gridstyle", "Grid", True),
             # ui.input_switch("fullwidth", "Take full width", True),
             # ui.input_switch("fixedheight", "Fixed height", True),
-            ui.div(ui.input_switch("expandDataGrid", "Expand Table", False),
-                   style="margin-top: 20px;",
-                   ),
+            
+            # ui.div(ui.input_switch("fixedheight", "Fixed height", True), 
+            #        ui.input_switch("expandDataGrid", "Expand Table", False),
+            #        style="margin-top: 20px;"),
+
+            ui.h2("Shiny for Python Database Connections"),
+            ui.input_select(id="select_db", label="Selected Database:", choices=["MySQL", "PostgreSQL"], selected="MySQL"),
+            ui.hr(),
+            ui.output_text(id="out_db_details"),
+            ui.output_table(id="out_table"),
+           
+            ui.page_fixed(
+            ui.row(
+            ui.column(4,
+            ui.div(
+                ui.include_css("bootstrap.css"), ui.h2("Most Recent Records"), 
+                style="margin-top: 20px;"),
+            ),
+            ui.column(4,
+                ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
+                style="margin-top: 28px;"),
+            ),),style="float:left"),
+           
             ui.div(ui.output_data_frame("plane_data"),
                     ui.include_css("bootstrap.css"),
-                    style="margin-top: 20px;",
+                    style="margin-top: 3px;",
                    ),
-
+            
         #     ui.panel_fixed(
         #     ui.output_text_verbatim("detail"),
         #     right="10px",
         #     bottom="10px",
         #     top="10px",
         # ),
-           
+            
            ),
     ui.nav("Data Analysis", 
            ui.include_css("bootstrap.css"),
@@ -72,6 +112,75 @@ def server(input: Inputs, output: Outputs, session: Session):
     async def downloadData():
         await asyncio.sleep(0.25)
         yield "one,two,three\n"
+
+    # @reactive.Calc
+    # def db_info():
+    #     if input.select_db() == "MySQL":
+    #         conn = connect_to_db(provider="MySQL")
+    #         stmt = "SELECT CONCAT(VERSION(), ' | ', CURRENT_USER());"
+    #     else:
+    #         conn = connect_to_db(provider="PostgreSQL")
+    #         stmt = "SELECT datname || ' | ' || datid FROM pg_stat_activity WHERE state = 'active';"
+    #     cursor = conn.cursor()
+    #     cursor.execute(stmt)
+    #     res = cursor.fetchall()
+    #     conn.close()
+    #     return str(res[0])
+
+    # @reactive.Calc
+    # def data():
+    #     conn = connect_to_db(provider=input.select_db())
+    #     stmt = "SELECT * FROM combined_flight_weather_data"
+    #     df = pd.read_sql(stmt, con=conn)
+    #     return df
+
+
+    @reactive.Calc
+    def data():
+        db_provider = input.select_db()
+        if db_provider == "PostgreSQL":
+            engine = sa.create_engine(connect_to_db(db_provider))
+            # Rest of your code to execute queries using SQLAlchemy
+        else:
+            raise Exception(f"Invalid DB Provider: {db_provider}")
+        
+        #engine = sa.create_engine(connect_to_db(provider=input.select_db()))
+        
+        # Define the table names outside of the data() function
+        metadata = sa.MetaData(bind=engine)
+        flight_weather_table = sa.Table('flight_weather', metadata, autoload=True)
+        weather_table = sa.Table('weather', metadata, autoload=True)
+        
+        # Define the function to get flight data
+        def get_flight_data(flight_id):
+            table_name = f"flightdata_{flight_id}"
+            flightdata_table = sa.Table(table_name, metadata, autoload=True)
+            return sa.select([flightdata_table]).where(flightdata_table.c.flight_id == flight_id)
+        
+        # Define the main query
+        combined_query = sa.select([
+            flight_weather_table.c.flight_id.label('fw_flight_id'),
+            *get_flight_data(flight_weather_table.c.flight_id).columns,
+            weather_table
+        ]).select_from(
+            flight_weather_table.join(weather_table, flight_weather_table.c.weather_id == weather_table.c.id)
+        ).apply_labels()
+        
+        # Execute the query and fetch the data into a DataFrame
+        df = pd.read_sql(combined_query, con=engine)
+        return df
+
+
+    # @output
+    # @render.text
+    # def out_db_details():
+    #     return f"Current database: {db_info()}"
+
+    @output
+    @render.table
+    def out_table():
+        return data()
+    
     # df: reactive.Value[pd.DataFrame] = reactive.Value(plane_data_df)
    
     @output
