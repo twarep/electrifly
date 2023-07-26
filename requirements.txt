@@ -47,3 +47,5 @@ websockets==11.0.3
 wsproto==1.2.0
 shinyswatch
 Jinja2==3.1.2
+ipywidgets==8.0.7
+matplotlib==3.7.2
