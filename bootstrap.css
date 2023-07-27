@@ -14,6 +14,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap");
 :root,
 [data-bs-theme=light] {
+
   --bs-blue: #3459e6;
   --bs-indigo: #6610f2;
   --bs-purple: #6f42c1;
@@ -37,7 +38,7 @@
   --bs-gray-700: #495057;
   --bs-gray-800: #343a40;
   --bs-gray-900: #212529;
-  --bs-primary: #3459e6;
+  --bs-primary: #007bff;
   --bs-secondary: #fff;
   --bs-success: #2fb380;
   --bs-info: #287bb5;
@@ -4496,6 +4497,15 @@ textarea.form-control-lg {
 .card-link + .card-link {
   margin-left: var(--bs-card-spacer-x);
 }
+
+/* used inspect to figure out how to change the colours */
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+  box-shadow: inset 0 -2px 0 #007bff;
+  color: #007bff;
+  background-color: #fff; /* Change this to a color that contrasts with #007bff */
+}
+
 
 .card-header {
   padding: var(--bs-card-cap-padding-y) var(--bs-card-cap-padding-x);
@@ -12123,6 +12133,8 @@ textarea.form-control-lg {
 .navbar {
   font-size: 0.875rem;
   font-weight: 500;
+  color: green;
+  background-color: blue;
 }
 .navbar .nav-item {
   margin-right: 0.5rem;
