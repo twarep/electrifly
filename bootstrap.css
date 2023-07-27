@@ -444,6 +444,10 @@ th {
   border-color: inherit;
   border-style: solid;
   border-width: 0;
+  white-space: normal !important; /* Enable text wrapping */
+  text-align: center;
+  /* word-break: break-all; /* Allow breaking long words to fit within cells */ 
+  width: auto; /* Let the header cells expand to fit the content */
 }
 
 label {
