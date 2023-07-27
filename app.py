@@ -9,6 +9,7 @@ import pandas as pd
 import asyncio
 from datetime import date
 import numpy as np
+import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
 import shiny.experimental as x
@@ -90,7 +91,7 @@ app_ui = ui.page_navbar(
     ui.nav("Recommendations", 
            "In construction! ML predictions on the way!"),
 
-    title="Electrifly UI",
+    title="ElectriFly UI",
 )
 
 
