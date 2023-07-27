@@ -187,8 +187,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         selected_columns = input.selected_cols()
         if not selected_columns:
             # Return the entire DataFrame as default when no columns are selected
-            default_columns = uploaded_data_df.loc[:,["flight_id","flight_date", "time_stamp", "time_min", "bat_1_current",
-                                               "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+            default_columns = uploaded_data_df.loc[:,["flight_id","flight_date", "weather_time_utc", "time_min","bat_1_soc", 
                                                "bat_2_soc","motor_power", "motor_temp"]]
             return default_columns
         else:
