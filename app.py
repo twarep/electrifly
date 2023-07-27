@@ -42,9 +42,6 @@ data_file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 data_file_changed_names = [name[14:name.index('.')].replace('.csv', '').replace('-', ' ').capitalize() for name in data_file_names]
 data = {}
 
-
-test = ["a","b"]
-
 # Get all data from files and store in data dictionary
 for file in data_file_names:
     data_df = pd.read_csv(join(mypath, file))
@@ -82,7 +79,7 @@ app_ui = ui.page_navbar(
             ui.include_css("bootstrap.css"),
             x.ui.card(
                 x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-                x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
+                # x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
                 ),
             div("SOC vs. Time Across Multiple Flights"), 
             ui.layout_sidebar(
@@ -111,7 +108,7 @@ app_ui = ui.page_navbar(
     ui.nav("Recommendations", 
            "In construction! ML predictions on the way!"),
 
-    title="Electrifly UI",
+    title="ElectriFly",
 )
 
 
