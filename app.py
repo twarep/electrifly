@@ -27,9 +27,10 @@ def connect_to_db(provider: str):
 
 def uploaded_data():
      engine = connect_to_db("PostgreSQL")
-     query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+     query = "SELECT * FROM flight_weather_data_view2 LIMIT 10;"
     # Execute the query and fetch the data into a DataFrame
      uploaded_data_df = pd.read_sql(query, con=engine)
+     uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format='%y/%m/%d')
      return uploaded_data_df
 
 def uploaded_cols(): 
@@ -179,7 +180,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         selected_columns = input.selected_cols()
         if not selected_columns:
             # Return the entire DataFrame as default when no columns are selected
-            default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+            default_columns = uploaded_data_df.loc[:,["flight_id","flight_date", "time_min", "bat_1_current",
                                                "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
                                                "bat_2_soc","motor_power", "motor_temp"]]
             return default_columns
