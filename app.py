@@ -59,22 +59,12 @@ app_ui = ui.page_navbar(
     ui.nav("Upload Data",
             #data refresh button 
             ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
-            #expand columns toggle (will be replaced with a multiselect dropdown of columns)
-            # ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
-            #     style="margin-top:40px;"),
-            
-            
-            
-            #ui.input_select("selected_cols", "Select input",choices= list(uploaded_cols().columns)),
 
-            # #table header
-            # ui.div(
-            #     ui.include_css("bootstrap.css"), ui.h4(default_cols().columns[1]), 
-            #     style="margin-top: 3px;"),  
-
+            #column selection panel
+            ui.div(
             # Dropdown with checkboxes
             ui.input_select("selected_cols", "Select Columns",choices= list(uploaded_cols().columns), multiple=True),
-
+            style="margin-top:40px;"),  
 
             #table header
             ui.div(
@@ -184,59 +174,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     #     # Execute the query and fetch the data into a DataFrame
     #     uploaded_data_df = pd.read_sql(query, con=engine)
     #     return uploaded_data_df
-    
-    # # output table 
-    # @output
-    # @render.data_frame
-    # def uploaded_data_df():
-    #     if input.expandDataGrid():
-    #         return uploaded_data()
-    #     else:
-    #         uploaded_data_df = uploaded_data()
-    #         collapsed_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
-    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
-    #                                            "bat_2_soc","motor_power", "motor_temp"]]
-    #         return collapsed_columns
-   
 
-    # def default_cols(): 
-#     uploaded_data_df = uploaded_data()
-#     default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
-#                                                "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
-#                                                "bat_2_soc","motor_power", "motor_temp"]]
-#     return default_columns
-    # @output
-    # @render.data_frame
-    # def call_uploaded_data_df():
-    #     return uploaded_data_df()
-
-    # def uploaded_data_df():
-    #     uploaded_data_df = uploaded_data()
-    #     selected_columns = input.selected_cols()
-    #     if not selected_columns:
-    #         # Return the entire DataFrame as default when no columns are selected
-    #         default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
-    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
-    #                                            "bat_2_soc","motor_power", "motor_temp"]]
-    #         return default_columns
-    #     else:
-    #         # Filter the DataFrame based on the selected columns
-    #         filtered_df = uploaded_data_df.loc[:, selected_columns]
-    #         return filtered_df
-
-
-    # def default_cols(): 
-    #     uploaded_data_df = uploaded_data()
-    #     default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
-    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
-    #                                            "bat_2_soc","motor_power", "motor_temp"]]
-    #     return default_columns
-
-    # Set choices for input_select using the reactive function
-    # output.selected_cols = input.selected_cols(
-    #     "choices", lambda: list(default_cols())
-    # )
-    
     @output
     @render.data_frame
     def uploaded_data_df():
