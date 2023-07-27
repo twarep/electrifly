@@ -31,11 +31,11 @@ def uploaded_data():
     # Execute the query and fetch the data into a DataFrame
      uploaded_data_df = pd.read_sql(query, con=engine)
     
-     uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'])
-     uploaded_data_df['time_stamp'] = uploaded_data_df['time_stamp'].apply(lambda ts: datetime.fromtimestamp(ts / 1000))
+    #  uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'])
+    #  uploaded_data_df['time_stamp'] = uploaded_data_df['time_stamp'].apply(lambda ts: datetime.fromtimestamp(ts / 1000))
 
-     print(uploaded_data_df['time_stamp'].dtype)
-     print(uploaded_data_df['time_stamp'])
+    #  print(uploaded_data_df['time_stamp'].dtype)
+    #  print(uploaded_data_df['time_stamp'])
      return uploaded_data_df
 
 
