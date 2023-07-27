@@ -9,6 +9,7 @@ import pandas as pd
 import asyncio
 from datetime import date
 import numpy as np
+import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
 import shiny.experimental as x
@@ -68,11 +69,7 @@ app_ui = ui.page_navbar(
                 ),
             #This creates the tabs between the recommended graph screen and the insights
         ui.navset_tab(
-            
-            # {"style": "background-colour: rgba(0, 128, 255, 0.1)"},
-            # ui.div(
-            #     {"class": "navset-tab;"},
-            # ),
+
             ui.nav("Recommended Graphs", 
                     div("SOC vs. Time Across Multiple Flights"), 
                     ui.layout_sidebar(
