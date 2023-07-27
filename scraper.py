@@ -18,13 +18,6 @@ from storage import table_exists, db_connect, execute, push_flight_metadata, pus
 import queries
 
 
-# Firefox imports
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from webdriver_manager.firefox import GeckoDriverManager
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions
-
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime):
   if re.search(":", str_datetime):
@@ -90,9 +83,8 @@ def weather_data(date_list, ids_list):
   # transform the weather_data into DB format
   df = weather_transformation(df)
   # print(df.head())  
-  # TODO: map out each weather data field to a flight
+  # map out each weather data field to a flight
   relevant_weather(df, ids_list)
-  # TODO: push the weather data to DB
 
   # delete the temp files from disk
   shutil.rmtree(download_dir)
@@ -103,23 +95,22 @@ load_dotenv()
 # set download directory to working directory
 download_dir = os.getcwd() + "/temp/"
 
+chrome_options = webdriver.ChromeOptions()
+
 # download preferences
 prefs = {
     "download.default_directory": download_dir,
-    "download.prompt_for_download": False,
+    "safebrowsing.enabled": "false"
 }
 
-# chrome_options = Options()
-# chrome_options.add_experimental_option("prefs", prefs)
+data_directory_arg = "user-data-dir=" + download_dir
 
-firefox_options = FirefoxOptions()
-firefox_options.set_preference("browser.download.dir", download_dir)
-# firefox_options.set_preference("browser.helperApps.neverAsk.saveToDisk", download_dir)
+chrome_options.add_experimental_option("prefs", prefs)
+chrome_options.add_argument(data_directory_arg)
 
 # set up Chrome webdriver
-
-# driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
-driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=firefox_options)
+driver = webdriver.Chrome(options=chrome_options)
+# driver = webdriver.Chrome()
 
 # get the connection string from the environment variable
 connection_string = os.getenv('DATABASE_URL')
@@ -138,22 +129,21 @@ password = os.getenv("password")
 pipistrel_ui = os.getenv("PIPISTREL_UI")
 driver.get(pipistrel_ui)
 
-# find username field and enter the username
-user_form = driver.find_element(By.ID, "id_username")
-user_form.send_keys(username)
+# log in if the user is not logged in
+if "Paul Parker" not in driver.page_source:
+  # find username field and enter the username
+  user_form = driver.find_element(By.ID, "id_username")
+  user_form.send_keys(username)
 
-# find password field and enter the password
-pass_form = driver.find_element(By.ID, "id_password")
-pass_form.send_keys(password)
+  # find password field and enter the password
+  pass_form = driver.find_element(By.ID, "id_password")
+  pass_form.send_keys(password)
 
-# click sign in
-driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/form/button").click()
+  # click sign in
+  driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/form/button").click()
 
 # click on the aircraft to get details for the plane we are flying
-aircraft_details = WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.CLASS_NAME, "clickable-aircraft")))
-#aircraft_details = driver.find_element(By.CLASS_NAME, "clickable-aircraft").click()
-aircraft_details.click()
-# aircraft_details = driver.get(str(os.getenv("PIPISTREL_PLANE")))
+aircraft_details = driver.find_element(By.CLASS_NAME, "clickable-aircraft").click()
 
 # then get each data row for the given plane
 rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
