@@ -85,7 +85,7 @@ app_ui = ui.page_navbar(
             ui.include_css("bootstrap.css"),
             x.ui.card(
                 x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-                # x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
+                x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
                 ),
             div("SOC vs. Time Across Multiple Flights"), 
             ui.layout_sidebar(
@@ -168,15 +168,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     async def downloadData():
         await asyncio.sleep(0.25)
         yield "one,two,three\n"
-
-    # query for table 
-    # @reactive.Calc
-    # def uploaded_data():
-    #     engine = connect_to_db("PostgreSQL")
-    #     query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
-    #     # Execute the query and fetch the data into a DataFrame
-    #     uploaded_data_df = pd.read_sql(query, con=engine)
-    #     return uploaded_data_df
 
     @output
     @render.data_frame
