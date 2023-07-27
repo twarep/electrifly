@@ -21,7 +21,7 @@ mypath = "./test_data/"
 def connect_to_db(provider: str):
     provider == "PostgreSQL"
     db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
-    engine = sa.create_engine(db_url)
+    engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
 
 
@@ -30,12 +30,10 @@ def uploaded_data():
      query = "SELECT * FROM flight_weather_data_view2 LIMIT 10;"
     # Execute the query and fetch the data into a DataFrame
      uploaded_data_df = pd.read_sql(query, con=engine)
-    
-    #  uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'])
-    #  uploaded_data_df['time_stamp'] = uploaded_data_df['time_stamp'].apply(lambda ts: datetime.fromtimestamp(ts / 1000))
-
-    #  print(uploaded_data_df['time_stamp'].dtype)
-    #  print(uploaded_data_df['time_stamp'])
+    #uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'])
+     uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
+    # Convert the 'flight_date' column back to a string
+     uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
      return uploaded_data_df
 
 
@@ -68,7 +66,7 @@ app_ui = ui.page_navbar(
             #column selection panel
             ui.div(
             # Dropdown with checkboxes
-            ui.input_select("selected_cols", "Select Columns",choices= list(uploaded_cols().columns), multiple=True),
+            ui.input_select("selected_cols", "Select Columns to Preview",choices= list(uploaded_cols().columns), multiple=True),
             style="margin-top:40px;"),  
 
             #table header
@@ -194,5 +192,5 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
-
+        
 app = App(app_ui, server, debug=True)
