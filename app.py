@@ -24,6 +24,19 @@ def connect_to_db(provider: str):
     engine = sa.create_engine(db_url)
     return engine
 
+
+def uploaded_data():
+     engine = connect_to_db("PostgreSQL")
+     query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+    # Execute the query and fetch the data into a DataFrame
+     uploaded_data_df = pd.read_sql(query, con=engine)
+     return uploaded_data_df
+
+def uploaded_cols(): 
+    uploaded_data_df = uploaded_data()
+    all_uploaded_cols = uploaded_data_df.iloc[:, 1:]
+    return all_uploaded_cols
+
 # Initialize the flight data dates as name keys
 data_file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 data_file_changed_names = [name[14:name.index('.')].replace('.csv', '').replace('-', ' ').capitalize() for name in data_file_names]
@@ -49,12 +62,18 @@ app_ui = ui.page_navbar(
             #expand columns toggle (will be replaced with a multiselect dropdown of columns)
             # ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
             #     style="margin-top:40px;"),
-            # ui.input_select("selected_cols", "Select input",choices=test),
+            
+            
+            
+            #ui.input_select("selected_cols", "Select input",choices= list(uploaded_cols().columns)),
 
             # #table header
             # ui.div(
-            #     ui.include_css("bootstrap.css"), ui.h4(ui.output_text("selection_choices")), 
+            #     ui.include_css("bootstrap.css"), ui.h4(default_cols().columns[1]), 
             #     style="margin-top: 3px;"),  
+
+            # Dropdown with checkboxes
+            ui.input_select("selected_cols", "Select Columns",choices= list(uploaded_cols().columns), multiple=True),
 
 
             #table header
@@ -158,13 +177,13 @@ def server(input: Inputs, output: Outputs, session: Session):
         yield "one,two,three\n"
 
     # query for table 
-    @reactive.Calc
-    def uploaded_data():
-        engine = connect_to_db("PostgreSQL")
-        query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
-        # Execute the query and fetch the data into a DataFrame
-        uploaded_data_df = pd.read_sql(query, con=engine)
-        return uploaded_data_df
+    # @reactive.Calc
+    # def uploaded_data():
+    #     engine = connect_to_db("PostgreSQL")
+    #     query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+    #     # Execute the query and fetch the data into a DataFrame
+    #     uploaded_data_df = pd.read_sql(query, con=engine)
+    #     return uploaded_data_df
     
     # # output table 
     # @output
@@ -180,6 +199,44 @@ def server(input: Inputs, output: Outputs, session: Session):
     #         return collapsed_columns
    
 
+    # def default_cols(): 
+#     uploaded_data_df = uploaded_data()
+#     default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+#                                                "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+#                                                "bat_2_soc","motor_power", "motor_temp"]]
+#     return default_columns
+    # @output
+    # @render.data_frame
+    # def call_uploaded_data_df():
+    #     return uploaded_data_df()
+
+    # def uploaded_data_df():
+    #     uploaded_data_df = uploaded_data()
+    #     selected_columns = input.selected_cols()
+    #     if not selected_columns:
+    #         # Return the entire DataFrame as default when no columns are selected
+    #         default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+    #                                            "bat_2_soc","motor_power", "motor_temp"]]
+    #         return default_columns
+    #     else:
+    #         # Filter the DataFrame based on the selected columns
+    #         filtered_df = uploaded_data_df.loc[:, selected_columns]
+    #         return filtered_df
+
+
+    # def default_cols(): 
+    #     uploaded_data_df = uploaded_data()
+    #     default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+    #                                            "bat_2_soc","motor_power", "motor_temp"]]
+    #     return default_columns
+
+    # Set choices for input_select using the reactive function
+    # output.selected_cols = input.selected_cols(
+    #     "choices", lambda: list(default_cols())
+    # )
+    
     @output
     @render.data_frame
     def uploaded_data_df():
@@ -195,13 +252,5 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
-
-    # @render.text
-    # def selection_choices(): 
-    #     uploaded_data_df = uploaded_data()
-    #     default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
-    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
-    #                                            "bat_2_soc","motor_power", "motor_temp"]]
-    #     return default_columns
 
 app = App(app_ui, server, debug=True)
