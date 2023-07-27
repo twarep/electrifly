@@ -6,8 +6,6 @@ from htmltools import css
 import shinyswatch
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import pandas as pd
 import asyncio
 from datetime import date
 import numpy as np
@@ -88,15 +86,16 @@ app_ui = ui.page_navbar(
             ),
         ),  
 
-
     #ML RECOMMENDATIONS SCREEN
     ui.nav("Recommendations", 
            "In construction! ML predictions on the way!"),
+
     title="Electrifly UI",
 )
 
 
 def server(input: Inputs, output: Outputs, session: Session):
+  
     #-----------------------------------------------------------------------------------
     #DATA ANALYSIS SCREEN 
     #-----------------------------------------------------------------------------------
