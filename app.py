@@ -7,6 +7,7 @@ import shinyswatch
 import numpy as np
 import pandas as pd
 import asyncio
+import matplotlib.pyplot as plt
 from datetime import date
 import numpy as np
 from os import listdir
@@ -28,6 +29,9 @@ data_file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 data_file_changed_names = [name[14:name.index('.')].replace('.csv', '').replace('-', ' ').capitalize() for name in data_file_names]
 data = {}
 
+
+test = ["a","b"]
+
 # Get all data from files and store in data dictionary
 for file in data_file_names:
     data_df = pd.read_csv(join(mypath, file))
@@ -43,8 +47,16 @@ app_ui = ui.page_navbar(
             #data refresh button 
             ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
             #expand columns toggle (will be replaced with a multiselect dropdown of columns)
-            ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
-                style="margin-top:40px;"),
+            # ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
+            #     style="margin-top:40px;"),
+            # ui.input_select("selected_cols", "Select input",choices=test),
+
+            # #table header
+            # ui.div(
+            #     ui.include_css("bootstrap.css"), ui.h4(ui.output_text("selection_choices")), 
+            #     style="margin-top: 3px;"),  
+
+
             #table header
             ui.div(
                 ui.include_css("bootstrap.css"), ui.h4("Most Recent Flight and Weather Data Records"), 
@@ -145,7 +157,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         await asyncio.sleep(0.25)
         yield "one,two,three\n"
 
-    #query for table 
+    # query for table 
     @reactive.Calc
     def uploaded_data():
         engine = connect_to_db("PostgreSQL")
@@ -154,17 +166,42 @@ def server(input: Inputs, output: Outputs, session: Session):
         uploaded_data_df = pd.read_sql(query, con=engine)
         return uploaded_data_df
     
-    #output table 
+    # # output table 
+    # @output
+    # @render.data_frame
+    # def uploaded_data_df():
+    #     if input.expandDataGrid():
+    #         return uploaded_data()
+    #     else:
+    #         uploaded_data_df = uploaded_data()
+    #         collapsed_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+    #                                            "bat_2_soc","motor_power", "motor_temp"]]
+    #         return collapsed_columns
+   
+
     @output
     @render.data_frame
     def uploaded_data_df():
-        if input.expandDataGrid():
-            return uploaded_data()
-        else:
-            uploaded_data_df = uploaded_data()
-            collapsed_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+        uploaded_data_df = uploaded_data()
+        selected_columns = input.selected_cols()
+        if not selected_columns:
+            # Return the entire DataFrame as default when no columns are selected
+            default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
                                                "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
                                                "bat_2_soc","motor_power", "motor_temp"]]
-            return collapsed_columns
+            return default_columns
+        else:
+            # Filter the DataFrame based on the selected columns
+            filtered_df = uploaded_data_df.loc[:, selected_columns]
+            return filtered_df
+
+    # @render.text
+    # def selection_choices(): 
+    #     uploaded_data_df = uploaded_data()
+    #     default_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+    #                                            "bat_2_soc","motor_power", "motor_temp"]]
+    #     return default_columns
 
 app = App(app_ui, server, debug=True)
