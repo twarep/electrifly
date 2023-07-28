@@ -18,6 +18,9 @@ import shiny.experimental as x
 from shiny import App, Inputs, Outputs, Session, render, ui
 import psycopg2
 import sqlalchemy as sa
+# from . import transformation
+import scraper
+# from . import db_connect
 
 mypath = "./test_data/"
 
@@ -60,8 +63,8 @@ app_ui = ui.page_navbar(
 
     #UPLOAD SCREEN 
     ui.nav("Upload Data",
-            #data refresh button 
-            ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
+            #data scraping button 
+            ui.input_action_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
             #expand columns toggle (will be replaced with a multiselect dropdown of columns)
             ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
                 style="margin-top:40px;"),
@@ -145,14 +148,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-----------------------------------------------------------------------------------
     #DATA ANALYSIS SCREEN 
     #-----------------------------------------------------------------------------------
-    
-
-    @session.download(
-        filename=lambda: f"{date.today().isoformat()}-{np.random.randint(100,999)}.csv"
-    )
-    async def downloadData():
-        await asyncio.sleep(0.25)
-        yield "one,two,three\n"
 
     @output
     @render.table
@@ -199,15 +194,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-----------------------------------------------------------------------------------
     #UPLOAD SCREEN 
     #-----------------------------------------------------------------------------------
-    
-    #arbitrarly downloads this random doc -> functionality needs to change
-    @session.download(
-        filename=lambda: f"{date.today().isoformat()}-{np.random.randint(100,999)}.csv"
-    )
-    async def downloadData():
-        await asyncio.sleep(0.25)
-        yield "one,two,three\n"
-
     #query for table 
     @reactive.Calc
     def uploaded_data():
@@ -216,7 +202,15 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Execute the query and fetch the data into a DataFrame
         uploaded_data_df = pd.read_sql(query, con=engine)
         return uploaded_data_df
-    
+
+    #Flight & Weather Data Refresh Button Functionality
+    @reactive.Effect
+    @reactive.event(input.downloadData)
+    async def _():
+        await asyncio.sleep(1)
+        if input.downloadData():
+            scraper.scrape()
+
     #output table 
     @output
     @render.data_frame
