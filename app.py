@@ -9,6 +9,7 @@ import shinyswatch
 import numpy as np
 import pandas as pd
 import asyncio
+import matplotlib.pyplot as plt
 from datetime import date
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,8 +26,27 @@ mypath = "./test_data/"
 def connect_to_db(provider: str):
     provider == "PostgreSQL"
     db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
-    engine = sa.create_engine(db_url)
+    engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
+
+
+def uploaded_data():
+     engine = connect_to_db("PostgreSQL")
+     query = "SELECT * FROM flight_weather_data_view2 LIMIT 10;"
+    # Execute the query and fetch the data into a DataFrame
+     uploaded_data_df = pd.read_sql(query, con=engine)
+    #uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'])
+     uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
+    # Convert the 'flight_date' column back to a string
+     uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
+     return uploaded_data_df
+
+
+
+def uploaded_cols(): 
+    uploaded_data_df = uploaded_data()
+    all_uploaded_cols = uploaded_data_df.iloc[:, 1:]
+    return all_uploaded_cols
 
 # Initialize the flight data dates as name keys
 data_file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
@@ -62,9 +82,13 @@ app_ui = ui.page_navbar(
     ui.nav("Upload Data",
             #data refresh button 
             ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
-            #expand columns toggle (will be replaced with a multiselect dropdown of columns)
-            ui.div(ui.input_switch("expandDataGrid", "Expand Columns", False),
-                style="margin-top:40px;"),
+
+            #column selection panel
+            ui.div(
+            # Dropdown with checkboxes
+            ui.input_select("selected_cols", "Select Columns to Preview",choices= list(uploaded_cols().columns), multiple=True),
+            style="margin-top:40px;"),  
+
             #table header
             ui.div(
                 ui.include_css("bootstrap.css"), ui.h4("Most Recent Flight and Weather Data Records"), 
@@ -136,7 +160,7 @@ app_ui = ui.page_navbar(
     ui.nav("Recommendations", 
            "In construction! ML predictions on the way!"),
 
-    title="ElectriFly UI",
+    title="ElectriFly",
 )
 
 
@@ -208,26 +232,19 @@ def server(input: Inputs, output: Outputs, session: Session):
         await asyncio.sleep(0.25)
         yield "one,two,three\n"
 
-    #query for table 
-    @reactive.Calc
-    def uploaded_data():
-        engine = connect_to_db("PostgreSQL")
-        query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
-        # Execute the query and fetch the data into a DataFrame
-        uploaded_data_df = pd.read_sql(query, con=engine)
-        return uploaded_data_df
-    
-    #output table 
     @output
     @render.data_frame
     def uploaded_data_df():
-        if input.expandDataGrid():
-            return uploaded_data()
-        else:
-            uploaded_data_df = uploaded_data()
-            collapsed_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
-                                               "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+        uploaded_data_df = uploaded_data()
+        selected_columns = input.selected_cols()
+        if not selected_columns:
+            # Return the entire DataFrame as default when no columns are selected
+            default_columns = uploaded_data_df.loc[:,["flight_id","flight_date", "weather_time_utc", "time_min","bat_1_soc", 
                                                "bat_2_soc","motor_power", "motor_temp"]]
-            return collapsed_columns
-
+            return default_columns
+        else:
+            # Filter the DataFrame based on the selected columns
+            filtered_df = uploaded_data_df.loc[:, selected_columns]
+            return filtered_df
+        
 app = App(app_ui, server, debug=True)
