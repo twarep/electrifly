@@ -86,6 +86,11 @@ app_ui = ui.page_navbar(
             #This creates the tabs between the recommended graph screen and the insights
         ui.navset_tab(
             ui.nav("Recommended Graphs", 
+              #-----------------------------------------------------------------------------------
+              # DIVIDES the page into a row, meaning you can put ui elements side by side
+              #-----------------------------------------------------------------------------------
+              ui.row( 
+                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
                     div(HTML("<hr>")),
                     div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
                     div(HTML("<hr>")),
@@ -98,17 +103,29 @@ app_ui = ui.page_navbar(
                                 selected=data_file_changed_names[0],
                                 multiple=True,
                             ),
-                            div(HTML("<p>To select multiple dates on <b>Windows</b>: </p>")),
-                            div("1. Press `ctrl` + select the dates"),
-                            div(HTML("<hr>")),
-                            div(HTML("<p>To select multiple dates on <b>Mac</b>: </p>")),
-                            div("1. Press `cmd` + select the dates"),
-                            width = 3
+                            div(HTML("<p>To select multiple dates:</p>")),
+                            div(HTML("""<table>
+                                          <tr>
+                                            <th>Windows</th>
+                                          </tr>
+                                          <tr>
+                                            <td>`ctrl` + click</td>
+                                        </table>
+                                        <table>
+                                          <tr>
+                                            <th>Mac</th>
+                                          </tr>
+                                          <tr>
+                                            <td>'cmd' + click</td>
+                                          </tr>
+                                        </table>""")),
+                                width=3
                         ),
                         ui.panel_main(
                             ui.output_plot("interactive")
                         ),
-                    ),
+                    )),
+                  ui.column(6,
                     div(HTML("<hr>")),
                     div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
                     div(HTML("<hr>")),
@@ -120,13 +137,13 @@ app_ui = ui.page_navbar(
                                 get_flights(True),
                                 selected=get_flights(True)[0],
                             ),
-                        ),
+                        width=3),
                         ui.panel_main(
                             ui.output_table("weather_interactive")
                         ),
                     position='right'
-                    ),
-                ),
+                    )),
+            )),
             ui.nav("Insights", "Statistical Insights in Construction!"),
         ),
             
