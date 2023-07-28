@@ -1,7 +1,9 @@
 from shiny import App, render, ui, Inputs, Outputs, Session, reactive
-from htmltools import HTML, div
+from htmltools import HTML, css, div
 from shiny.types import NavSetArg
 from typing import List
+from flight_querying import query_flights
+from weather_querying import query_weather
 from htmltools import css
 import shinyswatch
 import numpy as np
@@ -10,11 +12,14 @@ import asyncio
 import matplotlib.pyplot as plt
 from datetime import date
 import numpy as np
+import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
 import shiny.experimental as x
+from shiny import App, Inputs, Outputs, Session, render, ui
 import psycopg2
 import sqlalchemy as sa
+
 mypath = "./test_data/"
 
 #database connection 
@@ -55,7 +60,22 @@ for file in data_file_names:
     time_minutes = data_df[' time(min)'].to_numpy()
     data[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'soc': soc, 'time': time_minutes}
 
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_flights(date: bool):
+
+    flights = query_flights()
+
+    flight_data = flights.get_flight_id_and_dates()
+
+    if date:
+        return list(flight_data.keys())
+    
+    return flight_data
+
+
 app_ui = ui.page_navbar(
+    # {"style": "color: blue"},
     shinyswatch.theme.zephyr(),
 
     #UPLOAD SCREEN 
@@ -82,32 +102,58 @@ app_ui = ui.page_navbar(
            
     #DATA ANALYSIS SCREEN
     ui.nav("Data Analysis", 
-            ui.include_css("bootstrap.css"),
+        ui.include_css("bootstrap.css"),
             x.ui.card(
                 x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
                 x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
                 ),
-            div("SOC vs. Time Across Multiple Flights"), 
-            ui.layout_sidebar(
-                ui.panel_sidebar(
-                    ui.input_select(
-                        "state",
-                        "Choose flight date(s):",
-                        data_file_changed_names,
-                        selected=data_file_changed_names[0],
-                        multiple=True,
-                    ),
-                    div(HTML("<p>To select multiple dates on <b>Windows</b>: </p>")),
-                    div("1. Press `ctrl` + select the dates"),
+            #This creates the tabs between the recommended graph screen and the insights
+        ui.navset_tab(
+            ui.nav("Recommended Graphs", 
                     div(HTML("<hr>")),
-                    div(HTML("<p>To select multiple dates on <b>Mac</b>: </p>")),
-                    div("1. Press `cmd` + select the dates"),
-                    width = 3
+                    div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "state",
+                                "Choose flight date(s):",
+                                data_file_changed_names,
+                                selected=data_file_changed_names[0],
+                                multiple=True,
+                            ),
+                            div(HTML("<p>To select multiple dates on <b>Windows</b>: </p>")),
+                            div("1. Press `ctrl` + select the dates"),
+                            div(HTML("<hr>")),
+                            div(HTML("<p>To select multiple dates on <b>Mac</b>: </p>")),
+                            div("1. Press `cmd` + select the dates"),
+                            width = 3
+                        ),
+                        ui.panel_main(
+                            ui.output_plot("interactive")
+                        ),
+                    ),
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "weather_state",
+                                "Choose flight date(s):",
+                                get_flights(True),
+                                selected=get_flights(True)[0],
+                            ),
+                        ),
+                        ui.panel_main(
+                            ui.output_table("weather_interactive")
+                        ),
+                    position='right'
+                    ),
                 ),
-                ui.panel_main(
-                    ui.output_plot("interactive")
-                ),
-            ),
+            ui.nav("Insights", "Statistical Insights in Construction!"),
+        ),
+            
         ),  
 
     #ML RECOMMENDATIONS SCREEN
@@ -124,6 +170,23 @@ def server(input: Inputs, output: Outputs, session: Session):
     #DATA ANALYSIS SCREEN 
     #-----------------------------------------------------------------------------------
     
+
+    @session.download(
+        filename=lambda: f"{date.today().isoformat()}-{np.random.randint(100,999)}.csv"
+    )
+    async def downloadData():
+        await asyncio.sleep(0.25)
+        yield "one,two,three\n"
+
+    @output
+    @render.table
+    def weather_interactive(): 
+        # Get the flight ID corresponding to the chosen date
+        flight_date = input.weather_state()
+        flight_id = get_flights(False)[flight_date]
+        weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        return weather_df 
+
     @output
     @render.plot(alt="An interactive plot")
     def interactive():
