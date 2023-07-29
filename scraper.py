@@ -184,7 +184,7 @@ while is_next_page:
     current_flight_notes = row_data[4]
 
     # skip all rows except for flight tests
-    if current_flight_type not in ["Flight test and charging", "Flight test"]:
+    if current_flight_type not in ["Flight test"]:
       continue
 
     # query database for this flight ID
