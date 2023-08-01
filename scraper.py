@@ -116,7 +116,7 @@ driver = webdriver.Chrome(options=chrome_options)
 connection_string = os.getenv('DATABASE_URL')
 
 # connect to the PostgreSQL database
-conn = psycopg2.connect(connection_string, options="-c search_path=dbo,public")
+conn = psycopg2.connect(connection_string)
 
 # create a cursor object for the db
 cur = conn.cursor()
