@@ -27,7 +27,7 @@ mypath = "./test_data/"
 #database connection 
 def connect_to_db(provider: str):
     provider == "PostgreSQL"
-    db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
+    db_url = "postgres://user:velis@129.97.25.100:5432/velis"
     engine = sa.create_engine(db_url)
     return engine
 
@@ -211,17 +211,17 @@ def server(input: Inputs, output: Outputs, session: Session):
         if input.downloadData():
             scraper.scrape()
 
-    #output table 
-    @output
-    @render.data_frame
-    def uploaded_data_df():
-        if input.expandDataGrid():
-            return uploaded_data()
-        else:
-            uploaded_data_df = uploaded_data()
-            collapsed_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
-                                               "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
-                                               "bat_2_soc","motor_power", "motor_temp"]]
-            return collapsed_columns
+    # #output table 
+    # @output
+    # @render.data_frame
+    # def uploaded_data_df():
+    #     if input.expandDataGrid():
+    #         return uploaded_data()
+    #     else:
+    #         uploaded_data_df = uploaded_data()
+    #         collapsed_columns = uploaded_data_df.loc[:,["flight_id", "time_min", "bat_1_current",
+    #                                            "bat_2_current","bat_1_voltage", "bat_2_voltage", "bat_1_soc", 
+    #                                            "bat_2_soc","motor_power", "motor_temp"]]
+    #         return collapsed_columns
 
 app = App(app_ui, server, debug=True)
