@@ -13,25 +13,27 @@ import matplotlib.pyplot as plt
 from datetime import date
 import numpy as np
 import matplotlib.pyplot as plt
-from os import listdir
+from os import listdir, getenv
 from os.path import isfile, join
 import shiny.experimental as x
 from shiny import App, Inputs, Outputs, Session, render, ui
 import psycopg2
 import sqlalchemy as sa
+from dotenv import load_dotenv
 
 mypath = "./test_data/"
+# Load .env file
+load_dotenv()
 
 #database connection 
-def connect_to_db(provider: str):
-    provider == "PostgreSQL"
-    db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
-    engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
+def connect_to_db():
+    engine_string = "postgresql+psycopg2" + getenv('DATABASE_URL')[8:]
+    engine = sa.create_engine(engine_string, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
 
 
 def uploaded_data():
-     engine = connect_to_db("PostgreSQL")
+     engine = connect_to_db()
      query = "SELECT * FROM flight_weather_data_view2 LIMIT 10;"
     # Execute the query and fetch the data into a DataFrame
      uploaded_data_df = pd.read_sql(query, con=engine)
