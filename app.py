@@ -102,77 +102,77 @@ app_ui = ui.page_navbar(
 
            
     #DATA ANALYSIS SCREEN
-    # ui.nav("Data Analysis", 
-    #     ui.include_css("bootstrap.css"),
-    #         x.ui.card(
-    #             x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-    #             x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
-    #             ),
-    #         #This creates the tabs between the recommended graph screen and the insights
-    #     ui.navset_tab(
-    #         ui.nav("Recommended Graphs", 
-    #           #-----------------------------------------------------------------------------------
-    #           # DIVIDES the page into a row, meaning you can put ui elements side by side
-    #           #-----------------------------------------------------------------------------------
-    #           ui.row( 
-    #               ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
-    #                 div(HTML("<hr>")),
-    #                 div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
-    #                 div(HTML("<hr>")),
-    #                 ui.layout_sidebar(
-    #                     ui.panel_sidebar(
-    #                         ui.input_select(
-    #                             "state",
-    #                             "Choose flight date(s):",
-    #                             data_file_changed_names,
-    #                             selected=data_file_changed_names[0],
-    #                             multiple=True,
-    #                         ),
-    #                         div(HTML("<p>To select multiple dates:</p>")),
-    #                         div(HTML("""<table>
-    #                                       <tr>
-    #                                         <th>Windows</th>
-    #                                       </tr>
-    #                                       <tr>
-    #                                         <td>`ctrl` + click</td>
-    #                                     </table>
-    #                                     <table>
-    #                                       <tr>
-    #                                         <th>Mac</th>
-    #                                       </tr>
-    #                                       <tr>
-    #                                         <td>'cmd' + click</td>
-    #                                       </tr>
-    #                                     </table>""")),
-    #                             width=3
-    #                     ),
-    #                     ui.panel_main(
-    #                         ui.output_plot("interactive")
-    #                     ),
-    #                 )),
-    #               ui.column(6,
-    #                 div(HTML("<hr>")),
-    #                 div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
-    #                 div(HTML("<hr>")),
-    #                 ui.layout_sidebar(
-    #                     ui.panel_sidebar(
-    #                         ui.input_select(
-    #                             "weather_state",
-    #                             "Choose flight date(s):",
-    #                             get_flights(True),
-    #                             selected=get_flights(True)[0],
-    #                         ),
-    #                     width=3),
-    #                     ui.panel_main(
-    #                         ui.output_table("weather_interactive")
-    #                     ),
-    #                 position='right'
-    #                 )),
-    #         )),
-    #         ui.nav("Insights", "Statistical Insights in Construction!"),
-    #     ),
+    ui.nav("Data Analysis", 
+        ui.include_css("bootstrap.css"),
+            x.ui.card(
+                x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
+                x.ui.card_body("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
+                ),
+            #This creates the tabs between the recommended graph screen and the insights
+        ui.navset_tab(
+            ui.nav("Recommended Graphs", 
+              #-----------------------------------------------------------------------------------
+              # DIVIDES the page into a row, meaning you can put ui elements side by side
+              #-----------------------------------------------------------------------------------
+              ui.row( 
+                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "state",
+                                "Choose flight date(s):",
+                                data_file_changed_names,
+                                selected=data_file_changed_names[0],
+                                multiple=True,
+                            ),
+                            div(HTML("<p>To select multiple dates:</p>")),
+                            div(HTML("""<table>
+                                          <tr>
+                                            <th>Windows</th>
+                                          </tr>
+                                          <tr>
+                                            <td>`ctrl` + click</td>
+                                        </table>
+                                        <table>
+                                          <tr>
+                                            <th>Mac</th>
+                                          </tr>
+                                          <tr>
+                                            <td>'cmd' + click</td>
+                                          </tr>
+                                        </table>""")),
+                                width=3
+                        ),
+                        ui.panel_main(
+                            ui.output_plot("interactive")
+                        ),
+                    )),
+                  ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "weather_state",
+                                "Choose flight date(s):",
+                                get_flights(True),
+                                selected=get_flights(True)[0],
+                            ),
+                        width=3),
+                        ui.panel_main(
+                            ui.output_table("weather_interactive")
+                        ),
+                    position='right'
+                    )),
+            )),
+            ui.nav("Insights", "Statistical Insights in Construction!"),
+        ),
             
-    #     ),  
+        ),  
 
     #ML RECOMMENDATIONS SCREEN
     ui.nav("Recommendations", 
@@ -189,53 +189,53 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-----------------------------------------------------------------------------------
     
 
-    # @session.download(
-    #     filename=lambda: f"{date.today().isoformat()}-{np.random.randint(100,999)}.csv"
-    # )
-    # async def downloadData():
-    #     await asyncio.sleep(0.25)
-    #     yield "one,two,three\n"
+    @session.download(
+        filename=lambda: f"{date.today().isoformat()}-{np.random.randint(100,999)}.csv"
+    )
+    async def downloadData():
+        await asyncio.sleep(0.25)
+        yield "one,two,three\n"
 
-    # @output
-    # @render.table
-    # def weather_interactive(): 
-    #     # Get the flight ID corresponding to the chosen date
-    #     flight_date = input.weather_state()
-    #     flight_id = get_flights(False)[flight_date]
-    #     weather_df = query_weather().get_weather_by_flight_id(flight_id)
-    #     return weather_df 
+    @output
+    @render.table
+    def weather_interactive(): 
+        # Get the flight ID corresponding to the chosen date
+        flight_date = input.weather_state()
+        flight_id = get_flights(False)[flight_date]
+        weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        return weather_df 
 
-    # @output
-    # @render.plot(alt="An interactive plot")
-    # def interactive():
-    #     # SOC ranges
-    #     x1 = 0
-    #     x2 = 60
-    #     y1 = 15.01
-    #     y2 = 30
-    #     r1 = 0
-    #     r2 = 15
-    #     # Fill ranges
-    #     plt.fill([x1, x1, x2, x2], [y1, y2, y2, y1], c="yellow", alpha=0.5)
-    #     plt.fill([x1, x1, x2, x2], [r1, r2, r2, r1], c='r', alpha=0.5)
-    #     # Add text to fill ranges
-    #     plt.text(0.2, 20.5, 'Warning', fontsize='large', fontweight='bold')
-    #     plt.text(0.2, 5.5, 'Danger', fontsize='large', fontweight='bold', c='white')
-    #     # Plot the graphs
-    #     for date in input.state():
-    #         if date in data.keys():
-    #             soc = data[date]['soc']
-    #             time = data[date]['time']
-    #             plt.plot(time, soc, label=date)
-    #     # Add labels and legend to plot
-    #     plt.xlim([0, 55])
-    #     plt.ylim([-1, 101])
-    #     plt.xlabel("time (min)")
-    #     plt.ylabel("SOC")
-    #     plt.title("Time vs SOC")
-    #     # plt.legend(loc="lower left")
-    #     plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1.02),
-    #       ncol=3, fancybox=True, shadow=True)
+    @output
+    @render.plot(alt="An interactive plot")
+    def interactive():
+        # SOC ranges
+        x1 = 0
+        x2 = 60
+        y1 = 15.01
+        y2 = 30
+        r1 = 0
+        r2 = 15
+        # Fill ranges
+        plt.fill([x1, x1, x2, x2], [y1, y2, y2, y1], c="yellow", alpha=0.5)
+        plt.fill([x1, x1, x2, x2], [r1, r2, r2, r1], c='r', alpha=0.5)
+        # Add text to fill ranges
+        plt.text(0.2, 20.5, 'Warning', fontsize='large', fontweight='bold')
+        plt.text(0.2, 5.5, 'Danger', fontsize='large', fontweight='bold', c='white')
+        # Plot the graphs
+        for date in input.state():
+            if date in data.keys():
+                soc = data[date]['soc']
+                time = data[date]['time']
+                plt.plot(time, soc, label=date)
+        # Add labels and legend to plot
+        plt.xlim([0, 55])
+        plt.ylim([-1, 101])
+        plt.xlabel("time (min)")
+        plt.ylabel("SOC")
+        plt.title("Time vs SOC")
+        # plt.legend(loc="lower left")
+        plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1.02),
+          ncol=3, fancybox=True, shadow=True)
 
 
     #-----------------------------------------------------------------------------------
