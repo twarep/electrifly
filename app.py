@@ -28,7 +28,8 @@ mypath = "./test_data/"
 #database connection 
 def connect_to_db(provider: str):
     provider == "PostgreSQL"
-    db_url = "postgres://user:velis@129.97.25.100:5432/velis"
+    db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
+    # db_url = "postgresql://user:velis@129.97.25.100:5432/velis"
     engine = sa.create_engine(db_url)
     return engine
 
@@ -90,7 +91,7 @@ app_ui = ui.page_navbar(
             ui.input_action_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
             #column selection panel
             ui.div(
-            # Dropdown with checkboxes
+            # # Dropdown with checkboxes
             ui.input_select("selected_cols", "Select Columns to Preview",choices= list(uploaded_cols().columns), multiple=True),
             style="margin-top:40px;"),  
 
