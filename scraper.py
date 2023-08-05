@@ -40,11 +40,14 @@ def convert_str_to_datetime(str_datetime):
 
 # returns the relevant weather data for the given scraped flights
 def weather_data(date_list, ids_list):
+  print("The date list is: ", date_list)
   # get the weather data
   driver.get("https://mesonet.agron.iastate.edu/request/download.phtml?network=CA_ON_ASOS")
   # get the oldest date
   oldest_datetime = min(date_list)
+  print("The oldest_datetime is: ", oldest_datetime)
   newest_date = max(date_list).date()
+  print("The newest_datetime is: ", newest_date)
   newest_day = newest_date.day
   # extract each part of the date
   year = oldest_datetime.strftime("%Y")
@@ -59,7 +62,12 @@ def weather_data(date_list, ids_list):
   if newest_date == date.today():
     new_day_select = Select(driver.find_element(By.NAME, "day2"))
     if int(newest_day) < 10:
-      new_day_select.select_by_value(str(newest_day[1:]))
+      print("The newest_day is: ", newest_day)
+      print(f"The newest_day type is {type(newest_day)} ")
+      if type(newest_day) is str:
+        new_day_select.select_by_value(str(newest_day[1:]))
+      else:
+        new_day_select.select_by_value(str(newest_day))     
     else:
       new_day_select.select_by_value(str(newest_day))
   # select data from that oldest date
