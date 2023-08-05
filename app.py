@@ -4,6 +4,7 @@ from shiny.types import NavSetArg
 from typing import List
 from flight_querying import query_flights
 from weather_querying import query_weather
+import Graphing as Graphing
 from htmltools import css
 import shinyswatch
 import numpy as np
@@ -47,18 +48,6 @@ def uploaded_cols():
     uploaded_data_df = uploaded_data()
     all_uploaded_cols = uploaded_data_df.iloc[:, 1:]
     return all_uploaded_cols
-
-# Initialize the flight data dates as name keys
-data_file_names = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-data_file_changed_names = [name[14:name.index('.')].replace('.csv', '').replace('-', ' ').capitalize() for name in data_file_names]
-data = {}
-
-# Get all data from files and store in data dictionary
-for file in data_file_names:
-    data_df = pd.read_csv(join(mypath, file))
-    soc = (data_df[' bat 1 soc'].to_numpy() + data_df[' bat 2 soc'].to_numpy()) / 2
-    time_minutes = data_df[' time(min)'].to_numpy()
-    data[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'soc': soc, 'time': time_minutes}
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -123,21 +112,21 @@ app_ui = ui.page_navbar(
                             ui.input_select(
                                 "state",
                                 "Choose flight date(s):",
-                                data_file_changed_names,
-                                selected=data_file_changed_names[0],
+                                get_flights(True),
+                                selected=get_flights(True)[0],
                                 multiple=True,
                             ),
                             div(HTML("<p>To select multiple dates:</p>")),
                             div(HTML("""<table>
                                           <tr>
-                                            <th>Windows</th>
+                                            <th><b>Windows</b>:</th>
                                           </tr>
                                           <tr>
                                             <td>`ctrl` + click</td>
                                         </table>
                                         <table>
                                           <tr>
-                                            <th>Mac</th>
+                                            <th><b>Mac</b>:</th>
                                           </tr>
                                           <tr>
                                             <td>'cmd' + click</td>
@@ -207,34 +196,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     @output
     @render.plot(alt="An interactive plot")
     def interactive():
-        # SOC ranges
-        x1 = 0
-        x2 = 60
-        y1 = 15.01
-        y2 = 30
-        r1 = 0
-        r2 = 15
-        # Fill ranges
-        plt.fill([x1, x1, x2, x2], [y1, y2, y2, y1], c="yellow", alpha=0.5)
-        plt.fill([x1, x1, x2, x2], [r1, r2, r2, r1], c='r', alpha=0.5)
-        # Add text to fill ranges
-        plt.text(0.2, 20.5, 'Warning', fontsize='large', fontweight='bold')
-        plt.text(0.2, 5.5, 'Danger', fontsize='large', fontweight='bold', c='white')
-        # Plot the graphs
-        for date in input.state():
-            if date in data.keys():
-                soc = data[date]['soc']
-                time = data[date]['time']
-                plt.plot(time, soc, label=date)
-        # Add labels and legend to plot
-        plt.xlim([0, 55])
-        plt.ylim([-1, 101])
-        plt.xlabel("time (min)")
-        plt.ylabel("SOC")
-        plt.title("Time vs SOC")
-        # plt.legend(loc="lower left")
-        plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1.02),
-          ncol=3, fancybox=True, shadow=True)
+        soc_graph = Graphing.graph_soc_graph(list(input.state()))
+
 
 
     #-----------------------------------------------------------------------------------

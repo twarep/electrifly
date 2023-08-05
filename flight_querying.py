@@ -90,6 +90,7 @@ class query_flights:
         return flight_data
 
 
+    # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
     def get_flight_id_and_dates(self):
         """
         Function gets all flight ids and dates and returns a dictionary of flight_date: flight_id
@@ -111,6 +112,32 @@ class query_flights:
             # Create a string object to show the date in mm/dd/year format. Create Key: Value relation.
             date = flight_dates[i].strftime("%m/%d/%Y")
             flight_dict[date] = ids[i]
+
+        return flight_dict
+    
+
+    # Get Flight Id, SOC, and Time (in minutes) Function --------------------------------------------------------------------------------
+    def get_flight_soc_and_time(self, flight_ids: list):
+        """
+        Function that uses the flight ids to get their respective soc and time columns. Then, returns a dictionary of 
+        flight_id: {soc: [], time: []}
+        """
+
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get soc, and time data for the specific flight
+        for id in flight_ids:
+
+            # Get the flight data
+            flights_df = self.get_flight_data_on_id(["flight_id", "time_min", "bat_1_soc", "bat_2_soc"], id)
+
+            # Change to Numpy
+            ids = flights_df["flight_id"].to_numpy()
+            times = flights_df["time_min"].to_numpy()
+            soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2
+
+            flight_dict[ids] = {"soc": soc, "time_min": times}
 
         return flight_dict
 
