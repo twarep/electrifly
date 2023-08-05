@@ -32,7 +32,10 @@ def convert_str_to_datetime(str_datetime):
     elif str_datetime[-4:] == "p.m.":
       str_datetime = str_datetime[:-5] + ":00 PM"
 
-  format = "%B %d, %Y, %I:%M %p"
+  if "." in str_datetime:
+    format = "%b. %d, %Y, %I:%M %p"
+  else:
+    format = "%B %d, %Y, %I:%M %p"
   return datetime.strptime(str_datetime, format)
 
 # returns the relevant weather data for the given scraped flights
