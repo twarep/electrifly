@@ -84,8 +84,10 @@ app_ui = ui.page_navbar(
     #UPLOAD SCREEN 
     ui.nav("Upload Data",
             #data refresh button 
-            ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
-
+            #THE DOWNLOAD BUTTON WHICH WE MAY DELETE
+            # ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
+            #NEW!!!!
+            ui.input_action_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
             #column selection panel
             ui.div(
             # Dropdown with checkboxes
@@ -249,9 +251,17 @@ def server(input: Inputs, output: Outputs, session: Session):
     @session.download(
         filename=lambda: f"{date.today().isoformat()}-{np.random.randint(100,999)}.csv"
     )
-    async def downloadData():
-        await asyncio.sleep(0.25)
-        yield "one,two,three\n"
+    # async def downloadData():
+    #     await asyncio.sleep(0.25)
+    #     yield "one,two,three\n"
+
+    #Flight & Weather Data Refresh Button Functionality
+    @reactive.Effect
+    @reactive.event(input.downloadData)
+    async def _():
+        await asyncio.sleep(1)
+        if input.downloadData():
+            scraper.scrape()
 
     @output
     @render.data_frame
