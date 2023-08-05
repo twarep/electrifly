@@ -20,36 +20,34 @@ import shiny.experimental as x
 from shiny import App, Inputs, Outputs, Session, render, ui
 import psycopg2
 import sqlalchemy as sa
+import os
 
 mypath = "./test_data/"
 
 #database connection 
 def connect_to_db(provider: str):
     provider == "PostgreSQL"
+    #db_url = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
     db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
 
-
 def uploaded_data():
      engine = connect_to_db("PostgreSQL")
-     query = "SELECT * FROM flight_weather_data_view2 LIMIT 10;"
+     query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
     # Execute the query and fetch the data into a DataFrame
      uploaded_data_df = pd.read_sql(query, con=engine)
-    #uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'])
      uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
     # Convert the 'flight_date' column back to a string
      uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
      return uploaded_data_df
-
-
 
 def uploaded_cols(): 
     uploaded_data_df = uploaded_data()
     all_uploaded_cols = uploaded_data_df.iloc[:, 1:]
     return all_uploaded_cols
 
-
+  
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_flights(date: bool):
 
@@ -156,7 +154,67 @@ app_ui = ui.page_navbar(
                         ),
                     position='right'
                     )),
-            )),
+                ),
+
+                ui.row( 
+                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "power",
+                                "Choose flight date(s):",
+                                data_file_changed_names_power,
+                                selected=data_file_changed_names_power[0],
+                                multiple=True,
+                            ),
+                            div(HTML("<p>To select multiple dates:</p>")),
+                            div(HTML("""<table>
+                                          <tr>
+                                            <th>Windows</th>
+                                          </tr>
+                                          <tr>
+                                            <td>`ctrl` + click</td>
+                                        </table>
+                                        <table>
+                                          <tr>
+                                            <th>Mac</th>
+                                          </tr>
+                                          <tr>
+                                            <td>'cmd' + click</td>
+                                          </tr>
+                                        </table>""")),
+                                width=3
+                        ),
+                        ui.panel_main(
+                            ui.output_plot("power_graph")
+                        ),
+                    )
+                    ),
+                  ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>TO DO</b></p>")),
+                    div(HTML("<hr>")),
+                    # ui.layout_sidebar(
+                    #     ui.panel_sidebar(
+                    #         ui.input_select(
+                    #             "weather_state",
+                    #             "Choose flight date(s):",
+                    #             get_flights(True),
+                    #             selected=get_flights(True)[0],
+                    #         ),
+                    #     width=3),
+                    #     ui.panel_main(
+                    #         ui.output_table("weather_interactive")
+                    #     ),
+                    # position='right'
+                    # )
+                    ),
+                )
+            ),
+                
             ui.nav("Insights", "Statistical Insights in Construction!"),
         ),
             
@@ -202,8 +260,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         for flight_date in flight_dates:
             flight_ids.append(flight_data[flight_date])
         soc_graph = Graphing.graph_soc_graph(flight_ids, flight_dates)
-
-
 
     #-----------------------------------------------------------------------------------
     #UPLOAD SCREEN 
