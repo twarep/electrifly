@@ -19,12 +19,14 @@ import shiny.experimental as x
 from shiny import App, Inputs, Outputs, Session, render, ui
 import psycopg2
 import sqlalchemy as sa
+import os
 
 mypath = "./test_data/"
 
 #database connection 
 def connect_to_db(provider: str):
     provider == "PostgreSQL"
+    #db_url = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
     db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
@@ -32,10 +34,9 @@ def connect_to_db(provider: str):
 
 def uploaded_data():
      engine = connect_to_db("PostgreSQL")
-     query = "SELECT * FROM flight_weather_data_view2 LIMIT 10;"
+     query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
     # Execute the query and fetch the data into a DataFrame
      uploaded_data_df = pd.read_sql(query, con=engine)
-    #uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'])
      uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
     # Convert the 'flight_date' column back to a string
      uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
@@ -59,6 +60,18 @@ for file in data_file_names:
     soc = (data_df[' bat 1 soc'].to_numpy() + data_df[' bat 2 soc'].to_numpy()) / 2
     time_minutes = data_df[' time(min)'].to_numpy()
     data[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'soc': soc, 'time': time_minutes}
+
+# Initialize the flight data dates as name keys
+data_file_names_power = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+data_file_changed_names_power = [name[14:name.index('.')].replace('.csv', '').replace('-', ' ').capitalize() for name in data_file_names]
+data_power = {}
+
+# Get all data from files and store in data dictionary
+for file in data_file_names_power:
+    data_df = pd.read_csv(join(mypath, file))
+    power = data_df[' motor power'].to_numpy()
+    time_minutes = data_df[' time(min)'].to_numpy()
+    data_power[file[14:file.index('.')].replace('.csv', '').replace('-', ' ').capitalize()] = {'power': power, 'time': time_minutes}
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -167,7 +180,67 @@ app_ui = ui.page_navbar(
                         ),
                     position='right'
                     )),
-            )),
+                ),
+
+                ui.row( 
+                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "power",
+                                "Choose flight date(s):",
+                                data_file_changed_names_power,
+                                selected=data_file_changed_names_power[0],
+                                multiple=True,
+                            ),
+                            div(HTML("<p>To select multiple dates:</p>")),
+                            div(HTML("""<table>
+                                          <tr>
+                                            <th>Windows</th>
+                                          </tr>
+                                          <tr>
+                                            <td>`ctrl` + click</td>
+                                        </table>
+                                        <table>
+                                          <tr>
+                                            <th>Mac</th>
+                                          </tr>
+                                          <tr>
+                                            <td>'cmd' + click</td>
+                                          </tr>
+                                        </table>""")),
+                                width=3
+                        ),
+                        ui.panel_main(
+                            ui.output_plot("power_graph")
+                        ),
+                    )
+                    ),
+                  ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>TO DO</b></p>")),
+                    div(HTML("<hr>")),
+                    # ui.layout_sidebar(
+                    #     ui.panel_sidebar(
+                    #         ui.input_select(
+                    #             "weather_state",
+                    #             "Choose flight date(s):",
+                    #             get_flights(True),
+                    #             selected=get_flights(True)[0],
+                    #         ),
+                    #     width=3),
+                    #     ui.panel_main(
+                    #         ui.output_table("weather_interactive")
+                    #     ),
+                    # position='right'
+                    # )
+                    ),
+                )
+            ),
+                
             ui.nav("Insights", "Statistical Insights in Construction!"),
         ),
             
@@ -235,6 +308,29 @@ def server(input: Inputs, output: Outputs, session: Session):
         # plt.legend(loc="lower left")
         plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1.02),
           ncol=3, fancybox=True, shadow=True)
+        
+    
+        @output
+        @render.plot(alt="An interactive plot")
+        def power_graph():
+            for date in input.power():
+                if date in data_power.keys():
+                    # Get power and time data for the selected date
+                    power = data_power[date]['power']
+                    time = data_power[date]['time']
+
+                    # Create a pandas DataFrame
+                    df = pd.DataFrame({'time': time, 'power': power})
+
+                    # Create the scatter plot using Matplotlib
+                    plt.scatter(df['time'], df['power'], s=10,label=date)
+
+                    # Set labels and title
+                    plt.xlabel('Time (min)')
+                    plt.ylabel('Power Setting')
+                    plt.title('Power Setting vs. Time (min)')
+                    
+                    plt.legend(loc='upper right')
 
 
     #-----------------------------------------------------------------------------------
