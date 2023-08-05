@@ -133,11 +133,10 @@ class query_flights:
             flights_df = self.get_flight_data_on_id(["flight_id", "time_min", "bat_1_soc", "bat_2_soc"], id)
 
             # Change to Numpy
-            ids = flights_df["flight_id"].to_numpy()
             times = flights_df["time_min"].to_numpy()
             soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2
 
-            flight_dict[ids] = {"soc": soc, "time_min": times}
+            flight_dict[id] = {"soc": soc, "time_min": times}
 
         return flight_dict
 

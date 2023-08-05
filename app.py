@@ -196,7 +196,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @output
     @render.plot(alt="An interactive plot")
     def interactive():
-        soc_graph = Graphing.graph_soc_graph(list(input.state()))
+        flight_data = get_flights(False)
+        flight_dates = input.state()
+        flight_ids = []
+        for flight_date in flight_dates:
+            flight_ids.append(flight_data[flight_date])
+        soc_graph = Graphing.graph_soc_graph(flight_ids, flight_dates)
 
 
 

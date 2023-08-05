@@ -60,7 +60,7 @@ def create_mapbox_map_per_flight(flight_id: int):
     return fig
 
 
-def graph_soc_graph(flight_ids: list):
+def graph_soc_graph(flight_ids: list, flight_dates: list):
 
     # Make flight db connection
     flight_db_conn = query_flights()
@@ -72,32 +72,39 @@ def graph_soc_graph(flight_ids: list):
     danger_zone = [0, 15, 15, 0]
 
     # Set Plot
-    soc_figure = plt.subplots(figsize=(10, 10))
+    soc_figure = plt.figure()
+    soc_ax = soc_figure.add_subplot(1, 1, 1)
+    soc_figure.tight_layout()
 
     # Fill ranges
-    soc_figure.fill(x_zone, warning_zone, c="yellow", alpha=0.5)
-    soc_figure.fill(x_zone, danger_zone, c='r', alpha=0.5)
+    soc_ax.fill(x_zone, warning_zone, c="yellow", alpha=0.5)
+    soc_ax.fill(x_zone, danger_zone, c='r', alpha=0.5)
+
+    # Add text to fill ranges
+    soc_ax.text(0.2, 20.5, 'Warning', fontweight='bold')
+    soc_ax.text(0.2, 5.5, 'Danger', fontweight='bold', c='white')
 
     # Plot the graphs
-    for date in input.state():
+    for i in range(0, len(flight_ids)):
 
-        # Loop for all the flight ids
-        if date in flight_data.keys():
+        # Define the date and id
+        id = flight_ids[i]
+        date = flight_dates[i]
 
-            # Get the soc and time and plot it with a legend label
-            soc = flight_data[date]['soc']
-            time = flight_data[date]['time']
-            plt.plot(time, soc, label=date)
+        # Get the soc and time and plot it with a legend label
+        soc = flight_data[id]['soc']
+        time = flight_data[id]['time_min']
+        soc_ax.plot(time, soc, label=date)
     
     # Add labels and legend to plot
-    soc_figure.xlim([0, 55])
-    soc_figure.ylim([-1, 101])
-    soc_figure.xlabel("time (min)")
-    soc_figure.ylabel("SOC")
-    soc_figure.title("Time vs SOC")
+    soc_ax.set_xlim([0, 55])
+    soc_ax.set_ylim([-1, 101])
+    soc_ax.set_xlabel("time (min)")
+    soc_ax.set_ylabel("SOC")
+    soc_ax.set_title("Time vs SOC")
     
     # plt.legend(loc="lower left")
-    soc_figure.legend(loc='upper right', bbox_to_anchor=(1.15, 1.02),
-        ncol=3, fancybox=True, shadow=True)
+    soc_ax.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
+            borderaxespad=0, frameon=False)
 
-    return soc_figure
+    return soc_ax
