@@ -58,18 +58,11 @@ def weather_data(date_list, ids_list):
   month_select = Select(driver.find_element(By.NAME, "month1"))
   day_select = Select(driver.find_element(By.NAME, "day1"))
   time.sleep(3)
-  # if the newest flight was done today, select data from the most recent day:
-  if newest_date == date.today():
-    new_day_select = Select(driver.find_element(By.NAME, "day2"))
-    if int(newest_day) < 10:
-      print("The newest_day is: ", newest_day)
-      print(f"The newest_day type is {type(newest_day)} ")
-      if type(newest_day) is str:
-        new_day_select.select_by_value(str(newest_day[1:]))
-      else:
-        new_day_select.select_by_value(str(newest_day))     
-    else:
-      new_day_select.select_by_value(str(newest_day))
+  newest_day_select = Select(driver.find_element(By.NAME, "day2"))
+  print("The newest_day is: ", newest_day)
+  print(f"The newest_day type is {type(newest_day)} ")
+  # choose today's date plus 1 to include today
+  newest_day_select.select_by_value(str(date.today().day + 1))     
   # select data from that oldest date
   year_select.select_by_value(year)
   month_select.select_by_value(month[1:])
