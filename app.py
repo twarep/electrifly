@@ -20,6 +20,10 @@ from shiny import App, Inputs, Outputs, Session, render, ui
 import psycopg2
 import sqlalchemy as sa
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 mypath = "./test_data/"
 
@@ -31,12 +35,12 @@ def connect_to_db(provider: str):
     return engine
 
 
+
 def uploaded_data():
      engine = connect_to_db("PostgreSQL")
      query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
     # Execute the query and fetch the data into a DataFrame
      uploaded_data_df = pd.read_sql(query, con=engine)
-    #uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'])
      uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
     # Convert the 'flight_date' column back to a string
      uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
