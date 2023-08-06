@@ -170,60 +170,63 @@ app_ui = ui.page_navbar(
                 ),
 
                 ui.row( 
-                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.layout_sidebar(
-                        ui.panel_sidebar(
-                            ui.input_select(
-                                "power",
-                                "Choose flight date(s):",
-                                get_flights(True),
-                                selected=get_flights(True)[0],
-                                multiple=True,
+                    ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "power",
+                                    "Choose flight date(s):",
+                                    get_flights(True),
+                                    selected=get_flights(True)[0],
+                                    multiple=True,
+                                ),
+                                div(HTML("<p>To select multiple dates:</p>")),
+                                div(HTML("""<table>
+                                            <tr>
+                                                <th>Windows</th>
+                                            </tr>
+                                            <tr>
+                                                <td>`ctrl` + click</td>
+                                            </table>
+                                            <table>
+                                            <tr>
+                                                <th>Mac</th>
+                                            </tr>
+                                            <tr>
+                                                <td>'cmd' + click</td>
+                                            </tr>
+                                            </table>""")),
+                                    width=3
                             ),
-                            div(HTML("<p>To select multiple dates:</p>")),
-                            div(HTML("""<table>
-                                          <tr>
-                                            <th>Windows</th>
-                                          </tr>
-                                          <tr>
-                                            <td>`ctrl` + click</td>
-                                        </table>
-                                        <table>
-                                          <tr>
-                                            <th>Mac</th>
-                                          </tr>
-                                          <tr>
-                                            <td>'cmd' + click</td>
-                                          </tr>
-                                        </table>""")),
-                                width=3
-                        ),
-                        ui.panel_main(
-                            ui.output_plot("power_time_graph")
-                        ),
-                    )
+                            ui.panel_main(
+                                ui.output_plot("power_time_graph")
+                            ),
+                        )
                     ),
-                  ui.column(6,
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>TO DO</b></p>")),
-                    div(HTML("<hr>")),
-                    # ui.layout_sidebar(
-                    #     ui.panel_sidebar(
-                    #         ui.input_select(
-                    #             "weather_state",
-                    #             "Choose flight date(s):",
-                    #             get_flights(True),
-                    #             selected=get_flights(True)[0],
-                    #         ),
-                    #     width=3),
-                    #     ui.panel_main(
-                    #         ui.output_table("weather_interactive")
-                    #     ),
-                    # position='right'
-                    # )
+                    # This is the start of the code for the flight circuit map #################################################################
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Flight Circuit Map</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.output_text("flight_gps_response_text"),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "map_state",
+                                    "Choose flight date(s):",
+                                    get_flights(True),
+                                ),
+                                width=3
+                            ),
+                            ui.panel_main(
+                                output_widget("lat_long_map")
+                            ),
+                            position='right'
+                        ),
+                    # This is the end of the code for the flight circuit map #################################################################
                     ),
                 )
             ),
@@ -309,6 +312,38 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Return the Motor Power graph
         return motor_power_graph
+
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render_widget
+    def lat_long_map():
+        """
+        Function uses a Python Shiny Widget to showcase a Mapbox Plotly map graph for flights. Uses a responsive text interface to communicate problems in flights.
+
+        Returns:
+            figure: A map graph of the flight to showcase on the UI
+        """
+
+        # Get the flight id
+        flight_date = input.map_state()
+        flight_id = get_flights(False)[flight_date]
+        
+        # Call the graphing function to map the latitudes and longitudes
+        figure, latitudes, longitudes = Graphing.create_mapbox_map_per_flight(flight_id)
+
+        if (np.count_nonzero(np.isnan(latitudes)) == len(latitudes)) or (np.count_nonzero(np.isnan(longitudes)) == len(longitudes)):
+            @output
+            @render.text
+            def flight_gps_response_text():
+                return "This specific flight does not contain any GPS coordinates. This may be because the pilot may have forgotten to turn on the GPS during flight."
+        else:
+            @output
+            @render.text
+            def flight_gps_response_text():
+                return "The following graph shows the flight path of the Pipistrel Velis Electro plane for the date chosen."
+
+        return figure
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: DATA ANALYSIS SCREEN 
