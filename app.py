@@ -19,6 +19,13 @@ from os.path import isfile, join
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
+#NEW IMPORTS
+# generate related variables
+from numpy import mean
+from numpy import std
+from numpy.random import randn
+from numpy.random import seed
+from matplotlib import pyplot
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
@@ -72,6 +79,23 @@ def get_flights(date: bool):
     
     return flight_data
 
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+"""
+    The function determines the correlation between two pandas df columns
+
+    Parameters:
+        column_1: First column
+        column_2: Second column
+
+    Returns:
+        Pearson correlation between the data in column_1 and column_2
+    """
+def corr(column_1, column_2):
+    engine = connect_to_db("PostgreSQL")
+    query = f"SELECT {column_1}, {column_2} FROM flight_weather_data_view2"
+    corr_df = pd.read_sql_query(query, engine)
+    correlation = corr_df[column_1].corr(corr_df[column_2])
+    return correlation
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_navbar(
@@ -231,7 +255,37 @@ app_ui = ui.page_navbar(
                 )
             ),
                 
-            ui.nav("Insights", "Statistical Insights in Construction!"),
+            ui.nav("Insights",
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Correlational Analysis</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.input_select(
+                      "weather_state",
+                      "Choose flight date(s):",
+                      get_flights(True),
+                      selected=get_flights(True)[0],
+                    ),
+                    x.ui.card(
+                    x.ui.card_header("Correlation Between Outside Air Temperature (OAT) and SOC"),
+                    x.ui.card_body(round(corr("oat", "bat_1_soc"), 3))
+                    ),
+                    x.ui.card(
+                    x.ui.card_header("Correlation Between Temperature (from Weather Data) and SOC"),
+                    x.ui.card_body(round(corr("temperature", "bat_1_soc"), 3))
+                    ),
+                    x.ui.card(
+                    x.ui.card_header("Correlation Between Wind Speed and SOC"),
+                    x.ui.card_body(round(corr("wind_speed", "bat_1_soc"), 3))
+                    ),
+                    x.ui.card(
+                    x.ui.card_header("Correlation Between Wind Direction and SOC"),
+                    x.ui.card_body(round(corr("wind_direction", "bat_1_soc"), 3))
+                    ),
+                    x.ui.card(
+                    x.ui.card_header("Correlation Between Visibility and SOC"),
+                    x.ui.card_body(round(corr("visibility", "bat_1_soc"), 3))
+                    ),
+                  ),
         ),
             
         ),  
