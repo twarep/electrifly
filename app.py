@@ -265,26 +265,49 @@ app_ui = ui.page_navbar(
                       get_flights(True),
                       selected=get_flights(True)[0],
                     ),
+                    #TESTING
                     x.ui.card(
                     x.ui.card_header("Correlation Between Outside Air Temperature (OAT) and SOC"),
                     x.ui.card_body(round(corr("oat", "bat_1_soc"), 3))
                     ),
                     x.ui.card(
-                    x.ui.card_header("Correlation Between Temperature (from Weather Data) and SOC"),
-                    x.ui.card_body(round(corr("temperature", "bat_1_soc"), 3))
+                    x.ui.card_header("Correlation Between Power Setting and SOC"),
+                    x.ui.card_body(round(corr("motor_power", "bat_1_soc"), 3))
                     ),
                     x.ui.card(
-                    x.ui.card_header("Correlation Between Wind Speed and SOC"),
-                    x.ui.card_body(round(corr("wind_speed", "bat_1_soc"), 3))
+                    x.ui.card_header("Correlation Between Pitch and SOC"),
+                    x.ui.card_body(round(corr("pitch", "bat_1_soc"), 3))
                     ),
                     x.ui.card(
-                    x.ui.card_header("Correlation Between Wind Direction and SOC"),
-                    x.ui.card_body(round(corr("wind_direction", "bat_1_soc"), 3))
+                    x.ui.card_header("Correlation Between Roll and SOC"),
+                    x.ui.card_body(round(corr("roll", "bat_1_soc"), 3))
                     ),
                     x.ui.card(
-                    x.ui.card_header("Correlation Between Visibility and SOC"),
-                    x.ui.card_body(round(corr("visibility", "bat_1_soc"), 3))
+                    x.ui.card_header("Correlation Between Pressure Altitude and SOC"),
+                    x.ui.card_body(round(corr("pressure_alt", "bat_1_soc"), 3))
                     ),
+
+                     #END OF TESTING
+                    # x.ui.card(
+                    # x.ui.card_header("Correlation Between Outside Air Temperature (OAT) and SOC"),
+                    # x.ui.card_body(round(corr("oat", "bat_1_soc"), 3))
+                    # ),
+                    # x.ui.card(
+                    # x.ui.card_header("Correlation Between Temperature (from Weather Data) and SOC"),
+                    # x.ui.card_body(round(corr("temperature", "bat_1_soc"), 3))
+                    # ),
+                    # x.ui.card(
+                    # x.ui.card_header("Correlation Between Wind Speed and SOC"),
+                    # x.ui.card_body(round(corr("wind_speed", "bat_1_soc"), 3))
+                    # ),
+                    # x.ui.card(
+                    # x.ui.card_header("Correlation Between Wind Direction and SOC"),
+                    # x.ui.card_body(round(corr("wind_direction", "bat_1_soc"), 3))
+                    # ),
+                    # x.ui.card(
+                    # x.ui.card_header("Correlation Between Visibility and SOC"),
+                    # x.ui.card_body(round(corr("visibility", "bat_1_soc"), 3))
+                    # ),
                   ),
         ),
             
