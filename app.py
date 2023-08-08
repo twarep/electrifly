@@ -72,6 +72,33 @@ def get_flights(date: bool):
     
     return flight_data
 
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def soc_used(flight_id, column):
+    """
+    The function determines the amount of SOC used in a flight
+    
+    Parameters:
+        flight_id: id of the flight
+        column: the SOC column of interest
+    Returns:
+        The amount of SOC used in a flight (integer)
+    """
+    engine = connect_to_db("velis")
+     # Make flight db connection
+    
+    # get the table
+    file = "flightdata_" + str(flight_id)
+    # max and min queries
+    max_soc_query = f"SELECT max({column}) as max_soc_value FROM {file}"
+    min_soc_query = f"SELECT min({column}) as min_soc_value FROM {file} where {column} != 0"
+    max_soc_df = pd.read_sql_query(max_soc_query, engine)
+    min_soc_df = pd.read_sql_query(min_soc_query, engine)
+    #getting the max and min soc values
+    max_soc = int(max_soc_df["max_soc_value"])
+    min_soc = int(min_soc_df["min_soc_value"])
+    soc_diff = max_soc - min_soc #getting the difference (the amount used)
+    return soc_diff
+
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_navbar(
@@ -231,7 +258,12 @@ app_ui = ui.page_navbar(
                 )
             ),
                 
-            ui.nav("Insights", "Statistical Insights in Construction!"),
+            ui.nav("Insights", 
+                   x.ui.card(
+                    x.ui.card_header("SOC used in a flight"),
+                    x.ui.card_body(soc_used(4620, 'bat_1_soc'))
+                    )
+                   ),
         ),
             
         ),  
