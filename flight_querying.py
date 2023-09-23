@@ -164,6 +164,48 @@ class query_flights:
             flight_dict[id] = {"motor_power": motor_power, "time_min": times}
 
         return flight_dict
+    
+    # def get_number_of_circuits(self, flight_id):
+    #     # Make database connection
+    #     engine = self.connect()
+
+    #     # Get the flight id
+    #     flight_date = input.map_state()
+    #     #flight_id = get_flights(False)[flight_date]
+
+    #     # query for the number of circuits
+    #     query = f"""WITH AltitudeData AS (
+    #                 SELECT
+    #                     time_min,
+    #                     ROUND(pressure_alt) AS altitude,
+    #                     LAG(ROUND(pressure_alt)) OVER (ORDER BY time_min) AS prev_altitude,
+    #                     LEAD(ROUND(pressure_alt)) OVER (ORDER BY time_min) AS next_altitude
+    #                 FROM flightdata_{flight_id}
+    #             )
+
+    #             SELECT
+
+    #                 SUM(is_start_of_cycle) AS cycle_count
+    #             FROM (
+    #                 SELECT
+    #                     time_min,
+    #                     ROUND(altitude),
+    #                     CASE
+    #                         WHEN ROUND(altitude) > 500 AND (prev_altitude <= 500 OR prev_altitude IS NULL) AND (next_altitude >= 500 OR next_altitude IS NULL) THEN 1
+    #                         ELSE 0
+    #                     END AS is_start_of_cycle
+    #                 FROM AltitudeData
+    #             ) AS StartOfCycleData
+    #             WHERE is_start_of_cycle = 1;"""
+        
+    #     # Dispose of the connection, so we don't overuse it.
+    #     engine.dispose()
+    #     # Put the result of the query in a dataframe
+    #     count_df = pd.read_sql_query(query, engine)
+    #     # Get number of circuits
+    #     num_circuits = count_df[0]
+
+    #     return num_circuits
 
 
 

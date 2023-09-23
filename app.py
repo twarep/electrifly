@@ -342,7 +342,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             @render.text
             def flight_gps_response_text():
                 return "The following graph shows the flight path of the Pipistrel Velis Electro plane for the date chosen."
-
+        # query_conn = query_flights()
+        # query_result = query_conn.get_number_of_circuits(flight_id)
         return figure
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
