@@ -7,3 +7,4 @@ env.txt
 /__pycache__
 /pipeline/temp
 /pipeline/__pycache__
+/dependencies

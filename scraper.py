@@ -113,7 +113,7 @@ chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument(data_directory_arg)
 
 # set up Chrome webdriver
-driver = webdriver.Chrome(options=chrome_options)
+driver = webdriver.Chrome(service=ChromeService(executable_path="C:/Users/jj990/Downloads/chromedriver-win64/chromedriver-win64/chromedriver.exe"),options=chrome_options)
 # driver = webdriver.Chrome()
 
 # get the connection string from the environment variable
