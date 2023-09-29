@@ -16,7 +16,7 @@ import re
 from transformation import transform_overview_data, weather_transformation
 from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
 import queries
-from sys import platform
+import platform
 
 # Path variables
 chromedriver_path = "./dependencies/chromedriver-win64/chromedriver.exe"
@@ -41,9 +41,11 @@ def convert_str_to_datetime(str_datetime: str):
     str_datetime = str_datetime.replace("noon", "12:00 PM")
 
   if "." in str_datetime:
-    format = "%b. %d, %Y, %-I:%M %p"
+    if "Sept" in str_datetime:
+      str_datetime = str_datetime.replace("Sept", "Sep")
+    format = "%b. %d, %Y, %I:%M %p"
   else:
-    format = "%B %d, %Y, %-I:%M %p"
+    format = "%B %d, %Y, %I:%M %p"
 
   return datetime.strptime(str_datetime, format)
 
@@ -121,13 +123,11 @@ data_directory_arg = "user-data-dir=" + download_dir
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument(data_directory_arg)
 
-# set up Chrome webdriver
-if "linux" in platform or "win" in platform:
+if "linux" == platform.system() or "Windows" == platform.system():
   driver = webdriver.Chrome(service=ChromeService(chromedriver_path), options=chrome_options)
 else:
   driver = webdriver.Chrome(options=chrome_options)
-# driver = webdriver.Chrome()
-
+  
 # get the connection string from the environment variable
 connection_string = os.getenv('DATABASE_URL')
 
