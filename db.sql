@@ -3,7 +3,7 @@ CREATE TABLE flights (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY, 
   flight_date DATE NOT NULL, 
   flight_time_utc TIME NOT NULL,
-  flight_notes VARCHAR(500)
+  flight_notes VARCHAR(1000)
   );
 
 -- Create Weather Table
