@@ -19,13 +19,13 @@ from os.path import isfile, join
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
+import os
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
 def connect_to_db(provider: str):
     provider == "PostgreSQL"
-    #db_url = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
-    db_url = "postgresql+psycopg2://user:velis@129.97.25.100:5432/velis"
+    db_url = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
 
