@@ -16,11 +16,16 @@ import re
 from transformation import transform_overview_data, weather_transformation
 from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
 import queries
+import platform
 
+# Path variables
+chromedriver_path = "./dependencies/chromedriver-win64/chromedriver.exe"
 
 # converts the string time given by Pipistrel UI to a datetime object
-def convert_str_to_datetime(str_datetime):
+def convert_str_to_datetime(str_datetime: str):
+
   if re.search(":", str_datetime):
+
     # convert a.m. and p.m. to readable format
     if str_datetime[-4:] == "a.m.":
       str_datetime = str_datetime[:-4] + "AM"
@@ -31,11 +36,17 @@ def convert_str_to_datetime(str_datetime):
       str_datetime = str_datetime[:-5] + ":00 AM"
     elif str_datetime[-4:] == "p.m.":
       str_datetime = str_datetime[:-5] + ":00 PM"
+  
+  if "noon" in str_datetime:
+    str_datetime = str_datetime.replace("noon", "12:00 PM")
 
   if "." in str_datetime:
+    if "Sept" in str_datetime:
+      str_datetime = str_datetime.replace("Sept", "Sep")
     format = "%b. %d, %Y, %I:%M %p"
   else:
     format = "%B %d, %Y, %I:%M %p"
+
   return datetime.strptime(str_datetime, format)
 
 # returns the relevant weather data for the given scraped flights
@@ -112,10 +123,11 @@ data_directory_arg = "user-data-dir=" + download_dir
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument(data_directory_arg)
 
-# set up Chrome webdriver
-driver = webdriver.Chrome(options=chrome_options)
-# driver = webdriver.Chrome()
-
+if "linux" == platform.system() or "Windows" == platform.system():
+  driver = webdriver.Chrome(service=ChromeService(chromedriver_path), options=chrome_options)
+else:
+  driver = webdriver.Chrome(options=chrome_options)
+  
 # get the connection string from the environment variable
 connection_string = os.getenv('DATABASE_URL')
 
