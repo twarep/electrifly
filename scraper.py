@@ -123,7 +123,7 @@ data_directory_arg = "user-data-dir=" + download_dir
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument(data_directory_arg)
 
-if "linux" == platform.system() or "Windows" == platform.system():
+if "Windows" == platform.system():
   driver = webdriver.Chrome(service=ChromeService(chromedriver_path), options=chrome_options)
 else:
   driver = webdriver.Chrome(options=chrome_options)

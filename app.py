@@ -25,7 +25,7 @@ import sqlalchemy as sa
 def connect_to_db(provider: str):
     provider == "PostgreSQL"
     #db_url = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
-    db_url = "postgresql+psycopg2://user:YU37CrnJMLjG@ep-snowy-pond-543889.us-east-2.aws.neon.tech:5432/electrifly-db"
+    db_url = "postgresql+psycopg2://user:velis@129.97.25.100:5432/velis"
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
 
