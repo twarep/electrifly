@@ -124,14 +124,14 @@ def environment_setup():
   chrome_options.add_experimental_option("prefs", prefs)
   chrome_options.add_argument(data_directory_arg)
 
-  # set up Chrome webdriver
-if "linux" == platform.system() or "Windows" == platform.system():
-  driver = webdriver.Chrome(service=ChromeService(chromedriver_path), options=chrome_options)
-else:
-  driver = webdriver.Chrome(options=chrome_options)
-  
-# get the connection string from the environment variable
-connection_string = os.getenv('DATABASE_URL')
+    # set up Chrome webdriver
+  if "linux" == platform.system() or "Windows" == platform.system():
+    driver = webdriver.Chrome(service=ChromeService(chromedriver_path), options=chrome_options)
+  else:
+    driver = webdriver.Chrome(options=chrome_options)
+    
+  # get the connection string from the environment variable
+  connection_string = os.getenv('DATABASE_URL')
 
   # connect to the PostgreSQL database
   conn = psycopg2.connect(connection_string)
