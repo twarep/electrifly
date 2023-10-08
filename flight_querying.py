@@ -167,6 +167,9 @@ class query_flights:
 
 
     def get_number_of_circuits(self, flight_id):
+        """
+        Function that uses a flight id to get the number of circuits. Then, returns the number of circuits.
+        """
         # Make database connection
         engine = self.connect()
 
