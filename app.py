@@ -228,7 +228,33 @@ app_ui = ui.page_navbar(
                         ),
                     # This is the end of the code for the flight circuit map #################################################################
                     ),
-                )
+                ),
+
+                ui.row( 
+                    ui.column(6), # buffer for the left side
+                    # This is the start of the code for the number of circuits #################################################################
+                    ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Number of Circuits</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "num_ciruits_state",
+                                    "Choose flight date:",
+                                    get_flights(True),
+                                    selected=get_flights(True)[0],
+                                    multiple=False,
+                                ),
+                                    width=3
+                            ),
+                            ui.panel_main(
+                                ui.output_text("num_circuits"),
+                            ),
+                        )
+                    ),
+                    # This is the end of the code for the number of circuits #################################################################
+                ),
             ),
                 
             ui.nav("Insights", "Statistical Insights in Construction!"),
@@ -345,6 +371,26 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return figure
 
+  # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.text
+    def num_circuits():
+        """
+        Function uses a responsive text interface to show the number of circuits.
+
+        Returns:
+            query_result: A numeric value of the number of circuits
+        """
+
+        # Get the flight id
+        flight_date = input.num_ciruits_state()
+        flight_id = get_flights(False)[flight_date]
+
+        query_conn = query_flights()
+        query_result = query_conn.get_number_of_circuits(flight_id)
+
+        return query_result
+    
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
