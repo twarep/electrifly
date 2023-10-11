@@ -15,7 +15,6 @@ from datetime import date
 import numpy as np
 import matplotlib.pyplot as plt
 from os import listdir, getenv
-from dotenv import load_dotenv
 from os.path import isfile, join
 from dotenv import load_dotenv
 import shiny.experimental as x
