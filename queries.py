@@ -19,7 +19,7 @@ CREATE TABLE weather (
   temperature REAL NOT NULL,
   dewpoint REAL NOT NULL,
   relative_humidity REAL NOT NULL,
-  wind_direction SMALLINT NOT NULL,
+  wind_direction SMALLINT,
   wind_speed SMALLINT NOT NULL,
   pressure_altimeter REAL NOT NULL,
   sea_level_pressure REAL NOT NULL,
