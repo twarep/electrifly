@@ -14,8 +14,9 @@ import matplotlib.pyplot as plt
 from datetime import date
 import numpy as np
 import matplotlib.pyplot as plt
-from os import listdir
+from os import listdir, getenv
 from os.path import isfile, join
+from dotenv import load_dotenv
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
@@ -24,6 +25,7 @@ import os
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
 def connect_to_db(provider: str):
+    load_dotenv()
     provider == "PostgreSQL"
     db_url = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
