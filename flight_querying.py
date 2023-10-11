@@ -166,5 +166,59 @@ class query_flights:
         return flight_dict
 
 
+    def get_number_of_circuits(self, flight_id):
+        """
+        Function that uses a flight id to get the number of circuits. Then, returns the number of circuits.
+        """
+        # Make database connection
+        engine = self.connect()
+
+        # query for the number of circuits (explanation below), note that cycle = circuit
+
+        # Common Table Expression (CTE) named "AltitudeData": This CTE rounds the "pressure_alt" values to integers using the ROUND function and calculates the previous and next rounded altitudes using the LAG and LEAD.
+        # Main query selects the sum of "is_start_of_cycle" from a subquery named "StartOfCycleData." This subquery is where the actual cycle detection logic is implemented
+        #  "StartOfCycleData" subquery:
+            # Selects the altitude values and the "time_min" column from the "AltitudeData" CTE.
+            # Calculates a new column named "is_start_of_cycle" using CASE. is_start_of_cycle = 1 when the following conditions are met:
+                # The rounded altitude (which is current altitude) is greater than 500.
+                # The previous altitude (prev_altitude) is less than or equal to 500, or it is null (indicating the start of the dataset).
+                # The next altitude (next_altitude) is greater than or equal to 500, or it is null (indicating the end of the dataset).
+                # When these conditions are met, it signifies the start of a cycle, and "is_start_of_cycle" is set to 1; otherwise, it is set to 0.
+            # In the main query, it sums up the "is_start_of_cycle" values, which basically counts the number of cycles.
+        query = f"""WITH AltitudeData AS (
+                    SELECT
+                        time_min,
+                        ROUND(pressure_alt) AS altitude,
+                        LAG(ROUND(pressure_alt)) OVER (ORDER BY time_min) AS prev_altitude,
+                        LEAD(ROUND(pressure_alt)) OVER (ORDER BY time_min) AS next_altitude
+                    FROM flightdata_{flight_id}
+                )
+
+                SELECT
+
+                    SUM(is_start_of_cycle) AS cycle_count
+                FROM (
+                    SELECT
+                        time_min,
+                        ROUND(altitude),
+                        CASE
+                            WHEN ROUND(altitude) > 500 AND (prev_altitude <= 500 OR prev_altitude IS NULL) AND (next_altitude >= 500 OR next_altitude IS NULL) THEN 1
+                            ELSE 0
+                        END AS is_start_of_cycle
+                    FROM AltitudeData
+                ) AS StartOfCycleData
+                WHERE is_start_of_cycle = 1;"""
+
+        # Put the result of the query in an array
+        count_array = pd.read_sql_query(query, engine).to_numpy()
+
+        # Get number of circuits
+        num_circuits = count_array[0][0]
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        return num_circuits
+
 
 
