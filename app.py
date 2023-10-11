@@ -27,7 +27,7 @@ import os
 def connect_to_db(provider: str):
     load_dotenv()
     provider == "PostgreSQL"
-    db_url = "postgresql+psycopg2" + getenv('DATABASE_URL')[8:]
+    db_url = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
 
