@@ -14,7 +14,7 @@ CREATE TABLE weather (
   temperature REAL NOT NULL, -- in fahrenheit at 2 meters
   dewpoint REAL NOT NULL, -- in fahrenheit at 2 meters
   relative_humidity REAL NOT NULL, -- in %
-  wind_direction SMALLINT NOT NULL, -- in degrees from true north
+  wind_direction SMALLINT, -- in degrees from true north
   wind_speed SMALLINT NOT NULL, -- in knots
   pressure_altimeter REAL NOT NULL, -- in inches
   sea_level_pressure REAL NOT NULL, -- in millibar, note this is on average off by 1.02 millibars, according to https://www.sensorsone.com/inhg-to-mbar-conversion-table/
