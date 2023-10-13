@@ -274,7 +274,7 @@ def scrape(driver, cur, download_dir):
       is_next_page = False
       break
   if ids_list:
-    weather_data(date_list, ids_list)
+    weather_data(date_list, ids_list, driver, download_dir)
   else:
     print("There are no new flights to push to database.")
 
