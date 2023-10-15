@@ -14,7 +14,7 @@ import shutil
 from datetime import datetime, date
 import re
 from transformation import transform_overview_data, weather_transformation
-from storage import table_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
+from storage import table_exists, view_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
 import queries
 import platform
 
@@ -176,6 +176,15 @@ def create_tables():
     if not table_exists(table, conn):
       execute(create_queries[table])
 
+# create views if they don't exist
+def create_views():
+  view_list = ['flight_weather_data_view']
+  create_queries = {'flight_weather_data_view': queries.CREATE_FLIGHT_WEATHER_VIEW}
+  for view in view_list:
+    conn = db_connect()
+    if not view_exists(view, conn):
+      execute(create_queries[view])
+
 def scrape(driver, cur, download_dir):
   # then get each data row for the given plane
   rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
@@ -274,7 +283,7 @@ def scrape(driver, cur, download_dir):
       is_next_page = False
       break
   if ids_list:
-    weather_data(date_list, ids_list)
+    weather_data(date_list, ids_list, driver, download_dir)
   else:
     print("There are no new flights to push to database.")
 
@@ -283,4 +292,5 @@ if __name__ == '__main__':
   pipistrel_login(env['driver'])
   get_plane_info(env['driver'])
   create_tables()
+  create_views()
   scrape(env['driver'], env['cursor'], env['download_dir'])
