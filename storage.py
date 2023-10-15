@@ -47,6 +47,29 @@ def table_exists(table, conn):
   
   return exists
 
+# this function checks if the given view exists
+def view_exists(view, conn):
+  
+  # create a cursor object to interact with the database
+  cursor = conn.cursor()
+  
+  # check if the given view exists
+  cursor.execute("""
+      SELECT EXISTS (
+          SELECT 1
+          FROM pg_catalog.pg_views
+          WHERE viewname = %s
+      );
+  """, (view,))
+  # fetch the result
+  exists = cursor.fetchone()[0]
+  
+  # close the cursor and the connection
+  cursor.close()
+  db_disconnect(conn)
+  
+  return exists
+
 # this function executes the given create query
 def execute(query, data=None):
   conn = db_connect()
