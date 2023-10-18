@@ -53,7 +53,7 @@ def test_drop_cell_temps():
                    "ISO leakage current", "ias_derivative", "pitch_derivative", "roll_derivative", "alt_derivative"]
   expected_df = pd.DataFrame([expected_data], columns=expected_cols)
   actual_df = transformation.drop_cell_temps(df)
-  assert actual_df.equals(expected_df)
+  pd.testing.assert_frame_equal(actual_df, expected_df)
 
 def test_drop_remaining_columns():
   df = sample_flight_data()
@@ -69,7 +69,7 @@ def test_drop_remaining_columns():
   expected_df = pd.DataFrame([expected_data], columns=expected_cols)
   actual_df = transformation.drop_cell_temps(df)
   actual_df = transformation.drop_remaining_columns(actual_df)
-  assert actual_df.equals(expected_df)
+  pd.testing.assert_frame_equal(actual_df, expected_df)
 
 def test_drop_weather_columns():
   df = sample_weather_data()
@@ -80,7 +80,8 @@ def test_drop_weather_columns():
                    "skyc1", "skyc2", "skyc3", "skyc4", "skyl1", "skyl2", "skyl3", "skyl4", "wxcodes", "metar"]
   expected_df = pd.DataFrame([expected_data], columns=expected_cols)
   actual_df = transformation.drop_weather_columns(df)
-  assert actual_df.equals(expected_df)
+  pd.testing.assert_frame_equal(actual_df, expected_df)
+
 
 def test_weather_datetime_parsing():
   df = sample_weather_data()
@@ -92,7 +93,8 @@ def test_weather_datetime_parsing():
   expected_df = pd.DataFrame([expected_data], columns=expected_cols)
   actual_df = transformation.drop_weather_columns(df)
   actual_df = transformation.weather_datetime_parsing(actual_df)
-  assert actual_df.equals(expected_df)
+  pd.testing.assert_frame_equal(actual_df, expected_df)
+
 
 def test_weather_column_names():
   df = sample_weather_data()
@@ -106,7 +108,8 @@ def test_weather_column_names():
   actual_df = transformation.drop_weather_columns(df)
   actual_df = transformation.weather_datetime_parsing(actual_df)
   actual_df = transformation.weather_column_names(actual_df)
-  assert actual_df.equals(expected_df)
+  pd.testing.assert_frame_equal(actual_df, expected_df)
+
 
 def test_data_format_cleaning():
   df = sample_weather_data()
@@ -121,4 +124,4 @@ def test_data_format_cleaning():
   actual_df = transformation.weather_datetime_parsing(actual_df)
   actual_df = transformation.weather_column_names(actual_df)
   actual_df = transformation.data_format_cleaning(actual_df)
-  assert actual_df.equals(expected_df)
+  pd.testing.assert_frame_equal(actual_df, expected_df)
