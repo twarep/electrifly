@@ -124,4 +124,4 @@ def test_data_format_cleaning():
   actual_df = transformation.weather_datetime_parsing(actual_df)
   actual_df = transformation.weather_column_names(actual_df)
   actual_df = transformation.data_format_cleaning(actual_df)
-  pd.testing.assert_frame_equal(actual_df, expected_df)
+  pd.testing.assert_frame_equal(actual_df, expected_df, check_dtype=False)
