@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import asyncio
 import matplotlib.pyplot as plt
-from datetime import date
+from datetime import date, datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from os import listdir, getenv
@@ -20,7 +20,21 @@ from dotenv import load_dotenv
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
+import subprocess
 import os
+
+# GLOBAL VARIABLES -----------------------------------------------------------------------------------------------------------------------------------------------
+scraper_script_path = "scraper.py"
+# Variable to store the timestamp of the most recent run
+most_recent_run_time = None
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+# Function to run the scraper.py script
+def run_scraper():
+    global most_recent_run_time
+    subprocess.run(["python", scraper_script_path])
+    most_recent_run_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
@@ -81,10 +95,12 @@ app_ui = ui.page_navbar(
     shinyswatch.theme.zephyr(),
 
     # UPLOAD SCREEN        ################################################################################################################################
-    ui.nav("Upload Data",
-            #data refresh button 
-            ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
-
+    ui.nav("Upload Data",        
+            # Display the most recent run time
+            ui.div(
+                ui.div(ui.output_text("most_recent_run")),
+                style="margin-top: 10px;"
+            ),
             #column selection panel
             ui.div(
             # Dropdown with checkboxes
@@ -425,6 +441,12 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
+        
+    @output
+    @render.text
+    def most_recent_run():
+        run_scraper()  # Run the scraper.py script when the app is loaded
+        return f"Last Data Retrieval: {most_recent_run_time}"   
         
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
