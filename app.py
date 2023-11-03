@@ -23,19 +23,6 @@ import sqlalchemy as sa
 import subprocess
 import os
 
-# GLOBAL VARIABLES -----------------------------------------------------------------------------------------------------------------------------------------------
-scraper_script_path = "scraper.py"
-# Variable to store the timestamp of the most recent run
-most_recent_run_time = None
-
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-# Function to run the scraper.py script
-def run_scraper():
-    global most_recent_run_time
-    subprocess.run(["python", scraper_script_path])
-    most_recent_run_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
 def connect_to_db(provider: str):
@@ -441,12 +428,6 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
-        
-    @output
-    @render.text
-    def most_recent_run():
-        run_scraper()  # Run the scraper.py script when the app is loaded
-        return f"Last Data Retrieval: {most_recent_run_time}"   
         
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 

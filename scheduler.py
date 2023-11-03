@@ -1,5 +1,6 @@
 import subprocess
 import time
+from datetime import datetime
 
 # Define the times at which you want to run the scraper.py script
 scheduled_times = ["08:00", "12:00", "16:00", "20:00", "00:00"]
