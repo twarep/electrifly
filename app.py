@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
+from scheduler import get_most_recent_run_time
 import subprocess
 import os
 
@@ -428,6 +429,13 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.text
+    def most_recent_run():
+        most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
+        return f"Last Data Retrieval: {most_recent_run_time}"   
         
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
