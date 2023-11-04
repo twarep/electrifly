@@ -114,3 +114,17 @@ JOIN flights ff ON fw.flight_id = ff.id
 JOIN weather w ON fw.weather_id = w.id
 JOIN LATERAL get_flight_data(fw.flight_id) fd ON true;
 """
+
+CREATE_FORECAST = """
+CREATE TABLE forecast (
+  id INTEGER PRIMARY KEY, 
+  forecast_date DATE NOT NULL, 
+  forecast_time_utc TIME NOT NULL,
+  temperature_2m REAL NOT NULL,
+  weathercode SMALLINT NOT NULL,
+  windgusts_10m REAL NOT NULL,
+  visibility REAL NOT NULL,
+  lightning_potential REAL NOT NULL,
+  winddirection_180m SMALLINT NOT NULL
+);
+"""
