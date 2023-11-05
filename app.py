@@ -259,7 +259,32 @@ app_ui = ui.page_navbar(
                 ),
             ),
                 
-            ui.nav("Insights", "Statistical Insights in Construction!"),
+            ui.nav("Insights", 
+              #-----------------------------------------------------------------------------------
+              # DIVIDES the page into a row, meaning you can put ui elements side by side
+              #-----------------------------------------------------------------------------------
+                ui.row( 
+
+                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Motor Power For Selected Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "power_box_state",
+                                "Choose flight date(s):",
+                                get_flights(True),
+                                selected=get_flights(True)[0],
+                                multiple=True,
+                            ),
+                        width=3),
+                        ui.panel_main(
+                            ui.output_plot("power_boxplot")
+                        ),
+                    position='left'
+                    )),
+                )),
         ),
             
         ),  
@@ -395,6 +420,40 @@ def server(input: Inputs, output: Outputs, session: Session):
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: DATA ANALYSIS SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # START: INSIGHTS SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def power_boxplot():
+        """
+        The function uses the input from the 'power_box_state' parameter to get data on power for all the selected dates.
+
+        Returns 
+            motor_power_boxplot: a matplotlib figure boxplot with the data plotted already.
+        """
+        # Get all flight data
+        flight_data = get_flights(False)
+
+        flight_dates = input.power_box_state()
+        flight_ids = []
+
+        # Add flight ids to list
+        for flight_date in flight_dates:
+            flight_ids.append(flight_data[flight_date])
+
+        # Graph the Motor Power boxplot
+        motor_power_boxplot = Graphing.power_boxplot(flight_ids, flight_dates)
+
+        # Return the Motor Power boxplot
+        return motor_power_boxplot
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # END: INSIGHTS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------

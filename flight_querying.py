@@ -165,6 +165,28 @@ class query_flights:
 
         return flight_dict
 
+ # Get Flight Id and Motor power Function -------------------------------------------------------------------------
+    def get_flight_motor_power(self, flight_ids: list):
+        """
+        Function that uses the flight ids to get their respective motor power and time columns. Then, returns a dictionary of 
+        flight_id: {motor_power: [], time: []}
+        """
+
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get power data for the specific flight(s)
+        for id in flight_ids:
+
+            # Get the flight data
+            flights_df = self.get_flight_data_on_id(["flight_id", "motor_power"], id)
+
+            # Change to Numpy
+            motor_power = flights_df["motor_power"].to_numpy()
+
+            flight_dict[id] = {"motor_power": motor_power}
+
+        return flight_dict
 
     def get_number_of_circuits(self, flight_id):
         """

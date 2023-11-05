@@ -182,3 +182,61 @@ def power_graph(flight_ids: list, flight_dates: list):
             borderaxespad=0, frameon=False)
 
     return power_ax
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def power_boxplot(flight_ids: list, flight_dates: list):
+    """
+    The function takes in flight ids and dates and creates a single matplotlib figure boxplot of motor_power. 
+
+    Parameters:
+        flight_ids: A list of all flight ids form the DB. Index should corresponds with the flight_dates index.
+        flight_dates: A list of all flight dates form the DB. Index should corresponds with the flight_ids index.
+
+    Returns:
+        power_ax: The matplotlib figure axis with stored motor_power boxplot data and other supports.
+    """
+
+    # Make flight db connection
+    flight_db_conn = query_flights()
+    flight_data = flight_db_conn.get_flight_motor_power(flight_ids)
+
+    # Set Plot
+    power_figure = plt.figure()
+    power_ax = power_figure.add_subplot(1, 1, 1)
+    power_figure.tight_layout()
+
+    # Plot the graphs
+    for i in range(0, len(flight_ids)):
+        
+        # Define the id
+        id = flight_ids[i]
+        #date = flight_dates[i]
+
+        # Get the motor power plot it with a legend label
+        motor_power = flight_data[id]['motor_power']
+        power_ax.boxplot(motor_power, vert=False)
+    
+    # Hide the Y-axis
+    power_ax.yaxis.set_visible(False)
+    # Add labels and legend to plot
+    #power_ax.set_xlim([0, 55])
+    #power_ax.set_ylim([-1, 70])
+    power_ax.set_xlabel("Motor Power (kilowatts-KW)")
+    power_ax.set_title("Motor Power Boxplot")
+    
+    #power_ax.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1, borderaxespad=0, frameon=False)
+    
+
+##########################################################################
+    # Filter out records where motor_power is zero
+    # non_zero_motor_power = data[data['motor_power'] != 0]['motor_power']
+
+    # # Create a boxplot for non-zero motor_power values
+    # plt.figure(figsize=(10, 6))
+    # plt.boxplot(non_zero_motor_power)
+    # plt.title('Boxplot of Motor Power (Excluding Zeros)')
+    # plt.xlabel('Motor Power')
+    # plt.show()
+
+
+    return power_ax
