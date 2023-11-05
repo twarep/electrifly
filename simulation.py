@@ -1,11 +1,15 @@
 from datetime import datetime
-from pandas import pd
+import pandas as pd
+from sqlalchemy import create_engine
+from weather_forcast_querying import get_forecast_by_current_date
+import forecast
+
 # How long does 1 single flight take (on average: including time for inspection, flight, charging):
 avg_inspection_time_before_flight = 7.41
 avg_flight_time = 31.5
 avg_charging_time = 58.56
 total_flight_time = avg_inspection_time_before_flight + avg_flight_time + avg_charging_time
-print (total_flight_time)
+print ("This is the total flight time:", total_flight_time)
 
 # Pull in weather data [PETER]
 # Classify the weather data into zones (9 to 10 am -> green zone)
@@ -13,148 +17,297 @@ print (total_flight_time)
     #STRIP INTO TIME INTERVALS
 
 #pull in forecasted weather data (right now it's hardcoded)
-visibility = 14600.00
+forecast_df = get_forecast_by_current_date()
+forecast_date = forecast_df["Forecast Date"]
+forecast_time = forecast_df["Forecast Time"]
 
-
-#visibility (converting m to SM)
+#VISIBILITY:
+visibility = forecast_df["Visibility"]
 visability_zone = ""
+#visibility (converting m to SM)
 visibility_SM = visibility *  0.000621371
+visability_zone_list = []
 
-if (visibility_SM) < 3:
-    visability_zone = "red"
-elif (visibility_SM < 6):
-    visability_zone = "yellow"
-elif (pd.isna(visibility_SM)):
-    visability_zone == "gray"
-else:
-    visability_zone = "green"
+for i in visibility_SM.index:
+    if (pd.isna(visibility_SM[i])):
+        visability_zone = "gray"
+    elif(visibility_SM[i]) < 3:
+        visability_zone = "red"
+    elif (visibility_SM[i]< 6):
+        visability_zone = "yellow"
+    else:
+        visability_zone = "green"
+    visability_zone_list.append(visability_zone)
+# Create a new DataFrame
+visability_zone_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Visibility SM": visibility_SM,
+    "Visibility Zone": visability_zone_list
+})
 
-#cloud (pulled from weathercode)
+print(visability_zone_df_all)
+
+#CLOUD (pulled from weathercode):
+cloud = forecast_df["Weathercode"]
 cloud_zone = ""
-cloud = 0 # hardcoded value, will pull from forecasted weather data
+cloud_zone_list = []
 
-if cloud == 3:
-    cloud_zone = "red"
-elif cloud == 2:
-    cloud_zone = "yellow"
-elif (pd.isna(cloud)):
-    cloud_zone == "gray"
-else:
-    cloud_zone = "green"
+for i in cloud.index:
+    if(pd.isna(cloud[i])):
+        cloud_zone = "gray"
+    elif cloud[i] == 3:
+        cloud_zone = "red"
+    elif cloud[i] == 2:
+        cloud_zone = "yellow"
+    
+    else:
+        cloud_zone = "green"
+    cloud_zone_list.append(cloud_zone)
+
+# Create a new DataFrame
+cloud_zone_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Cloud": cloud,
+    "Cloud Zone": cloud_zone_list
+})
+
+print(cloud_zone_df_all)
 
 #rain 
+rain = forecast_df["Weathercode"]
 rain_zone = ""
-rain = 0 # hardcoded value, will pull from forecasted weather data
+rain_zone_list = []
 
-if rain == 65:
-    rain_zone = "red"
-elif rain == 63:
-    rain_zone = "yellow"
-elif (pd.isna(rain)):
-    rain_zone == "gray"
-else:
-    rain_zone = "green"
+for i in rain.index:
+    if (pd.isna(rain[i])):
+        rain_zone = "gray"   
+    elif rain[i] == 65:
+        rain_zone = "red"
+    elif rain[i] == 63:
+        rain_zone = "yellow"
+    else:
+        rain_zone = "green"
+    rain_zone_list.append(rain_zone)
+
+# Create a new DataFrame
+rain_zone_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Rain": rain,
+    "Rain Zone": rain_zone_list
+})
+
+print(rain_zone_df_all)
 
 #rain showers
+rain_shower = forecast_df["Weathercode"]
 rain_shower_zone = ""
-rain_shower = 0 # hardcoded value, will pull from forecasted weather data
+rain_shower_zone_list = []
 
-if rain_shower == 82:
-    rain_shower_zone = "red"
-elif rain_shower == 81:
-    rain_shower_zone = "yellow"
-elif (pd.isna(rain_shower)):
-    rain_shower_zone == "gray"
-else:
-    rain_shower_zone = "green"
+for i in rain_shower.index:
+    if (pd.isna(rain_shower[i])):
+        rain_shower_zone = "gray"
+    elif rain_shower[i] == 82:
+        rain_shower_zone = "red"
+    elif rain_shower[i] == 81:
+        rain_shower_zone = "yellow"
+    else:
+        rain_shower_zone = "green"
+    rain_shower_zone_list.append(rain_shower_zone)
+
+# Create a new DataFrame
+rain_shower_zone_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Rain Shower": rain_shower,
+    "Rain Shower Zone": rain_shower_zone_list
+})
+
+print(rain_shower_zone_df_all)
+
 
 #thunderstorm (pulled from weathercode)
+thunderstorm = forecast_df["Weathercode"]
 thunderstorm_zone = ""
-thunderstorm = 0 # hardcoded value, will pull from forecasted weather data
+thunderstorm_zone_list = []
 
-if thunderstorm == 96:
-    thunderstorm_zone = "red"
-elif (pd.isna(thunderstorm)):
-    thunderstorm_zone == "gray"
-else:
-    thunderstorm_zone = "green"
+for i in thunderstorm.index:
+    if (pd.isna(thunderstorm[i])):
+        thunderstorm_zone = "gray"
+    elif thunderstorm[i] == 96:
+        thunderstorm_zone = "red"
+    else:
+        thunderstorm_zone = "green"
+    thunderstorm_zone_list.append(thunderstorm_zone)
+
+# Create a new DataFrame
+thunderstorm_zone_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Thunderstorm": thunderstorm,
+    "Thunderstorm Zone": thunderstorm_zone_list
+})
+
+print(thunderstorm_zone_df_all)
+
 
 #snow fall (pulled from weathercode): this includes snow fall, snow grains and snow showers
+snowfall = forecast_df["Weathercode"]
 snowfall_zone = ""
-snowfall = 0 # hardcoded value, will pull from forecasted weather data
+snowfall_zone_list = []
 
-if (snowfall == 71) or (snowfall == 73) or (snowfall == 75) or (snowfall == 77) or (snowfall == 85) or (snowfall == 86):
-    snowfall_zone = "red"
-elif (pd.isna(snowfall)):
-    snowfall_zone == "gray"
-else:
-    snowfall_zone = "green"
+for i in snowfall.index:
+    if (pd.isna(snowfall[i])):
+        snowfall_zone = "gray"
+    elif (snowfall[i] == 71) or (snowfall[i] == 73) or (snowfall[i] == 75) or (snowfall[i] == 77) or (snowfall[i] == 85) or (snowfall[i] == 86):
+        snowfall_zone = "red"
+    else:
+        snowfall_zone = "green"
+    snowfall_zone_list.append(snowfall_zone)
     
-# freezing rain and drizzle
+# Create a new DataFrame
+snowfall_zone_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Snowfall": snowfall,
+    "Snowfall Zone": snowfall_zone_list
+})
+
+print(snowfall_zone_df_all)
+
+    
+# freezing rain and freezing drizzle (both under freezing rain)
 freezing_rain_zone = ""
-freezing_drizzle_zone = ""
-freezing_rain = 0 # hardcoded value, will pull from forecasted weather data
-freezing_drizzle = 0 # hardcoded value, will pull from forecasted weather data
+freezing_rain = forecast_df["Weathercode"] 
+freezing_rain_zone_list = []
 
-if (freezing_rain == 66) or (freezing_rain == 67) or (freezing_drizzle == 56) or (freezing_drizzle == 57):
-    freezing_rain_zone = "red"
-    freezing_drizzle_zone = "red"
-elif (pd.isna(freezing_rain) or pd.isna(freezing_drizzle)):
-    freezing_rain_zone = "gray"
-    freezing_drizzle_zone = "gray"
-else:
-    freezing_rain_zone = "green"
-    freezing_drizzle_zone = "green"
+for i in freezing_rain.index:
+    if (pd.isna(freezing_rain[i])):
+        freezing_rain_zone = "gray"
+    elif (freezing_rain[i] == 66) or (freezing_rain[i] == 67) or (freezing_rain[i] == 56) or (freezing_rain[i] == 57):
+        freezing_rain_zone = "red"
+    else:
+        freezing_rain_zone = "green"
+    freezing_rain_zone_list.append(freezing_rain_zone)
 
+
+# Create a new DataFrame
+freezing_rain_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Freezing Rain": freezing_rain,
+    "Freezing Rain Zone": freezing_rain_zone_list
+})
+
+print(freezing_rain_df_all)
 
 #gust (MAKE SURE TO DOWNLOAD CSV WITH UNITS AS KNOTS)
 wind_gusts_zone = ""
-wind_gusts = 0
+wind_gusts = forecast_df["Wind Gusts"] 
+wind_gusts_zone_list = []
 
-if (wind_gusts) >= 30:
-    wind_gusts_zone = "red"
-elif (wind_gusts >= 25):
-    wind_gusts_zone = "yellow"
-elif (pd.isna(wind_gusts)):
-    wind_gusts_zone == "gray"
-else:
-    wind_gusts_zone = "green"
+for i in wind_gusts.index:
+    if (pd.isna(wind_gusts[i])):
+        wind_gusts_zone = "gray"    
+    elif (wind_gusts[i]) >= 30:
+        wind_gusts_zone = "red"
+    elif (wind_gusts[i] >= 25):
+        wind_gusts_zone = "yellow"
+    else:
+        wind_gusts_zone = "green"
+    wind_gusts_zone_list.append(wind_gusts_zone)
+
+
+# Create a new DataFrame
+wind_gusts_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Wind Gusts": wind_gusts,
+    "Wind Gusts Zone": wind_gusts_zone_list
+})
+
+print(wind_gusts_df_all)
+
 
 #temperature 
 temperature_zone = ""
-temperature = 0 # hardcoded value, will pull from forecasted weather data
+temperature = forecast_df["Temperature (°C)"] 
+temperature_zone_list = []
+for i in temperature.index:
+    if (pd.isna(temperature[i])):
+        temperature_zone = "gray"
+    elif (temperature[i] > 35) or (temperature[i] < -20):
+        temperature_zone = "red"
+    elif (temperature[i] > 30) or (temperature[i] < -10):
+        temperature_zone = "yellow"
+    else:
+        temperature_zone = "green"
+    temperature_zone_list.append(temperature_zone)
+# Create a new DataFrame
+temperature_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Temperature": temperature,
+    "Temperature Zone": temperature_zone_list
+})
 
-if (temperature > 35) or (temperature < -20):
-    temperature_zone = "red"
-elif (temperature > 30) or (temperature < -10):
-    temperature_zone = "yellow"
-elif (pd.isna(temperature)):
-    temperature_zone == "gray"
-else:
-    temperature_zone = "green"
-
-#lightning potential -> double check!! -> JOANNA MAKE QUESTION
-lightning_potential_index_zone = ""
-lightning_potential_index = 0
-
-if (lightning_potential_index > 0):
-    lightning_potential_index_zone = "red"
-elif (lightning_potential_index == 0):
-    lightning_potential_index_zone = "yellow"
-#ACC SHOULD BE GREEN: -> but it would never be green makes no sense
-elif (pd.isna(lightning_potential_index)):
-    lightning_potential_index_zone == "gray"
-else:
-    lightning_potential_index = "green"
-
-#time of day 
-time_of_day_zone = ""
-#make sure this is the datetime datatype
-time_of_day = 0 # This is the format from data: 2023-10-28T07:52
+print(temperature_df_all)
 
 
-dt = datetime.strptime(time_of_day, "%Y-%m-%dT%H:%M")
+# lightning_potential_index_zone = ""
+# lightning_potential_index = forecast_df["Lightning Potential"] 
+# lightning_potential_index_zone_list = []
 
-print(dt)  # Example - This will print: 2023-10-28 07:52:00
+# for i in lightning_potential_index.index:
+#     if (pd.isna(lightning_potential_index[i])):
+#         lightning_potential_index_zone = "gray"
+#     elif (lightning_potential_index[i] > 0):
+#         lightning_potential_index_zone = "yellow"
+#     else:
+#         lightning_potential_index = "green"
+#     lightning_potential_index_zone_list.append(lightning_potential_index_zone)
 
-#loop through time column, check if each of the times in a row are less than sunrise -> red
+# # Create a new DataFrame
+# lightning_potential_index_df_all = pd.DataFrame({
+#     "Forecast Date": forecast_date,
+#     "Forecast Time": forecast_time,
+#     "Lightning Potential Index": lightning_potential_index,
+#     "Lightning Potential Index": lightning_potential_index_zone_list
+# })
+
+# print(lightning_potential_index_df_all)
+
+zones_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time,
+    "Visibility Zone": visability_zone_list,
+    "Cloud Zone": cloud_zone_list,
+    "Rain Zone": rain_zone_list,
+    "Rain Shower Zone": rain_shower_zone_list,
+    "Thunderstorm Zone": thunderstorm_zone_list,
+    "Snowfall Zone": snowfall_zone_list,
+    "Freezing Rain Zone": freezing_rain_zone_list,
+    "Wind Gusts Zone": wind_gusts_zone_list,
+    "Temperature Zone": temperature_zone_list,
+    # "Lightning Potential Index": lightning_potential_index_zone_list
+})
+
+print(zones_df_all)
+
+# Function to prioritize colors
+def prioritize_colors(row):
+    if 'gray' in row.values:
+        return 'gray'
+    if 'red' in row.values:
+        return 'red'
+    elif 'yellow' in row.values:
+        return 'yellow'
+    else:
+        return 'green'
+
+# Create a new column 'final_color' based on the prioritized colors
+zones_df_all['final_zone'] = zones_df_all.apply(prioritize_colors, axis=1)
+print(zones_df_all)
+zones_df_all.to_csv('zones_df_all')
