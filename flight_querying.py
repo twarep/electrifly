@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
 import os
+from storage import execute
 
 
 class query_flights:
@@ -253,3 +254,59 @@ class query_flights:
 
         # Return the data
         return flight_data
+    
+
+    def make_ml_query():
+
+        queries = [
+            """CREATE TABLE test_flight_activites AS
+               SELECT flight_id, time_min FROM flightdata_4620
+               union ALL
+               SELECT flight_id, time_min FROM flightdata_4940
+               union ALL
+               SELECT flight_id, time_min FROM flightdata_4929;
+            """,
+            """ALTER TABLE test_flight_activites
+               ADD COLUMN activity VARCHAR(255) DEFAULT 'NA';
+            """,
+            """ UPDATE test_flight_activites
+                SET activity = CASE
+                    WHEN flight_id = 4620 AND (time_min BETWEEN 13.5 AND 15.5) THEN 'takeoff'
+                    WHEN flight_id = 4620 AND (time_min BETWEEN 45 AND 48) THEN 'landing'
+                    WHEN flight_id = 4620 AND ((time_min BETWEEN 18.1 AND 19) OR
+                                (time_min BETWEEN 23.8 AND 24) OR
+                                (time_min BETWEEN 29.9 AND 30) OR
+                                (time_min BETWEEN 35.7 AND 35.9)) THEN 'climb'
+                    WHEN flight_id = 4620 AND ((time_min BETWEEN 17 AND 18) OR
+                                (time_min BETWEEN 21.9 AND 23.9) OR
+                                (time_min BETWEEN 27.8 AND 29.9) OR
+                                (time_min BETWEEN 39.8 AND 41)) THEN 'descent'
+                    ELSE activity  -- Keep the existing value for other rows
+                END
+                WHERE flight_id = 4620;
+            """,
+            """ UPDATE test_flight_activites
+                SET activity = CASE
+                    WHEN flight_id = 4940 AND (time_min BETWEEN 9.2 AND 11) THEN 'takeoff'
+                    WHEN flight_id = 4940 AND (time_min BETWEEN 35.9 AND 45) THEN 'landing'
+                    WHEN flight_id = 4940 AND (time_min BETWEEN 19.5 AND 20) THEN 'climb'
+                    WHEN flight_id = 4940 AND ((time_min BETWEEN 22 AND 22.9) OR
+                               (time_min BETWEEN 27 AND 27.8) OR
+                               (time_min BETWEEN 32 AND 33)) THEN 'descent'
+                    ELSE activity  -- Keep the existing value for other rows
+                END
+                WHERE flight_id = 4940;
+            """,
+            """UPDATE test_flight_activites
+SET activity = CASE
+    WHEN flight_id = 4929 AND (time_min BETWEEN 7.5 AND 8.1) THEN 'takeoff'
+    WHEN flight_id = 4929 AND (time_min BETWEEN 30 AND 36) THEN 'landing'
+    ELSE activity  -- Keep the existing value for other rows
+END
+WHERE flight_id = 4929;
+            """
+        ]
+
+        for query in queries:
+            execute(query)
+
