@@ -39,13 +39,15 @@ def get_forecast_by_current_date():
     engine = connect()
 
     query = f"""SELECT forecast_date AS "Forecast Date",
-                        forecast_time_utc AS "Forecast Time",
+                        forecast_time_et AS "Forecast Time",
                         temperature_2m AS "Temperature (°C)",
                         weathercode AS "Weathercode",
                         windgusts_10m AS "Wind Gusts",
                         lightning_potential AS "Lightning Potential",
                         winddirection_10m AS "Wind Direction 10m (Degrees)", 
-                        visibility AS "Visibility"
+                        visibility AS "Visibility",
+                        sunrise_time AS "Sunrise",
+                        sunset_time AS "Sunset"
                 FROM forecast
             """
     

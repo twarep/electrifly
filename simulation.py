@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, time
 import pandas as pd
 from sqlalchemy import create_engine
 from weather_forcast_querying import get_forecast_by_current_date
@@ -19,7 +19,7 @@ print ("This is the total flight time:", total_flight_time)
 #pull in forecasted weather data (right now it's hardcoded)
 forecast_df = get_forecast_by_current_date()
 forecast_date = forecast_df["Forecast Date"]
-forecast_time = forecast_df["Forecast Time"]
+forecast_time_et = forecast_df["Forecast Time"]
 
 #VISIBILITY:
 visibility = forecast_df["Visibility"]
@@ -41,7 +41,7 @@ for i in visibility_SM.index:
 # Create a new DataFrame
 visability_zone_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Visibility SM": visibility_SM,
     "Visibility Zone": visability_zone_list
 })
@@ -68,7 +68,7 @@ for i in cloud.index:
 # Create a new DataFrame
 cloud_zone_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Cloud": cloud,
     "Cloud Zone": cloud_zone_list
 })
@@ -94,7 +94,7 @@ for i in rain.index:
 # Create a new DataFrame
 rain_zone_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Rain": rain,
     "Rain Zone": rain_zone_list
 })
@@ -120,7 +120,7 @@ for i in rain_shower.index:
 # Create a new DataFrame
 rain_shower_zone_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Rain Shower": rain_shower,
     "Rain Shower Zone": rain_shower_zone_list
 })
@@ -145,7 +145,7 @@ for i in thunderstorm.index:
 # Create a new DataFrame
 thunderstorm_zone_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Thunderstorm": thunderstorm,
     "Thunderstorm Zone": thunderstorm_zone_list
 })
@@ -170,7 +170,7 @@ for i in snowfall.index:
 # Create a new DataFrame
 snowfall_zone_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Snowfall": snowfall,
     "Snowfall Zone": snowfall_zone_list
 })
@@ -196,7 +196,7 @@ for i in freezing_rain.index:
 # Create a new DataFrame
 freezing_rain_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Freezing Rain": freezing_rain,
     "Freezing Rain Zone": freezing_rain_zone_list
 })
@@ -223,7 +223,7 @@ for i in wind_gusts.index:
 # Create a new DataFrame
 wind_gusts_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Wind Gusts": wind_gusts,
     "Wind Gusts Zone": wind_gusts_zone_list
 })
@@ -248,7 +248,7 @@ for i in temperature.index:
 # Create a new DataFrame
 temperature_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Temperature": temperature,
     "Temperature Zone": temperature_zone_list
 })
@@ -272,16 +272,58 @@ print(temperature_df_all)
 # # Create a new DataFrame
 # lightning_potential_index_df_all = pd.DataFrame({
 #     "Forecast Date": forecast_date,
-#     "Forecast Time": forecast_time,
+#     "Forecast Time": forecast_time_et,
 #     "Lightning Potential Index": lightning_potential_index,
 #     "Lightning Potential Index": lightning_potential_index_zone_list
 # })
 
 # print(lightning_potential_index_df_all)
 
+#sunrise "If any part of the flight is between: 
+# RED is 30 mins AFTER sunset and 30 mins BEFORE sunrise 
+#yellow as (15 mins BEFORE sunset to 30 mins AFTER sunset) and (30 mins BEFORE sunrise to 15 min after sunrise)
+# green as 15 min after sunrise and 15 mins before sunset
+
+sunrise = forecast_df["Sunrise"]
+sunset = forecast_df["Sunset"] 
+print(type(sunrise))
+print(forecast_time_et)
+print(sunrise)
+delta_thirty = timedelta(minutes=30)
+delta_fifteen = timedelta(minutes=15)
+
+sunrise_sunset_zone = ""
+sunrise_sunset_zone_list = []
+
+
+for i in forecast_time_et.index:
+    print(type(sunset[i]))
+    sunset_30 = datetime.combine(forecast_date[i],sunset[i])
+    sunrise_30 = datetime.combine(forecast_date[i],sunrise[i])
+    if (forecast_time_et[i] > (sunset_30 + delta_thirty).time()) or (forecast_time_et[i] < (sunrise_30-delta_thirty).time()):
+        sunrise_sunset_zone = "red"
+    # elif ((forecast_time_et[i] < (sunset_30 - delta_fifteen).time()) and (forecast_time_et[i] > (sunset_30 + delta_thirty).time())) or ((forecast_time_et[i] < (sunrise_30 - delta_thirty).time()) and (forecast_time_et[i] > (sunrise_30 + delta_fifteen).time())):
+    #     sunrise_sunset_zone = "yellow"
+    elif (((sunset_30 - delta_fifteen).time()) < (forecast_time_et[i]) < (sunset_30 + delta_thirty).time()) or (((sunrise_30 - delta_thirty).time() < (forecast_time_et[i]) < (sunrise_30 + delta_fifteen).time())):
+        sunrise_sunset_zone = "yellow"
+    else:
+        sunrise_sunset_zone = "green"
+    sunrise_sunset_zone_list.append(sunrise_sunset_zone)
+# Create a new DataFrame
+sunrise_sunset_df_all = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time_et,
+    "Sunrise": sunrise,
+    "Sunset": sunset,
+    "Sunrise Sunset Zone": sunrise_sunset_zone_list
+})
+
+print(sunrise_sunset_df_all)
+sunrise_sunset_df_all.to_csv('sunrise_sunset_df_all')
+
 zones_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
-    "Forecast Time": forecast_time,
+    "Forecast Time": forecast_time_et,
     "Visibility Zone": visability_zone_list,
     "Cloud Zone": cloud_zone_list,
     "Rain Zone": rain_zone_list,
@@ -291,6 +333,9 @@ zones_df_all = pd.DataFrame({
     "Freezing Rain Zone": freezing_rain_zone_list,
     "Wind Gusts Zone": wind_gusts_zone_list,
     "Temperature Zone": temperature_zone_list,
+    "Sunrise": sunrise,
+    "Sunset": sunset,
+    "Sunrise Sunset Zone": sunrise_sunset_zone_list
     # "Lightning Potential Index": lightning_potential_index_zone_list
 })
 
@@ -311,3 +356,12 @@ def prioritize_colors(row):
 zones_df_all['final_zone'] = zones_df_all.apply(prioritize_colors, axis=1)
 print(zones_df_all)
 zones_df_all.to_csv('zones_df_all')
+
+
+final_zones_color = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time_et,
+    "Zone": zones_df_all['final_zone']
+})
+
+final_zones_color.to_csv('final_zones_color')

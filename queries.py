@@ -119,12 +119,14 @@ CREATE_FORECAST = """
 CREATE TABLE forecast (
   id INTEGER PRIMARY KEY, 
   forecast_date DATE NOT NULL, 
-  forecast_time_utc TIME NOT NULL,
+  forecast_time_et TIME NOT NULL,
   temperature_2m REAL NOT NULL,
   weathercode SMALLINT NOT NULL,
   windgusts_10m REAL NOT NULL,
   visibility REAL NOT NULL,
   lightning_potential REAL NOT NULL,
-  winddirection_10m SMALLINT NOT NULL
+  winddirection_10m SMALLINT NOT NULL,
+  sunrise_time TIME NOT NULL,
+  sunset_time TIME NOT NULL,
 );
 """
