@@ -88,6 +88,44 @@ class query_flights:
         engine.dispose()
 
         return flight_data
+    
+    # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
+    def get_flight_data_every_half_min_on_id(self, columns: list, id: int):
+
+        # Make database connection
+        engine = self.connect()
+
+        # Unravel list of columns to be a string to input
+        str_column = "".join([f"{column}, " for column in columns])[:-2]
+        
+        # Make query
+        # It partitions the data into 30-second intervals by using the floor function to group time_min values.
+        # It orders the rows within each partition by the absolute difference from the midpoint of the interval, effectively ranking the closest times to the 30-second marks.
+        # It filters to only include the first-ranked rows in each partition, which are the closest to the desired 30-second intervals.
+        # It excludes the first row by ensuring that time_min is greater than 0.
+        
+        query = f"""
+                WITH ranked_data AS (
+                    SELECT *,
+                            ROW_NUMBER() OVER (
+                            PARTITION BY floor(time_min / 0.5)
+                            ORDER BY ABS(time_min - (floor(time_min / 0.5) * 0.5))
+                            ) AS rn
+                    FROM flightdata_{str(id)}
+                    )
+                    SELECT *
+                    FROM ranked_data
+                    WHERE rn = 1
+                    AND time_min > 0; -- excluding the first row as per your request
+                """
+
+        # Select the data based on the query
+        flight_data = pd.read_sql_query(query, engine)
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        return flight_data
 
 
     # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
@@ -185,6 +223,38 @@ class query_flights:
             motor_power = flights_df["motor_power"].to_numpy()
 
             flight_dict[id] = {"motor_power": motor_power}
+
+        return flight_dict
+    
+ # Get Flight Id, Motor power, and SOC rate Function -------------------------------------------------------------------------
+    def get_flight_power_soc_rate(self, flight_ids: list):
+        """
+        Function that uses the flight ids to get their respective time, motor power, soc, and soc rate of change columns. 
+        Then, returns a dictionary of 
+        flight_id: {time: [], motor_power: [], soc: [], soc_rate_of_change: []}
+        """
+
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get time, power, soc, and soc rate data for the specific flight(s)
+        for id in flight_ids:
+
+            # Get the flight data
+            flights_df = self.get_flight_data_every_half_min_on_id(["flight_id", "time_min", "motor_power", "bat_1_soc", "bat_2_soc"], id)
+
+            # Change to Numpy
+            times = flights_df["time_min"].to_numpy()
+            motor_power = flights_df["motor_power"].to_numpy()
+            soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
+            
+            # Calculate SOC rate of change
+            # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+            soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+            # Append a 0 to soc_rate_of_change to keep the array sizes consistent
+            soc_rate_of_change = np.append(soc_rate_of_change, 0) 
+
+            flight_dict[id] = {"time_min": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change}
 
         return flight_dict
 
