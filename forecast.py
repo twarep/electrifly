@@ -7,6 +7,7 @@ from storage import db_connect, execute, table_exists
 from sqlalchemy import create_engine
 
 # get data
+
 api_url = "https://api.open-meteo.com/v1/forecast?latitude=43.4668&longitude=-80.5164&minutely_15=temperature_2m,weathercode,windgusts_10m,visibility,lightning_potential&hourly=winddirection_10m&daily=sunrise,sunset&wind_speed_unit=kn&timezone=America%2FNew_York&forecast_days=3"
 response = requests.get(api_url)
 data = response.json()
