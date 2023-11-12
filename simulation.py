@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, time
+from sys import displayhook
 import pandas as pd
 from sqlalchemy import create_engine
 from weather_forcast_querying import get_forecast_by_current_date
@@ -364,4 +365,39 @@ final_zones_color = pd.DataFrame({
     "Zone": zones_df_all['final_zone']
 })
 
+#extract each date into its own column
+#get rid of the duplicate time columns
+#stitch it together in a dataframe
+
+displayhook(final_zones_color.iloc[96])
+
+df0 = final_zones_color.iloc[0:96, 1] 
+df1 = final_zones_color.iloc[0:96, 2] 
+df2 = final_zones_color.iloc[96:192, 2] 
+df2 = df2.reset_index() 
+df3 = final_zones_color.iloc[192:288, 2] 
+df3 = df3.reset_index() 
+print(df0)
+print(df1)
+print(df2)
+print(df3)
+
+# new_df = final_zones_color['Forecast Date'].unique()
+# print(new_df)
+
+first_date= final_zones_color.iloc[0, 0]
+print(first_date) 
+second_date= final_zones_color.iloc[96, 0]
+print(second_date) 
+third_date= final_zones_color.iloc[192, 0]
+print(third_date) 
+
+
+full = [df0, df1, df2, df3]
+result_table_colours = pd.concat(full, axis=1)
+result_table_colours.columns = ["Forecast Time", first_date, "index", second_date, "index", third_date]
+del result_table_colours['index']
+print(result_table_colours)
+
 final_zones_color.to_csv('final_zones_color')
+result_table_colours.to_csv('result_table_colours')
