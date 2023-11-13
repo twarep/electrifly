@@ -304,6 +304,26 @@ app_ui = ui.page_navbar(
                         ),
                     position='right'
                     )),  
+                ),
+                ui.row( 
+                  ui.column(12,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Power Stats for Selected Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "power_stats_table_state",
+                                "Choose flight date(s):",
+                                get_flights(True),
+                                selected=get_flights(True)[0]
+                            ),
+                        width=3),
+                        ui.panel_main(
+                            ui.output_table("power_stats_table")
+                        ),
+                    position='right'
+                    )),
                 )),
         ),
             
@@ -497,6 +517,16 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def power_stats_table(): 
+        # Get the flight ID corresponding to the chosen date
+        flight_date = input.power_stats_table_state()
+        flight_id = get_flights(False)[flight_date]
+        power_stats_df = query_flights().get_power_stats_flight_id(flight_id)
+        return power_stats_df 
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: INSIGHTS SCREEN 

@@ -311,6 +311,33 @@ class query_flights:
         engine.dispose()
 
         return num_circuits
+    
+    # Get power stats Function -------------------------------------------------------------------------
+
+    def get_power_stats_flight_id(self, flight_id):
+        """
+        
+        """
+        # Make database connection
+        engine = self.connect()
+
+        query = f"""SELECT
+                        flight_id,
+                        MIN(motor_power) AS min_motor_power,
+                        MAX(motor_power) AS max_motor_power,
+                        AVG(motor_power) AS avg_motor_power
+                    FROM
+                        flightdata_{str(flight_id)}
+                    GROUP BY
+                        flight_id;
+                """
+        
+        # Select the data based on the query
+        power_stats_df = pd.read_sql_query(query, engine)
+
+        engine.dispose()
+
+        return power_stats_df
 
 
 
