@@ -233,7 +233,43 @@ app_ui = ui.page_navbar(
                 ),
 
                 ui.row( 
-                    ui.column(6), # buffer for the left side
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Number of Circuits</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "select_flights",
+                                    "Choose flight date:",
+                                    get_flights(True),
+                                    multiple=False,
+                                ),
+                                ui.input_select(
+                                    "select_graph",
+                                    "Choose the graph type:",
+                                    ["Line Plot", "Scatter Plot"],
+                                    multiple=False,
+                                ),
+                                ui.input_select(
+                                    "select_x_variable",
+                                    "Choose the Independent (X) variable:",
+                                    ["time", "SOC"],
+                                    multiple=False,
+                                ),
+                                ui.input_select(
+                                    "select_y_variable",
+                                    "Choose the Dependent (Y) variable:",
+                                    ["Test1", "Test2"],
+                                    multiple=False,
+                                ),
+                                width=3
+                            ),
+                            ui.panel_main(
+                                ui.output_plot("custom_graph"),
+                            ),
+                        )
+                    ), # buffer for the left side
                     # This is the start of the code for the number of circuits #################################################################
                     ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
                         div(HTML("<hr>")),
@@ -248,7 +284,7 @@ app_ui = ui.page_navbar(
                                     selected=get_flights(True)[0],
                                     multiple=False,
                                 ),
-                                    width=3
+                                width=3
                             ),
                             ui.panel_main(
                                 ui.output_text("num_circuits"),
@@ -288,6 +324,13 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_id = get_flights(False)[flight_date]
         weather_df = query_weather().get_weather_by_flight_id(flight_id)
         return weather_df 
+
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot()
+    def custom_graph():
+        print()
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
