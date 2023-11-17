@@ -71,7 +71,10 @@ def weather_data(date_list, ids_list, driver, download_dir):
   newest_day_select.select_by_value(str(date.today().day + 1))     
   # select data from that oldest date
   year_select.select_by_value(year)
-  month_select.select_by_value(month)
+  if int(month) < 10:
+    month_select.select_by_value(month[1:])
+  else:
+    month_select.select_by_value(month)
   if int(day) < 10:
     day_select.select_by_value(day[1:])
   else:
