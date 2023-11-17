@@ -92,7 +92,6 @@ def weather_data(date_list, ids_list, driver, download_dir):
   df = pd.read_csv(weather_data_path)
   # transform the weather_data into DB format
   df = weather_transformation(df)
-  # print(df.head())  
   # map out each weather data field to a flight
   print(ids_list)
   relevant_weather(df, ids_list)
@@ -104,6 +103,10 @@ def environment_setup():
   # Load .env file
   load_dotenv()
 
+  # delete the temp directory if it exists
+  temp_dir = os.getcwd() + "/temp/"
+  if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
+    shutil.rmtree(temp_dir)
   # set download directory to working directory
   download_dir = os.getcwd() + "/temp/"
 
@@ -231,13 +234,16 @@ def scrape(driver, cur, download_dir):
       # if the file is currently processing, there will be no download link, so skip this one for now
       if not download_csv_link:
         driver.back()
-      else:    
+      else:      
+        # get the download link
+        current_download_link = download_csv_link[0].get_attribute("href")
+        # check if the current filename is available, if not then continue
+        if str(current_flight_id) not in str(current_download_link):
+          driver.back()
+          continue
         push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes)
         ids_list.append(current_flight_id)
         date_list.append(current_flight_datetime)   
-        # get the download link
-        current_download_link = download_csv_link[0].get_attribute("href")
-        # get the name of the file to download
         current_file_name = os.path.basename(current_download_link)
         # click the link
         download_csv_link[0].click()
