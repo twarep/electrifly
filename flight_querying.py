@@ -90,7 +90,7 @@ class query_flights:
         return flight_data
     
     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
-    def get_flight_data_every_half_min_on_id(self, columns: list, id: int):
+    def get_flight_data_avg_every_min_on_id(self, columns: list, id: int):
 
         # Make database connection
         engine = self.connect()
@@ -104,19 +104,37 @@ class query_flights:
         # It filters to only include the first-ranked rows in each partition, which are the closest to the desired 30-second intervals.
         # It excludes the first row by ensuring that time_min is greater than 0.
         
+        # query = f"""
+        #         WITH ranked_data AS (
+        #             SELECT *,
+        #                     ROW_NUMBER() OVER (
+        #                     PARTITION BY floor(time_min / 0.5)
+        #                     ORDER BY ABS(time_min - (floor(time_min / 0.5) * 0.5))
+        #                     ) AS rn
+        #             FROM flightdata_{str(id)}
+        #             )
+        #             SELECT *
+        #             FROM ranked_data
+        #             WHERE rn = 1
+        #             AND time_min > 0; -- excluding the first row as per your request
+        #         """
+
+        # This query will output a table where each row represents a specific flight at a specific minute (rounded to the nearest minute).
+        # For each of these rows, it will show the average state of charge (SOC) for both batteries (bat_1_soc and bat_2_soc) and the average motor power during that minute.
         query = f"""
-                WITH ranked_data AS (
-                    SELECT *,
-                            ROW_NUMBER() OVER (
-                            PARTITION BY floor(time_min / 0.5)
-                            ORDER BY ABS(time_min - (floor(time_min / 0.5) * 0.5))
-                            ) AS rn
-                    FROM flightdata_{str(id)}
-                    )
-                    SELECT *
-                    FROM ranked_data
-                    WHERE rn = 1
-                    AND time_min > 0; -- excluding the first row as per your request
+                SELECT
+                    flight_id,
+                    ROUND(time_min) AS time_min,
+                    AVG(bat_1_soc) AS bat_1_soc,
+                    AVG(bat_2_soc) AS bat_2_soc,
+                    AVG(motor_power) AS motor_power
+                FROM
+                    flightdata_{str(id)}
+                GROUP BY
+                    flight_id, ROUND(time_min)
+                ORDER BY
+                    flight_id, time_min;
+
                 """
 
         # Select the data based on the query
@@ -241,7 +259,7 @@ class query_flights:
         for id in flight_ids:
 
             # Get the flight data
-            flights_df = self.get_flight_data_every_half_min_on_id(["flight_id", "time_min", "motor_power", "bat_1_soc", "bat_2_soc"], id)
+            flights_df = self.get_flight_data_avg_every_min_on_id(["flight_id", "time_min", "motor_power", "bat_1_soc", "bat_2_soc"], id)
 
             # Change to Numpy
             times = flights_df["time_min"].to_numpy()
