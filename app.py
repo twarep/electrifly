@@ -270,7 +270,7 @@ app_ui = ui.page_navbar(
     #ML RECOMMENDATIONS SCREEN
     ui.nav("Simulation", 
             ui.row( 
-                  ui.column(12,
+                  ui.column(6,
                     div(HTML("<hr>")),
                     div(HTML("<p><b>Number of Feasible Flights</b></p>")),
                     div(HTML("<hr>")),
@@ -278,7 +278,17 @@ app_ui = ui.page_navbar(
                             ui.output_table("simulation_table", style="width: 70%; height: 300px;")
                         ),
                     ),
+
+                    ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(
+                            ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
+                        ),
+                    ),
                 ),
+            
                 
                 
             ),
@@ -481,6 +491,16 @@ def server(input: Inputs, output: Outputs, session: Session):
         # flight_id = get_flights(False)[flight_date]
         # weather_df = query_weather().get_weather_by_flight_id(flight_id)
         # return weather_df 
+    
+     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def flight_planning_table(): 
+        # Apply conditional formatting
+        #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
+        flight_plan = simulation.feasible_flights
+        # new = styled_data.set_table_styles()
+        return flight_plan
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: SIMULATION SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------

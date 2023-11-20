@@ -368,6 +368,7 @@ result_table_colours.to_csv('result_table_colours')
 # feasible_flights = pd.DataFrame(columns=["Start Time", "Finish Time"])
 start_times = []
 finish_times = []
+
 countSafe = 0
 countModSafe = 0
 cellBlock = 0
@@ -384,6 +385,8 @@ colour = dayOne.iloc[:, 1]
 # print(dayOne.iloc[3, 0])
 
 consecutive = False
+number = 0
+number_ui = []
 # Assuming dayOne is a DataFrame with one column
 numRows = len(dayOne[first_date])
 for i in range(numRows):
@@ -399,15 +402,17 @@ for i in range(numRows):
                 if count == 3:
                     consecutive = True
                     StartTime = dayOne.iloc[j-2, 0]
+                    
 
                     FinishTime = dayOne.iloc[j, 0]
                     format = '%H:%M:%S'
-
+                    number += 1
                     StartTime = StartTime.strftime(format)
                     FinishTime = FinishTime.strftime(format)
 
                     start_times.append(StartTime)
                     finish_times.append(FinishTime)
+                    number_ui.append(number)
                 
                     # print(FinishTime)
                     count = 0
@@ -417,6 +422,7 @@ for i in range(numRows):
                 consecutive = False
 
 feasible_flights = pd.DataFrame({
+    "#": number_ui,
     "Start Time": start_times,
     "Finish Time": finish_times
 })
