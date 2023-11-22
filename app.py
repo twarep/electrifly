@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
+import simulation
 import os
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -73,6 +74,8 @@ def get_flights(date: bool):
         return list(flight_data.keys())
     
     return flight_data
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -265,9 +268,31 @@ app_ui = ui.page_navbar(
         ),  
 
     #ML RECOMMENDATIONS SCREEN
-    ui.nav("Recommendations", 
-           "In construction! ML predictions on the way!"),
+    ui.nav("Simulation", 
+            ui.row( 
+                  ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Number of Feasible Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(
+                            ui.output_table("simulation_table", style="width: 70%; height: 300px;")
+                        ),
+                    ),
 
+                    ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(
+                            ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
+                        ),
+                    ),
+                ),
+            
+                
+                
+            ),
+# simulation.result_table_colours
     title="ElectriFly",
 )
 
@@ -278,6 +303,13 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    def data_grid():
+        # Placeholder for the actual data grid
+        return ui.tags.div("Data grid will be here.")
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -428,6 +460,49 @@ def server(input: Inputs, output: Outputs, session: Session):
         
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # START: SIMULATION SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def simulation_table(): 
+        # Apply conditional formatting
+        #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
+        styled_data = simulation.result_table_colours.style.applymap(style_cell)
+        # new = styled_data.set_table_styles()
+        return styled_data
+    
+    # Define a function to determine the cell background color
+    def style_cell(val):
+        if val == 'red':
+            return "background-color: #c62828; color: #c62828;"
+        elif val == 'yellow':
+            return "background-color: #fdd835; color: #fdd835;"
+        elif val == 'green':
+            return "background-color: #43a047; color: #43a047;"
+
+        #return simulation.result_table_colours
+
+        # flight_date = input.weather_state()
+        # flight_id = get_flights(False)[flight_date]
+        # weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        # return weather_df 
+    
+     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def flight_planning_table(): 
+        # Apply conditional formatting
+        #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
+        flight_plan = simulation.feasible_flights
+        # new = styled_data.set_table_styles()
+        return flight_plan
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # END: SIMULATION SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Get the App Ready and Host

@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta, time
+from sys import displayhook
 import pandas as pd
 from sqlalchemy import create_engine
 from weather_forcast_querying import get_forecast_by_current_date
 import forecast
+import numpy
 
 # How long does 1 single flight take (on average: including time for inspection, flight, charging):
 avg_inspection_time_before_flight = 7.41
@@ -46,8 +48,6 @@ visability_zone_df_all = pd.DataFrame({
     "Visibility Zone": visability_zone_list
 })
 
-print(visability_zone_df_all)
-
 #CLOUD (pulled from weathercode):
 cloud = forecast_df["Weathercode"]
 cloud_zone = ""
@@ -73,8 +73,6 @@ cloud_zone_df_all = pd.DataFrame({
     "Cloud Zone": cloud_zone_list
 })
 
-print(cloud_zone_df_all)
-
 #rain 
 rain = forecast_df["Weathercode"]
 rain_zone = ""
@@ -98,8 +96,6 @@ rain_zone_df_all = pd.DataFrame({
     "Rain": rain,
     "Rain Zone": rain_zone_list
 })
-
-print(rain_zone_df_all)
 
 #rain showers
 rain_shower = forecast_df["Weathercode"]
@@ -125,8 +121,6 @@ rain_shower_zone_df_all = pd.DataFrame({
     "Rain Shower Zone": rain_shower_zone_list
 })
 
-print(rain_shower_zone_df_all)
-
 
 #thunderstorm (pulled from weathercode)
 thunderstorm = forecast_df["Weathercode"]
@@ -150,9 +144,6 @@ thunderstorm_zone_df_all = pd.DataFrame({
     "Thunderstorm Zone": thunderstorm_zone_list
 })
 
-print(thunderstorm_zone_df_all)
-
-
 #snow fall (pulled from weathercode): this includes snow fall, snow grains and snow showers
 snowfall = forecast_df["Weathercode"]
 snowfall_zone = ""
@@ -174,9 +165,6 @@ snowfall_zone_df_all = pd.DataFrame({
     "Snowfall": snowfall,
     "Snowfall Zone": snowfall_zone_list
 })
-
-print(snowfall_zone_df_all)
-
     
 # freezing rain and freezing drizzle (both under freezing rain)
 freezing_rain_zone = ""
@@ -200,8 +188,6 @@ freezing_rain_df_all = pd.DataFrame({
     "Freezing Rain": freezing_rain,
     "Freezing Rain Zone": freezing_rain_zone_list
 })
-
-print(freezing_rain_df_all)
 
 #gust (MAKE SURE TO DOWNLOAD CSV WITH UNITS AS KNOTS)
 wind_gusts_zone = ""
@@ -228,9 +214,6 @@ wind_gusts_df_all = pd.DataFrame({
     "Wind Gusts Zone": wind_gusts_zone_list
 })
 
-print(wind_gusts_df_all)
-
-
 #temperature 
 temperature_zone = ""
 temperature = forecast_df["Temperature (°C)"] 
@@ -252,9 +235,6 @@ temperature_df_all = pd.DataFrame({
     "Temperature": temperature,
     "Temperature Zone": temperature_zone_list
 })
-
-print(temperature_df_all)
-
 
 # lightning_potential_index_zone = ""
 # lightning_potential_index = forecast_df["Lightning Potential"] 
@@ -286,9 +266,6 @@ print(temperature_df_all)
 
 sunrise = forecast_df["Sunrise"]
 sunset = forecast_df["Sunset"] 
-print(type(sunrise))
-print(forecast_time_et)
-print(sunrise)
 delta_thirty = timedelta(minutes=30)
 delta_fifteen = timedelta(minutes=15)
 
@@ -297,7 +274,6 @@ sunrise_sunset_zone_list = []
 
 
 for i in forecast_time_et.index:
-    print(type(sunset[i]))
     sunset_30 = datetime.combine(forecast_date[i],sunset[i])
     sunrise_30 = datetime.combine(forecast_date[i],sunrise[i])
     if (forecast_time_et[i] > (sunset_30 + delta_thirty).time()) or (forecast_time_et[i] < (sunrise_30-delta_thirty).time()):
@@ -318,9 +294,6 @@ sunrise_sunset_df_all = pd.DataFrame({
     "Sunrise Sunset Zone": sunrise_sunset_zone_list
 })
 
-print(sunrise_sunset_df_all)
-sunrise_sunset_df_all.to_csv('sunrise_sunset_df_all')
-
 zones_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
     "Forecast Time": forecast_time_et,
@@ -339,8 +312,6 @@ zones_df_all = pd.DataFrame({
     # "Lightning Potential Index": lightning_potential_index_zone_list
 })
 
-print(zones_df_all)
-
 # Function to prioritize colors
 def prioritize_colors(row):
     if 'gray' in row.values:
@@ -354,8 +325,7 @@ def prioritize_colors(row):
 
 # Create a new column 'final_color' based on the prioritized colors
 zones_df_all['final_zone'] = zones_df_all.apply(prioritize_colors, axis=1)
-print(zones_df_all)
-zones_df_all.to_csv('zones_df_all')
+
 
 
 final_zones_color = pd.DataFrame({
@@ -364,4 +334,95 @@ final_zones_color = pd.DataFrame({
     "Zone": zones_df_all['final_zone']
 })
 
-final_zones_color.to_csv('final_zones_color')
+#extract each date into its own column
+#get rid of the duplicate time columns
+#stitch it together in a dataframe
+
+displayhook(final_zones_color.iloc[96])
+
+df0 = final_zones_color.iloc[0:96, 1] 
+df1 = final_zones_color.iloc[0:96, 2] 
+df2 = final_zones_color.iloc[96:192, 2] 
+df2 = df2.reset_index() 
+df3 = final_zones_color.iloc[192:288, 2] 
+df3 = df3.reset_index() 
+
+first_date= final_zones_color.iloc[0, 0]
+second_date= final_zones_color.iloc[96, 0]
+third_date= final_zones_color.iloc[192, 0]
+
+
+full = [df0, df1, df2, df3]
+result_table_colours = pd.concat(full, axis=1)
+result_table_colours.columns = ["Forecast Time", first_date, "index", second_date, "index", third_date]
+del result_table_colours['index']
+
+# result_table_colours.to_csv('result_table_colours')
+
+#STEP 1: Find the total flight tight 97.47 -> approx 105 -> 6 or 7 blocks
+
+#STEP 2: Find consecutive timeslots where it's green or yellow
+# feasible_flights = pd.DataFrame('number', 'Date', 'Start')
+# feasible_flights = pd.DataFrame(columns=["Start Time", "Finish Time"])
+start_times = []
+finish_times = []
+
+countSafe = 0
+countModSafe = 0
+cellBlock = 0
+
+dayOne = result_table_colours.iloc[:, 0:2]
+date = dayOne.iloc[:, 0]
+colour = dayOne.iloc[:, 1]
+#date
+# print(dayOne.iloc[:, 0])
+# #color
+# print(dayOne.iloc[:, 1])
+
+# #specific time
+# print(dayOne.iloc[3, 0])
+
+consecutive = False
+number = 0
+number_ui = []
+# Assuming dayOne is a DataFrame with one column
+numRows = len(dayOne[first_date])
+for i in range(numRows):
+    count = 0
+    if (dayOne.iloc[i, 1] == 'green') and (i != numRows) and (i+1 != numRows) and (i+2 != numRows):
+        count += 1
+        
+        for j in range(i + 1, i + 3):
+            
+            if dayOne.iloc[j, 1] == 'green': 
+                
+                count += 1
+                if count == 3:
+                    consecutive = True
+                    StartTime = dayOne.iloc[j-2, 0]
+                    
+
+                    FinishTime = dayOne.iloc[j, 0]
+                    format = '%H:%M:%S'
+                    number += 1
+                    StartTime = StartTime.strftime(format)
+                    FinishTime = FinishTime.strftime(format)
+
+                    start_times.append(StartTime)
+                    finish_times.append(FinishTime)
+                    number_ui.append(number)
+                
+                    # print(FinishTime)
+                    count = 0
+
+            else:
+                count = 0            
+                consecutive = False
+
+feasible_flights = pd.DataFrame({
+    "#": number_ui,
+    "Start Time": start_times,
+    "Finish Time": finish_times
+})
+
+print(feasible_flights)
