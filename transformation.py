@@ -30,10 +30,11 @@ def drop_remaining_columns(df):
   df = df.drop("ACC_LONG", axis=1)
   df = df.drop("ACC_LAT", axis=1)
   df = df.drop("ACC_NORM", axis=1)
-  df = df.drop("ias_derivative", axis=1)
-  df = df.drop("pitch_derivative", axis=1)
-  df = df.drop("roll_derivative", axis=1)
-  df = df.drop("alt_derivative", axis=1)
+  if "ias_derivative" in df.columns:
+    df = df.drop("ias_derivative", axis=1)
+    df = df.drop("pitch_derivative", axis=1)
+    df = df.drop("roll_derivative", axis=1)
+    df = df.drop("alt_derivative", axis=1)
   return df
 
 # takes in weather df, drops the irrelevant weather columns
