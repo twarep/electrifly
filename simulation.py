@@ -294,8 +294,6 @@ sunrise_sunset_df_all = pd.DataFrame({
     "Sunrise Sunset Zone": sunrise_sunset_zone_list
 })
 
-sunrise_sunset_df_all.to_csv('sunrise_sunset_df_all')
-
 zones_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
     "Forecast Time": forecast_time_et,
@@ -359,7 +357,7 @@ result_table_colours = pd.concat(full, axis=1)
 result_table_colours.columns = ["Forecast Time", first_date, "index", second_date, "index", third_date]
 del result_table_colours['index']
 
-result_table_colours.to_csv('result_table_colours')
+# result_table_colours.to_csv('result_table_colours')
 
 #STEP 1: Find the total flight tight 97.47 -> approx 105 -> 6 or 7 blocks
 
@@ -428,16 +426,3 @@ feasible_flights = pd.DataFrame({
 })
 
 print(feasible_flights)
-
-        # print(checkGreen)
-
-        # if checkGreen == True:
-
-        #     print("hi")
-
-# for i in range(result_table_colours[1]):
-#STEP 3: If all green -> very safe; if any yellow exists -> moderately safe
-
-#STEP 4: Capture the start and end times
-
-#STEP 5: Make the table of the start and end time
