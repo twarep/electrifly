@@ -51,14 +51,11 @@ def convert_str_to_datetime(str_datetime: str):
 
 # returns the relevant weather data for the given scraped flights
 def weather_data(date_list, ids_list, driver, download_dir):
-  print("The date list is: ", date_list)
   # get the weather data
   driver.get("https://mesonet.agron.iastate.edu/request/download.phtml?network=CA_ON_ASOS")
   # get the oldest date
   oldest_datetime = min(date_list)
-  print("The oldest_datetime is: ", oldest_datetime)
   newest_date = max(date_list).date()
-  print("The newest_datetime is: ", newest_date)
   newest_day = newest_date.day
   # extract each part of the date
   year = oldest_datetime.strftime("%Y")
@@ -70,20 +67,18 @@ def weather_data(date_list, ids_list, driver, download_dir):
   day_select = Select(driver.find_element(By.NAME, "day1"))
   time.sleep(3)
   newest_day_select = Select(driver.find_element(By.NAME, "day2"))
-  print("The newest_day is: ", newest_day)
-  print(f"The newest_day type is {type(newest_day)} ")
   # choose today's date plus 1 to include today
   newest_day_select.select_by_value(str(date.today().day + 1))     
   # select data from that oldest date
   year_select.select_by_value(year)
-  month_select.select_by_value(month[1:])
+  month_select.select_by_value(month)
   if int(day) < 10:
     day_select.select_by_value(day[1:])
   else:
     day_select.select_by_value(day)
   # select the waterloo airport only (cykf)
   waterloo_airport_option = Select(driver.find_element(By.ID, "stations_in"))
-  time.sleep(0.5)
+  time.sleep(1)
   waterloo_airport_option.select_by_value("CYKF")
   driver.find_element(By.ID, "stations_add").click()
   # click on the correct download option
@@ -97,7 +92,6 @@ def weather_data(date_list, ids_list, driver, download_dir):
   df = pd.read_csv(weather_data_path)
   # transform the weather_data into DB format
   df = weather_transformation(df)
-  # print(df.head())  
   # map out each weather data field to a flight
   relevant_weather(df, ids_list)
 
@@ -108,6 +102,10 @@ def environment_setup():
   # Load .env file
   load_dotenv()
 
+  # delete the temp directory if it exists
+  temp_dir = os.getcwd() + "/temp/"
+  if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
+    shutil.rmtree(temp_dir)
   # set download directory to working directory
   download_dir = os.getcwd() + "/temp/"
 
@@ -235,13 +233,16 @@ def scrape(driver, cur, download_dir):
       # if the file is currently processing, there will be no download link, so skip this one for now
       if not download_csv_link:
         driver.back()
-      else:    
+      else:      
+        # get the download link
+        current_download_link = download_csv_link[0].get_attribute("href")
+        # check if the current filename is available, if not then continue
+        if str(current_flight_id) not in str(current_download_link):
+          driver.back()
+          continue
         push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes)
         ids_list.append(current_flight_id)
         date_list.append(current_flight_datetime)   
-        # get the download link
-        current_download_link = download_csv_link[0].get_attribute("href")
-        # get the name of the file to download
         current_file_name = os.path.basename(current_download_link)
         # click the link
         download_csv_link[0].click()
