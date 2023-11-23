@@ -12,6 +12,7 @@ import time
 import psycopg2
 import shutil
 from datetime import datetime, date
+import datetime
 import re
 from transformation import transform_overview_data, weather_transformation
 from storage import table_exists, view_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
@@ -20,6 +21,12 @@ import platform
 
 # Path variables
 chromedriver_path = "./dependencies/chromedriver-win64/chromedriver.exe"
+def log_last_run_time():
+    log_file = 'scraper_run_log.txt'
+    current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    with open(log_file, 'w') as file:
+        file.write(f'Last run: {current_time}')
 
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime: str):
@@ -288,6 +295,7 @@ def scrape(driver, cur, download_dir):
     print("There are no new flights to push to database.")
 
 if __name__ == '__main__':
+  log_last_run_time()
   env = environment_setup()
   pipistrel_login(env['driver'])
   get_plane_info(env['driver'])
