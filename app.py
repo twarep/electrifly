@@ -10,10 +10,8 @@ import shinyswatch
 import numpy as np
 import pandas as pd
 import asyncio
-import matplotlib.pyplot as plt
 from datetime import date
 import numpy as np
-import matplotlib.pyplot as plt
 from os import listdir, getenv
 from os.path import isfile, join
 from dotenv import load_dotenv
@@ -21,6 +19,13 @@ import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
 import os
+
+# Getting initial data
+flights = query_flights()
+
+# Get the column names from the flight data
+columns = flights.get_flight_columns()
+
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
@@ -254,13 +259,13 @@ app_ui = ui.page_navbar(
                                 ui.input_select(
                                     "select_x_variable",
                                     "Choose the Independent (X) variable:",
-                                    ["time", "SOC"],
+                                    columns,
                                     multiple=False,
                                 ),
                                 ui.input_select(
                                     "select_y_variable",
                                     "Choose the Dependent (Y) variable:",
-                                    ["Test1", "Test2"],
+                                    columns,
                                     multiple=False,
                                 ),
                                 width=3
@@ -330,7 +335,19 @@ def server(input: Inputs, output: Outputs, session: Session):
     @output
     @render.plot()
     def custom_graph():
-        print()
+
+        # Get all the inputs
+        flight_date = input.select_flights()
+        graph_type = input.select_graph()
+        x_variable = input.select_x_variable()
+        y_variable = input.select_y_variable()
+        flight_id = get_flights(False)[flight_date]
+
+        # Make the graph
+        created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variable, y_variable)
+
+        # Return the custom graph
+        return created_custom_graph         
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
