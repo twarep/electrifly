@@ -257,10 +257,15 @@ def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list):
         # Get the motor power and soc rate
         motor_power = flight_data[id]['motor_power']
         soc_rate_of_change = flight_data[id]['soc_rate_of_change']
-        scatter_ax.scatter(motor_power, soc_rate_of_change, s=10)
+        #activity = flight_data[id]['activity']
+        #scatter_ax.scatter(motor_power, soc_rate_of_change, label=activity,s=10)
+        scatter_ax.scatter(motor_power, soc_rate_of_change,s=10)
 
     scatter_ax.set_xlabel("Motor Power")
     scatter_ax.set_ylabel("SOC Rate of Change")
     scatter_ax.set_title("Motor Power vs. SOC Rate of Change Scatterplot")
+
+    #scatter_ax.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
+            #borderaxespad=0, frameon=False)
 
     return scatter_ax

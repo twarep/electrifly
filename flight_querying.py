@@ -121,19 +121,36 @@ class query_flights:
 
         # This query will output a table where each row represents a specific flight at a specific minute (rounded to the nearest minute).
         # For each of these rows, it will show the average state of charge (SOC) for both batteries (bat_1_soc and bat_2_soc) and the average motor power during that minute.
+        # query = f"""
+        #         SELECT
+        #             fw_flight_id,
+        #             activity,
+        #             ROUND(time_min) AS time_min,
+        #             AVG(bat_1_soc) AS bat_1_soc,
+        #             AVG(bat_2_soc) AS bat_2_soc,
+        #             AVG(motor_power) AS motor_power
+        #         FROM
+        #             labeled_activities_view
+        #         WHERE
+        #             fw_flight_id = {str(id)} 
+        #         GROUP BY
+        #             fw_flight_id, activity, ROUND(time_min)
+        #         ORDER BY
+        #             fw_flight_id, activity, time_min;
+
+        #         """
         query = f"""
                 SELECT
-                    flight_id,
-                    ROUND(time_min) AS time_min,
-                    AVG(bat_1_soc) AS bat_1_soc,
-                    AVG(bat_2_soc) AS bat_2_soc,
-                    AVG(motor_power) AS motor_power
+                    fw_flight_id,
+                    activity,
+                    time_min,
+                    bat_1_soc,
+                    bat_2_soc,
+                    motor_power
                 FROM
-                    flightdata_{str(id)}
-                GROUP BY
-                    flight_id, ROUND(time_min)
-                ORDER BY
-                    flight_id, time_min;
+                    labeled_activities_view
+                WHERE
+                    fw_flight_id = {str(id)};
 
                 """
 
@@ -259,7 +276,7 @@ class query_flights:
         for id in flight_ids:
 
             # Get the flight data
-            flights_df = self.get_flight_data_avg_every_min_on_id(["flight_id", "time_min", "motor_power", "bat_1_soc", "bat_2_soc"], id)
+            flights_df = self.get_flight_data_avg_every_min_on_id(["fw_flight_id", "time_min", "motor_power", "bat_1_soc", "bat_2_soc"], id)
 
             # Change to Numpy
             times = flights_df["time_min"].to_numpy()
