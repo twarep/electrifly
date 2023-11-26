@@ -75,6 +75,28 @@ def get_flights(date: bool):
     
     return flight_data
 
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_flights_act_view_dict(date: bool):
+    """
+    The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
+    It returns data depending if the the input parameter specifies only flight_date to be returned.
+
+    Parameters:
+        date: Boolean value to specify if you only want to return a list of flight dates from the DB.
+
+    Returns:
+        if date is TRUE --> list(flight_data.keys()): List of flight dates in form mm/dd/yyyy
+        if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
+    """
+    flights = query_flights()
+
+    flight_data = flights.get_flight_id_and_dates_act_view()
+
+    if date:
+        return list(flight_data.keys())
+    
+    return flight_data
+
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
     log_file = 'scraper_run_log.txt'
@@ -270,7 +292,32 @@ app_ui = ui.page_navbar(
                 ),
             ),
                 
-            ui.nav("Insights", "Statistical Insights in Construction!"),
+            ui.nav("Insights", 
+              #-----------------------------------------------------------------------------------
+              # DIVIDES the page into a row, meaning you can put ui elements side by side
+              #-----------------------------------------------------------------------------------
+                ui.row( 
+                  
+                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Motor Power vs. SOC Rate of Change</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "power_soc_rate_state",
+                                "Choose flight date(s):",
+                                get_flights_act_view_dict(True),
+                                selected=get_flights_act_view_dict(True)[0],
+                                multiple=True,
+                            ),
+                        width=3),
+                        ui.panel_main(
+                            ui.output_plot("power_soc_rate_of_change_scatter_plot")
+                        ),
+                    position='right'
+                    )),  
+                )),
         ),
             
         ),  
@@ -435,6 +482,39 @@ def server(input: Inputs, output: Outputs, session: Session):
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: DATA ANALYSIS SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # START: INSIGHTS SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def power_soc_rate_of_change_scatter_plot():
+        """
+        The function uses the input from the 'power_soc_rate_state' parameter to get data on power for all the selected dates.
+        Returns 
+            power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+        """
+        # Get all flight data
+        flight_data = get_flights_act_view_dict(False)
+
+        flight_dates = input.power_soc_rate_state()
+        flight_ids = []
+
+        # Add flight ids to list
+        for flight_date in flight_dates:
+            flight_ids.append(flight_data[flight_date])
+
+        # Graph the power vs. soc rate of change scatter plot
+        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_ids, flight_dates)
+
+        # Return the power vs. soc rate of change scatter plot
+        return power_soc_rate_of_change_scatterplot
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # END: INSIGHTS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
