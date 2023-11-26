@@ -89,9 +89,6 @@ app_ui = ui.page_navbar(
 
     # UPLOAD SCREEN        ################################################################################################################################
     ui.nav("Upload Data",
-            #data refresh button 
-            ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
-
             #column selection panel
             ui.div(
             # Dropdown with checkboxes
@@ -441,7 +438,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.text
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
-        return f"Last Data Retrieval: {most_recent_run_time}"  
+        return f"Last data retrieval: {most_recent_run_time}"  
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
