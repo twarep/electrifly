@@ -75,7 +75,13 @@ def get_flights(date: bool):
     
     return flight_data
 
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+# Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_most_recent_run_time():
+    log_file = 'scraper_run_log.txt'
+    with open(log_file, 'r') as file:
+        log_content = file.read()
+
+    return log_content
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -85,9 +91,6 @@ app_ui = ui.page_navbar(
 
     # UPLOAD SCREEN        ################################################################################################################################
     ui.nav("Upload Data",
-            #data refresh button 
-            ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
-
             #column selection panel
             ui.div(
             # Dropdown with checkboxes
@@ -102,6 +105,11 @@ app_ui = ui.page_navbar(
             ui.div(ui.output_data_frame("uploaded_data_df"),
                     ui.include_css("bootstrap.css"),
                     style="margin-top: 2px; max-height: 3000px;",),
+                        # Display the most recent run time
+            ui.div(
+                ui.div(ui.output_text("most_recent_run")),
+                style="margin-top: 10px;"
+            ),
            ),
     # DATA ANALYSIS SCREEN ################################################################################################################################
     ui.nav("Data Analysis", 
@@ -457,7 +465,11 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
-        
+    @output
+    @render.text
+    def most_recent_run():
+        most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
+        return f"Last data retrieval: {most_recent_run_time}"  
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
