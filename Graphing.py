@@ -193,6 +193,12 @@ def custom_graph_creation(graph_type: str, flight_id, x_data_label: str, y_data_
     x_ax_data = query_result[x_data_label].to_numpy()
     y_ax_data = query_result[y_data_label].to_numpy()
 
+    # Set min/max x and y
+    max_x = x_ax_data.max()
+    min_x = x_ax_data.min()
+    max_y = y_ax_data.max()
+    min_y = y_ax_data.min()
+
     # Set Plot
     custom_figure = plt.figure()
     custom_ax = custom_figure.add_subplot(1, 1, 1)
@@ -204,6 +210,11 @@ def custom_graph_creation(graph_type: str, flight_id, x_data_label: str, y_data_
 
     elif graph_type == "Scatter Plot":
         custom_ax.scatter(x_ax_data, y_ax_data, s=5, c='blue')
+    
+    # Add labels and legend to plot
+    custom_ax.set_xlabel(x_data_label)
+    custom_ax.set_ylabel(y_data_label)
+    custom_ax.set_title(f"{x_data_label} vs {y_data_label}")
 
     # Return the axis
     return custom_ax

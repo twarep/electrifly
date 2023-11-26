@@ -31,22 +31,15 @@ class query_flights:
         The function uses psycopg2 to get the column name 
         """
 
-        # get the connection string from the environment variable
-        connection_string = os.getenv('DATABASE_URL')
-
-        # connect to the PostgreSQL database
-        conn = psycopg2.connect(connection_string)
-        conn.autocommit = True
-
-        # create a cursor object for the db
-        cur = conn.cursor()
+        # Make database connection
+        engine = self.connect()
 
         # Make and execute the query
-        sql_query = 'SELECT * FROM flightdata_4620 LIMIT 3'
-        cur.execute(sql_query)
+        sql_query = 'SELECT * FROM flightdata_4620 LIMIT 1'
+        flights = pd.read_sql_query(sql_query, engine)
 
         # Save the column names to an array
-        columns = [desc[0] for desc in cur.description]
+        columns = [column for column in flights.columns if column not in ["flight_id"]]
 
         # Return the columns
         return columns
