@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
+import simulation
 import os
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -74,6 +75,14 @@ def get_flights(date: bool):
     
     return flight_data
 
+# Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_most_recent_run_time():
+    log_file = 'scraper_run_log.txt'
+    with open(log_file, 'r') as file:
+        log_content = file.read()
+
+    return log_content
+
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_navbar(
@@ -82,9 +91,6 @@ app_ui = ui.page_navbar(
 
     # UPLOAD SCREEN        ################################################################################################################################
     ui.nav("Upload Data",
-            #data refresh button 
-            ui.download_button("downloadData", "Flight & Weather Data Refresh", style="background-color: #007bff; color: white;"),
-
             #column selection panel
             ui.div(
             # Dropdown with checkboxes
@@ -99,6 +105,11 @@ app_ui = ui.page_navbar(
             ui.div(ui.output_data_frame("uploaded_data_df"),
                     ui.include_css("bootstrap.css"),
                     style="margin-top: 2px; max-height: 3000px;",),
+                        # Display the most recent run time
+            ui.div(
+                ui.div(ui.output_text("most_recent_run")),
+                style="margin-top: 10px;"
+            ),
            ),
     # DATA ANALYSIS SCREEN ################################################################################################################################
     ui.nav("Data Analysis", 
@@ -265,9 +276,31 @@ app_ui = ui.page_navbar(
         ),  
 
     #ML RECOMMENDATIONS SCREEN
-    ui.nav("Recommendations", 
-           "In construction! ML predictions on the way!"),
+    ui.nav("Simulation", 
+            ui.row( 
+                  ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Number of Feasible Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(
+                            ui.output_table("simulation_table", style="width: 70%; height: 300px;")
+                        ),
+                    ),
 
+                    ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(
+                            ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
+                        ),
+                    ),
+                ),
+            
+                
+                
+            ),
+# simulation.result_table_colours
     title="ElectriFly",
 )
 
@@ -278,6 +311,13 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    def data_grid():
+        # Placeholder for the actual data grid
+        return ui.tags.div("Data grid will be here.")
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -425,9 +465,56 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
-        
+    @output
+    @render.text
+    def most_recent_run():
+        most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
+        return f"Last data retrieval: {most_recent_run_time}"  
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # START: SIMULATION SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def simulation_table(): 
+        # Apply conditional formatting
+        #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
+        styled_data = simulation.result_table_colours.style.applymap(style_cell)
+        # new = styled_data.set_table_styles()
+        return styled_data
+    
+    # Define a function to determine the cell background color
+    def style_cell(val):
+        if val == 'red':
+            return "background-color: #c62828; color: #c62828;"
+        elif val == 'yellow':
+            return "background-color: #fdd835; color: #fdd835;"
+        elif val == 'green':
+            return "background-color: #43a047; color: #43a047;"
+
+        #return simulation.result_table_colours
+
+        # flight_date = input.weather_state()
+        # flight_id = get_flights(False)[flight_date]
+        # weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        # return weather_df 
+    
+     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def flight_planning_table(): 
+        # Apply conditional formatting
+        #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
+        flight_plan = simulation.feasible_flights
+        # new = styled_data.set_table_styles()
+        return flight_plan
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # END: SIMULATION SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Get the App Ready and Host
