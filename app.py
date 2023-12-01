@@ -80,6 +80,7 @@ def get_flights_act_view_dict(date: bool):
     """
     The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
     It returns data depending if the the input parameter specifies only flight_date to be returned.
+    Note the flight_data is from the labeled_activities_view
 
     Parameters:
         date: Boolean value to specify if you only want to return a list of flight dates from the DB.
@@ -493,7 +494,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.plot(alt="An interactive plot")
     def power_soc_rate_of_change_scatter_plot():
         """
-        The function uses the input from the 'power_soc_rate_state' parameter to get data on power for all the selected dates.
+        The function uses the input from the 'power_soc_rate_state' parameter to get data on power, soc rate of change, and activities for all the selected dates.
         Returns 
             power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """

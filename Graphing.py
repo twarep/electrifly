@@ -185,7 +185,8 @@ def power_graph(flight_ids: list, flight_dates: list):
 
 def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list):
     """
-    The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of motor_power vs. SOC rate of change. 
+    The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of motor_power vs. SOC rate of change.
+    A legend of activities is also included. 
     Parameters:
         flight_ids: A list of all flight ids form the DB. Index should corresponds with the flight_dates index.
         flight_dates: A list of all flight dates form the DB. Index should corresponds with the flight_ids index.
@@ -211,10 +212,46 @@ def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list):
         # Get the motor power and soc rate
         motor_power = flight_data[id]['motor_power']
         soc_rate_of_change = flight_data[id]['soc_rate_of_change']
-        scatter_ax.scatter(motor_power, soc_rate_of_change, s=10)
 
+        # Get activities
+        activity = flight_data[id]['activity']
+        # Determine unique activities and assign colors or markers
+        all_activities = np.concatenate([flight_data[id]['activity'] for id in flight_ids])
+        unique_activities = np.unique(all_activities)
+        colors = plt.cm.jet(np.linspace(0, 1, len(unique_activities))) # gets colours from the jet colour map
+        activity_color_map = dict(zip(unique_activities, colors)) # assigns each unique activity to a colour
+        # print(unique_activities) # ['NA' 'climb' 'cruise' 'descent' 'landing' 'takeoff']
+
+        scatter_figure = plt.figure()
+        scatter_ax = scatter_figure.add_subplot(1, 1, 1)
+        scatter_figure.tight_layout()
+        
+        # Iterate over each unique activity type
+        for act in unique_activities:
+            # Create a boolean mask where the condition (activity == act) is True
+            # This mask is used to select only the data points corresponding to the current activity
+            act_mask = activity == act
+
+            # Plot the scatter points for the current activity
+            # motor_power[act_mask] and soc_rate_of_change[act_mask] select the data points that correspond to the current activity
+            scatter_ax.scatter(motor_power[act_mask], soc_rate_of_change[act_mask],
+                               s=10, color=activity_color_map[act], label=act)
+
+        
     scatter_ax.set_xlabel("Motor Power")
     scatter_ax.set_ylabel("SOC Rate of Change")
     scatter_ax.set_title("Motor Power vs. SOC Rate of Change Scatterplot")
+
+    # Create a legend with unique entries
+    # Handles are references to the plot elements, and labels are the text descriptions for these elements
+    handles, labels = scatter_ax.get_legend_handles_labels()
+
+    # Create a unique list of handle-label pairs
+    # This is to ensure that each label (and its corresponding handle) appears only once in the legend
+    unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
+
+    # Create and set the legend for the scatter plot
+    # *zip(*unique) unpacks the unique handle-label pairs into separate tuples of handles and labels
+    scatter_ax.legend(*zip(*unique), loc='upper left', fontsize="7", bbox_to_anchor=(1.01, 1.01))
 
     return scatter_ax
