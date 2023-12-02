@@ -183,20 +183,21 @@ def power_graph(flight_ids: list, flight_dates: list):
 
     return power_ax
 
-def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list):
+def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list, activities_filter: list):
     """
     The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of motor_power vs. SOC rate of change.
     A legend of activities is also included. 
     Parameters:
         flight_ids: A list of all flight ids form the DB. Index should corresponds with the flight_dates index.
         flight_dates: A list of all flight dates form the DB. Index should corresponds with the flight_ids index.
+        activities_filter: A list of all flight activities the user would like to filter by.
     Returns:
         scatter_ax: The matplotlib figure axis with stored scatter plot data and other supports.
     """
 
     # Make flight db connection
     flight_db_conn = query_flights()
-    flight_data = flight_db_conn.get_flight_power_soc_rate(flight_ids)
+    flight_data = flight_db_conn.get_flight_power_soc_rate(flight_ids, activities_filter)
 
     # Set Plot
     scatter_figure = plt.figure()
@@ -236,6 +237,11 @@ def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list):
             # motor_power[act_mask] and soc_rate_of_change[act_mask] select the data points that correspond to the current activity
             scatter_ax.scatter(motor_power[act_mask], soc_rate_of_change[act_mask],
                                s=10, color=activity_color_map[act], label=act)
+            
+            # Calculate and plot line of best fit for each activity
+            # a, b = np.polyfit(motor_power[act_mask], soc_rate_of_change[act_mask], 1)
+            # scatter_ax.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
+            #                 color=activity_color_map[act], linestyle='--', linewidth=2)
 
         
     scatter_ax.set_xlabel("Motor Power")

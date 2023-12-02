@@ -23,6 +23,12 @@ import sqlalchemy as sa
 import simulation
 import os
 
+# Getting initial data
+flights = query_flights()
+
+# Get the list of activities from labeled_activities_view
+list_of_activities = flights.get_flight_activities()
+
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
 def connect_to_db(provider: str):
@@ -312,6 +318,12 @@ app_ui = ui.page_navbar(
                                 selected=get_flights_act_view_dict(True)[0],
                                 multiple=True,
                             ),
+                            ui.input_select(
+                                "select_activities",
+                                "Choose activities:",
+                                list_of_activities,
+                                multiple=True,
+                            ),
                         width=3),
                         ui.panel_main(
                             ui.output_plot("power_soc_rate_of_change_scatter_plot")
@@ -502,14 +514,15 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_data = get_flights_act_view_dict(False)
 
         flight_dates = input.power_soc_rate_state()
+        activities_filter = input.select_activities()
         flight_ids = []
 
         # Add flight ids to list
         for flight_date in flight_dates:
             flight_ids.append(flight_data[flight_date])
 
-        # Graph the power vs. soc rate of change scatter plot
-        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_ids, flight_dates)
+        # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
+        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_ids, flight_dates, activities_filter)
 
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot

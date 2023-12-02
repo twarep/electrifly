@@ -248,8 +248,8 @@ class query_flights:
 
         return flight_dict
     
-    # Get Flight Id, Motor power, and SOC rate Function -------------------------------------------------------------------------
-    def get_flight_power_soc_rate(self, flight_ids: list):
+    # Get Flight Id, Motor power, SOC rate, and activities Function -------------------------------------------------------------------------
+    def get_flight_power_soc_rate(self, flight_ids: list, activities_filter: list):
         """
         Function that uses the flight ids to get their respective time, motor power, soc, soc rate of change, and activity columns. 
         Then, returns a dictionary of 
@@ -277,7 +277,28 @@ class query_flights:
             # Append a 0 to soc_rate_of_change to keep the array sizes consistent
             soc_rate_of_change = np.append(soc_rate_of_change, 0) 
 
+            # Filter based on activities_filter 
+            # If certain activities are selected by the user in the filter, update the variables
+            # Otherwise, it will default to all activities in the flight
+            if(len(activities_filter) != 0):
+                filter_mask = np.isin(activity, activities_filter)
+                times = times[filter_mask]
+                motor_power = motor_power[filter_mask]
+                soc = soc[filter_mask]
+                soc_rate_of_change = soc_rate_of_change[filter_mask]
+                activity = activity[filter_mask]
+
             flight_dict[id] = {"time_min": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
+
+            # # Find the minimum time_min value across all entries
+            # min_time_min = min(flight_dict[key]['time_min'] for key in flight_dict)
+
+            # # Create a list of keys for entries that have the minimum time_min value
+            # keys_to_remove = [key for key in flight_dict if flight_dict[key]['time_min'] == min_time_min]
+
+            # # Remove these entries from the dictionary
+            # for key in keys_to_remove:
+            #     del flight_dict[key]
 
         return flight_dict
 
@@ -335,6 +356,26 @@ class query_flights:
         engine.dispose()
 
         return num_circuits
+    
+    def get_flight_activities(self):
+        """
+            Function that gets a list of all possible unique flight activities from the labeled_activities_view
+            Query: select distinct activity from labeled_activities_view;
+        """
+        engine = self.connect()
+        query = f"""select distinct activity from labeled_activities_view;"""
+
+        # Put the result of the query in a list
+        activities_list = pd.read_sql_query(query, engine).to_numpy().tolist()
+        result_list = []
+
+        for i in range(len(activities_list)):
+            result_list.append(activities_list[i][0])
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        return result_list
 
 
 
