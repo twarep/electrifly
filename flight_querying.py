@@ -126,13 +126,7 @@ class query_flights:
 
         # Make query
         query = f"""
-                SELECT
-                    fw_flight_id,
-                    activity,
-                    time_min,
-                    bat_1_soc,
-                    bat_2_soc,
-                    motor_power
+                SELECT *
                 FROM
                     labeled_activities_view
                 WHERE
@@ -279,7 +273,38 @@ class query_flights:
             flight_dict[id] = {"time_min": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change}
 
         return flight_dict
+   
+    # Get Flight Id, Temperature and SOC rate Function -------------------------------------------------------------------------
+    def get_flight_temperature_soc_rate(self, flight_ids: list):
+        """
+        Function that uses the flight ids to get their respective time, temperature, soc, and soc rate of change columns. 
+        Then, returns a dictionary of 
+        fw_flight_id: {time: [], temperature: [], soc: [], soc_rate_of_change: []}
+        """
 
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get time, Temperature, soc, and soc rate data for the specific flight(s)
+        for id in flight_ids:
+
+            # Get the flight data
+            flights_df = self.get_flight_data_every_half_min_on_id(["fw_flight_id", "time_min", "temperature", "bat_1_soc", "bat_2_soc"], id)
+
+            # Change to Numpy
+            times = flights_df["time_min"].to_numpy()
+            temperature = flights_df["temperature"].to_numpy()
+            soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
+
+            # Calculate SOC rate of change
+            # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+            soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+            # Append a 0 to soc_rate_of_change to keep the array sizes consistent
+            soc_rate_of_change = np.append(soc_rate_of_change, 0) 
+
+            flight_dict[id] = {"time_min": times, "temperature": temperature, "soc": soc, "soc_rate_of_change": soc_rate_of_change}
+
+        return flight_dict
 
     def get_number_of_circuits(self, flight_id):
         """
