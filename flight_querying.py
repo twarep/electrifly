@@ -129,14 +129,19 @@ class query_flights:
                 SELECT
                     fw_flight_id,
                     activity,
-                    time_min,
-                    bat_1_soc,
-                    bat_2_soc,
-                    motor_power
+                    ROUND(time_min*2)/2 AS time_min_rounded,
+                    AVG(bat_1_soc) AS bat_1_soc,
+                    AVG(bat_2_soc) AS bat_2_soc,
+                    AVG(motor_power) AS motor_power
                 FROM
                     labeled_activities_view
                 WHERE
-                    fw_flight_id = {str(id)};
+                    fw_flight_id = {str(id)} 
+                GROUP BY
+                    fw_flight_id, activity, time_min_rounded
+                ORDER BY
+                    fw_flight_id, activity, time_min_rounded;
+
                 """
 
         # Select the data based on the query
@@ -266,7 +271,7 @@ class query_flights:
             flights_df = self.get_flight_data_every_half_min_on_id(["fw_flight_id", "time_min", "motor_power", "bat_1_soc", "bat_2_soc", "activity"], id)
 
             # Change to Numpy
-            times = flights_df["time_min"].to_numpy()
+            times = flights_df["time_min_rounded"].to_numpy()
             motor_power = flights_df["motor_power"].to_numpy()
             activity = flights_df["activity"].to_numpy()
             soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
@@ -288,7 +293,7 @@ class query_flights:
                 soc_rate_of_change = soc_rate_of_change[filter_mask]
                 activity = activity[filter_mask]
 
-            flight_dict[id] = {"time_min": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
+            flight_dict[id] = {"time_min_rounded": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
 
             # # Find the minimum time_min value across all entries
             # min_time_min = min(flight_dict[key]['time_min'] for key in flight_dict)
