@@ -239,9 +239,9 @@ def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list, activities_
                                s=10, color=activity_color_map[act], label=act)
             
             # Calculate and plot line of best fit for each activity
-            # a, b = np.polyfit(motor_power[act_mask], soc_rate_of_change[act_mask], 1)
-            # scatter_ax.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
-            #                 color=activity_color_map[act], linestyle='--', linewidth=2)
+            a, b = np.polyfit(motor_power[act_mask], soc_rate_of_change[act_mask], 1)
+            scatter_ax.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
+                            color=activity_color_map[act], linestyle='--', linewidth=2)
 
         
     scatter_ax.set_xlabel("Motor Power")

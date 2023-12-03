@@ -117,12 +117,11 @@ class query_flights:
     
     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
     def get_flight_data_every_half_min_on_id(self, columns: list, id: int):
-
+        """
+        The function runs a query to get the fw_flight_id, activity, time, soc, and power from labeled activities view in 30 sec intervals.
+        """
         # Make database connection
         engine = self.connect()
-
-        # # Unravel list of columns to be a string to input
-        # str_column = "".join([f"{column}, " for column in columns])[:-2]
 
         # Make query
         query = f"""
@@ -381,6 +380,41 @@ class query_flights:
         engine.dispose()
 
         return result_list
+    
+    def get_soc_roc_stats_by_id(self, flight_id):
+        """
+        Function that uses a flight id to get the soc rate of change and calculates its stats (min, max, mean, standard deviation, variance). 
+        Then, returns the statistics in a dataframe.
+        """
+        engine = self.connect()
+
+        # Get the flight data
+        result_df = self.get_flight_data_every_half_min_on_id(["fw_flight_id", "time_min_rounded", "bat_1_soc", "bat_2_soc", "activity"], flight_id)
+
+        # Change to Numpy
+        times = result_df["time_min_rounded"].to_numpy()
+        activity = result_df["activity"].to_numpy()
+        soc = (result_df["bat_1_soc"].to_numpy() + result_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
+
+        # Calculate SOC rate of change
+        # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+        soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+        # Append a 0 to soc_rate_of_change to keep the array sizes consistent
+        soc_rate_of_change = np.append(soc_rate_of_change, 0)
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Add activity and SOC information into dataframe
+        df = pd.DataFrame({
+            "Activity": activity,
+            "SOC Rate of Change": soc_rate_of_change
+        })
+
+        # Compute max, min, mean, standard deviation, and variance, and reset index
+        statistics_df = df.groupby('Activity')['SOC Rate of Change'].agg(['max', 'min', 'mean', 'std', 'var']).reset_index()
+
+        return statistics_df
 
 
 

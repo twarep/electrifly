@@ -101,7 +101,7 @@ def get_flights_act_view_dict(date: bool):
 
     if date:
         return list(flight_data.keys())
-    
+    print(flight_data)
     return flight_data
 
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -329,6 +329,25 @@ app_ui = ui.page_navbar(
                             ui.output_plot("power_soc_rate_of_change_scatter_plot")
                         ),
                     position='right'
+                    )),
+                    ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Plane Operations vs. SOC Rate of Change Statistics </b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "soc_roc_state",
+                                    "Choose flight date(s):",
+                                    get_flights_act_view_dict(True),
+                                    selected=get_flights_act_view_dict(True)[0],
+                                    multiple=False,
+                                ),
+                            width=3),
+                            ui.panel_main(
+                                ui.output_table("soc_roc_table")
+                            ),
+                        position='right'
                     )),  
                 )),
         ),
@@ -526,6 +545,24 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def soc_roc_table(): 
+        """
+        The function uses the input from the 'soc_roc_state' parameter to get data on soc rate of change stats per activity for the selected date.
+        Returns 
+            soc_roc_df: a dataframe that will output as a table.
+        """
+        # Get the flight ID corresponding to the chosen date
+        flight_date = input.soc_roc_state()
+
+        flight_id = get_flights_act_view_dict(False)[flight_date] #########
+
+        soc_roc_df = query_flights().get_soc_roc_stats_by_id(flight_id)
+
+        return soc_roc_df 
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: INSIGHTS SCREEN 
