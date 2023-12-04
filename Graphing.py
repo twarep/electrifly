@@ -261,3 +261,43 @@ def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list, activities_
     scatter_ax.legend(*zip(*unique), loc='upper left', fontsize="7", bbox_to_anchor=(1.01, 1.01))
 
     return scatter_ax
+
+def temp_soc_rate_scatterplot(flight_ids: list, flight_dates: list):
+    """
+    The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of temperature vs. SOC rate of change.
+    Parameters:
+        flight_ids: A list of all flight ids form the DB. Index should corresponds with the flight_dates index.
+        flight_dates: A list of all flight dates form the DB. Index should corresponds with the flight_ids index.
+    Returns:
+        scatter_ax: The matplotlib figure axis with stored scatter plot data and other supports.
+    """
+
+    # Make flight db connection
+    flight_db_conn = query_flights()
+    flight_data = flight_db_conn.get_temp_and_soc_rate(flight_ids)
+
+    # Set Plot
+    scatter_figure = plt.figure()
+    scatter_ax = scatter_figure.add_subplot(1, 1, 1)
+    scatter_figure.tight_layout()
+
+    # Plot the graphs
+    for i in range(0, len(flight_ids)):
+
+        # Define the id
+        id = flight_ids[i]
+        date = flight_dates[i]
+
+        # Get the temp and soc rate
+        temp = flight_data[id]['temperature']
+        soc_rate_of_change = flight_data[id]['soc_rate_of_change']
+        scatter_ax.scatter(temp, soc_rate_of_change, s=10, label=date)
+
+    scatter_ax.set_xlabel("Temperature")
+    scatter_ax.set_ylabel("SOC Rate of Change")
+    scatter_ax.set_title("Temperature vs. SOC Rate of Change Scatterplot")
+
+    scatter_ax.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
+            borderaxespad=0, frameon=False)
+
+    return scatter_ax

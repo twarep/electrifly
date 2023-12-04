@@ -349,6 +349,28 @@ app_ui = ui.page_navbar(
                             ),
                         position='right'
                     )),  
+                ),
+                ui.row( 
+                  
+                  ui.column(12, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Temperature vs. SOC Rate of Change</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "temp_soc_rate_state",
+                                "Choose flight date(s):",
+                                get_flights(True),
+                                selected=get_flights(True)[0],
+                                multiple=True,
+                            ),
+                        width=3),
+                        ui.panel_main(
+                            ui.output_plot("temp_soc_rate_of_change_scatter_plot")
+                        ),
+                    position='right'
+                    )) 
                 )),
         ),
             
@@ -563,6 +585,31 @@ def server(input: Inputs, output: Outputs, session: Session):
         soc_roc_df = query_flights().get_soc_roc_stats_by_id(flight_id)
 
         return soc_roc_df 
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def temp_soc_rate_of_change_scatter_plot():
+        """
+        The function uses the input from the 'temp_soc_rate_state' parameter to get data on temp and soc rate of change for all the selected dates.
+        Returns 
+            temp_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+        """
+        # Get all flight data
+        flight_data = get_flights(False)
+
+        flight_dates = input.temp_soc_rate_state()
+        flight_ids = []
+
+        # Add flight ids to list
+        for flight_date in flight_dates:
+            flight_ids.append(flight_data[flight_date])
+
+        # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
+        temp_soc_rate_of_change_scatterplot = Graphing.temp_soc_rate_scatterplot(flight_ids, flight_dates)
+
+        # Return the power vs. soc rate of change scatter plot
+        return temp_soc_rate_of_change_scatterplot
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: INSIGHTS SCREEN 
