@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+import sqlalchemy as sa
 import pandas as pd
 import numpy as np
 import os
@@ -22,6 +23,31 @@ class query_flights:
         engine = create_engine(engine_string)
 
         return engine
+    
+
+    # Check if the database has the specified table
+    def check_for_table(self, table: str):
+        """
+        The function takes a table name and checks whether that table actually exists in the database.
+        If it does, the function will return True, else False.
+        """
+
+        # Make database connection
+        engine = self.connect()
+        inspection = sa.inspect(engine)
+
+        # Make boolean variable to hold true or false.
+        table_exists = False
+
+        # Check if the table exists. If it does, return True, else False.
+        if inspection.has_table(table, schema="public"):
+            table_exists = True
+        
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return True or False based on check.
+        return table_exists
 
     
     # Getting the flight data column names -------------------------------------------------------------------------------------------------
@@ -250,7 +276,8 @@ class query_flights:
         engine = self.connect()
 
         # Make the query
-        query = f"""SELECT tfa.time_min AS Time, 
+        query = f"""SELECT tfa.time_min AS Time,
+                        tfa.flight_id AS id, 
                         tfa.activity AS Operations, 
                         fl.bat_1_soc AS SOC,
                         fl.bat_1_avg_cell_temp AS Cell_Temperature,
@@ -262,9 +289,9 @@ class query_flights:
                         fl.ground_speed AS Ground_Speed,
                         fl.oat AS Outside_Air_Temperature,
                         fl.inverter_temp AS Inverter_Temperature
-                    FROM test_flight_activites \"tfa\" 
+                    FROM flight_activities \"tfa\" 
                     INNER JOIN flightdata_{flight} \"fl\" 
-                        ON tfa.time_min=fl.time_min 
+                        ON tfa.time_min=fl.time_min AND tfa.flight_id=fl.flight_id
                     WHERE fl.flight_id={flight}"""
 
         # Select the data based on the query
