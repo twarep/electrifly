@@ -301,3 +301,178 @@ def temp_soc_rate_scatterplot(flight_ids: list, flight_dates: list):
             borderaxespad=0, frameon=False)
 
     return scatter_ax
+
+def custom_graph_creation(graph_type: str, flight_id, x_data_label: str, y_data_label: str):
+
+    # Make the query connection
+    flight_db_conn = query_flights()
+    query_result = flight_db_conn.get_flight_data_on_id([x_data_label, y_data_label], flight_id)
+    x_ax_data = query_result[x_data_label].to_numpy()
+    y_ax_data = query_result[y_data_label].to_numpy()
+
+    # Set Plot
+    custom_figure = plt.figure()
+    custom_ax = custom_figure.add_subplot(1, 1, 1)
+    custom_figure.tight_layout()
+
+    # For each graph type graph different things.
+    if graph_type == "Line Plot":
+        custom_ax.plot(x_ax_data, y_ax_data)
+
+    elif graph_type == "Scatter Plot":
+        custom_ax.scatter(x_ax_data, y_ax_data, s=5, c='blue')
+    
+    # Add labels and legend to plot
+    custom_ax.set_xlabel(x_data_label)
+    custom_ax.set_ylabel(y_data_label)
+    custom_ax.set_title(f"Custom graph comparing: {x_data_label} vs {y_data_label}")
+
+    # Return the axis
+    return custom_ax
+
+
+def custom_graph_creation(graph_type: str, flight_id, x_data_label: str, y_data_label: str):
+
+    # Make the query connection
+    flight_db_conn = query_flights()
+    query_result = flight_db_conn.get_flight_data_on_id([x_data_label, y_data_label], flight_id)
+    x_ax_data = query_result[x_data_label].to_numpy()
+    y_ax_data = query_result[y_data_label].to_numpy()
+
+    # Set Plot
+    custom_figure = plt.figure()
+    custom_ax = custom_figure.add_subplot(1, 1, 1)
+    custom_figure.tight_layout()
+
+    # For each graph type graph different things.
+    if graph_type == "Line Plot":
+        custom_ax.plot(x_ax_data, y_ax_data)
+
+    elif graph_type == "Scatter Plot":
+        custom_ax.scatter(x_ax_data, y_ax_data, s=5, c='blue')
+    
+    # Add labels and legend to plot
+    custom_ax.set_xlabel(x_data_label)
+    custom_ax.set_ylabel(y_data_label)
+    custom_ax.set_title(f"Custom graph comparing: {x_data_label} vs {y_data_label}")
+
+    # Return the axis
+    return custom_ax
+def power_soc_rate_scatterplot(flight_ids: list, flight_dates: list, activities_filter: list):
+    """
+    The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of motor_power vs. SOC rate of change.
+    A legend of activities is also included. 
+    Parameters:
+        flight_ids: A list of all flight ids form the DB. Index should corresponds with the flight_dates index.
+        flight_dates: A list of all flight dates form the DB. Index should corresponds with the flight_ids index.
+        activities_filter: A list of all flight activities the user would like to filter by.
+    Returns:
+        scatter_ax: The matplotlib figure axis with stored scatter plot data and other supports.
+    """
+
+    # Make flight db connection
+    flight_db_conn = query_flights()
+    flight_data = flight_db_conn.get_flight_power_soc_rate(flight_ids, activities_filter)
+
+    # Set Plot
+    scatter_figure = plt.figure()
+    scatter_ax = scatter_figure.add_subplot(1, 1, 1)
+    scatter_figure.tight_layout()
+
+    # Plot the graphs
+    for i in range(0, len(flight_ids)):
+
+        # Define the id
+        id = flight_ids[i]
+
+        # Get the motor power and soc rate
+        motor_power = flight_data[id]['motor_power']
+        soc_rate_of_change = flight_data[id]['soc_rate_of_change']
+
+        # Get activities
+        activity = flight_data[id]['activity']
+        # Determine unique activities and assign colors or markers
+        all_activities = np.concatenate([flight_data[id]['activity'] for id in flight_ids])
+        unique_activities = np.unique(all_activities)
+        colors = plt.cm.jet(np.linspace(0, 1, len(unique_activities))) # gets colours from the jet colour map
+        activity_color_map = dict(zip(unique_activities, colors)) # assigns each unique activity to a colour
+        # print(unique_activities) # ['NA' 'climb' 'cruise' 'descent' 'landing' 'takeoff']
+
+        scatter_figure = plt.figure()
+        scatter_ax = scatter_figure.add_subplot(1, 1, 1)
+        scatter_figure.tight_layout()
+        
+        # Iterate over each unique activity type
+        for act in unique_activities:
+            # Create a boolean mask where the condition (activity == act) is True
+            # This mask is used to select only the data points corresponding to the current activity
+            act_mask = activity == act
+
+            # Plot the scatter points for the current activity
+            # motor_power[act_mask] and soc_rate_of_change[act_mask] select the data points that correspond to the current activity
+            scatter_ax.scatter(motor_power[act_mask], soc_rate_of_change[act_mask],
+                               s=10, color=activity_color_map[act], label=act)
+            
+            # Calculate and plot line of best fit for each activity
+            a, b = np.polyfit(motor_power[act_mask], soc_rate_of_change[act_mask], 1)
+            scatter_ax.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
+                            color=activity_color_map[act], linestyle='--', linewidth=2)
+
+        
+    scatter_ax.set_xlabel("Motor Power")
+    scatter_ax.set_ylabel("SOC Rate of Change")
+    scatter_ax.set_title("Motor Power vs. SOC Rate of Change Scatterplot")
+
+    # Create a legend with unique entries
+    # Handles are references to the plot elements, and labels are the text descriptions for these elements
+    handles, labels = scatter_ax.get_legend_handles_labels()
+
+    # Create a unique list of handle-label pairs
+    # This is to ensure that each label (and its corresponding handle) appears only once in the legend
+    unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
+
+    # Create and set the legend for the scatter plot
+    # *zip(*unique) unpacks the unique handle-label pairs into separate tuples of handles and labels
+    scatter_ax.legend(*zip(*unique), loc='upper left', fontsize="7", bbox_to_anchor=(1.01, 1.01))
+
+    return scatter_ax
+
+def temp_soc_rate_scatterplot(flight_ids: list, flight_dates: list):
+    """
+    The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of temperature vs. SOC rate of change.
+    Parameters:
+        flight_ids: A list of all flight ids form the DB. Index should corresponds with the flight_dates index.
+        flight_dates: A list of all flight dates form the DB. Index should corresponds with the flight_ids index.
+    Returns:
+        scatter_ax: The matplotlib figure axis with stored scatter plot data and other supports.
+    """
+
+    # Make flight db connection
+    flight_db_conn = query_flights()
+    flight_data = flight_db_conn.get_temp_and_soc_rate(flight_ids)
+
+    # Set Plot
+    scatter_figure = plt.figure()
+    scatter_ax = scatter_figure.add_subplot(1, 1, 1)
+    scatter_figure.tight_layout()
+
+    # Plot the graphs
+    for i in range(0, len(flight_ids)):
+
+        # Define the id
+        id = flight_ids[i]
+        date = flight_dates[i]
+
+        # Get the temp and soc rate
+        temp = flight_data[id]['temperature']
+        soc_rate_of_change = flight_data[id]['soc_rate_of_change']
+        scatter_ax.scatter(temp, soc_rate_of_change, s=10, label=date)
+
+    scatter_ax.set_xlabel("Temperature")
+    scatter_ax.set_ylabel("SOC Rate of Change")
+    scatter_ax.set_title("Temperature vs. SOC Rate of Change Scatterplot")
+
+    scatter_ax.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
+            borderaxespad=0, frameon=False)
+
+    return scatter_ax

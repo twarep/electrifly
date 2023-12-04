@@ -10,10 +10,8 @@ import shinyswatch
 import numpy as np
 import pandas as pd
 import asyncio
-import matplotlib.pyplot as plt
 from datetime import date
 import numpy as np
-import matplotlib.pyplot as plt
 from os import listdir, getenv
 from os.path import isfile, join
 from dotenv import load_dotenv
@@ -25,6 +23,9 @@ import os
 
 # Getting initial data
 flights = query_flights()
+
+# Get the column names from the flight data
+columns = flights.get_flight_columns()
 
 # Get the list of activities from labeled_activities_view
 list_of_activities = flights.get_flight_activities()
@@ -273,7 +274,43 @@ app_ui = ui.page_navbar(
                 ),
 
                 ui.row( 
-                    ui.column(6), # buffer for the left side
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Number of Circuits</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "select_flights",
+                                    "Choose flight date:",
+                                    get_flights(True),
+                                    multiple=False,
+                                ),
+                                ui.input_select(
+                                    "select_graph",
+                                    "Choose the graph type:",
+                                    ["Line Plot", "Scatter Plot"],
+                                    multiple=False,
+                                ),
+                                ui.input_select(
+                                    "select_x_variable",
+                                    "Choose the Independent (X) variable:",
+                                    columns,
+                                    multiple=False,
+                                ),
+                                ui.input_select(
+                                    "select_y_variable",
+                                    "Choose the Dependent (Y) variable:",
+                                    columns,
+                                    multiple=False,
+                                ),
+                                width=3
+                            ),
+                            ui.panel_main(
+                                ui.output_plot("custom_graph"),
+                            ),
+                        )
+                    ), # buffer for the left side
                     # This is the start of the code for the number of circuits #################################################################
                     ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
                         div(HTML("<hr>")),
@@ -288,7 +325,7 @@ app_ui = ui.page_navbar(
                                     selected=get_flights(True)[0],
                                     multiple=False,
                                 ),
-                                    width=3
+                                width=3
                             ),
                             ui.panel_main(
                                 ui.output_text("num_circuits"),
@@ -429,6 +466,25 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_id = get_flights(False)[flight_date]
         weather_df = query_weather().get_weather_by_flight_id(flight_id)
         return weather_df 
+
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot()
+    def custom_graph():
+
+        # Get all the inputs
+        flight_date = input.select_flights()
+        graph_type = input.select_graph()
+        x_variable = input.select_x_variable()
+        y_variable = input.select_y_variable()
+        flight_id = get_flights(False)[flight_date]
+
+        # Make the graph
+        created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variable, y_variable)
+
+        # Return the custom graph
+        return created_custom_graph         
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------

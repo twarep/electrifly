@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
 import os
+import psycopg2
 
 
 class query_flights:
@@ -21,6 +22,27 @@ class query_flights:
         engine = create_engine(engine_string)
 
         return engine
+
+    
+    # Getting the flight data column names -------------------------------------------------------------------------------------------------
+    # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
+    def get_flight_columns(self):
+        """
+        The function uses psycopg2 to get the column name 
+        """
+
+        # Make database connection
+        engine = self.connect()
+
+        # Make and execute the query
+        sql_query = 'SELECT * FROM flightdata_4620 LIMIT 1'
+        flights = pd.read_sql_query(sql_query, engine)
+
+        # Save the column names to an array
+        columns = [column for column in flights.columns if column not in ["flight_id"]]
+
+        # Return the columns
+        return columns
     
 
     # Get Flights Function -----------------------------------------------------------------------------------------------------------------
