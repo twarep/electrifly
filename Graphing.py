@@ -182,3 +182,32 @@ def power_graph(flight_ids: list, flight_dates: list):
             borderaxespad=0, frameon=False)
 
     return power_ax
+
+
+def custom_graph_creation(graph_type: str, flight_id, x_data_label: str, y_data_label: str):
+
+    # Make the query connection
+    flight_db_conn = query_flights()
+    query_result = flight_db_conn.get_flight_data_on_id([x_data_label, y_data_label], flight_id)
+    x_ax_data = query_result[x_data_label].to_numpy()
+    y_ax_data = query_result[y_data_label].to_numpy()
+
+    # Set Plot
+    custom_figure = plt.figure()
+    custom_ax = custom_figure.add_subplot(1, 1, 1)
+    custom_figure.tight_layout()
+
+    # For each graph type graph different things.
+    if graph_type == "Line Plot":
+        custom_ax.plot(x_ax_data, y_ax_data)
+
+    elif graph_type == "Scatter Plot":
+        custom_ax.scatter(x_ax_data, y_ax_data, s=5, c='blue')
+    
+    # Add labels and legend to plot
+    custom_ax.set_xlabel(x_data_label)
+    custom_ax.set_ylabel(y_data_label)
+    custom_ax.set_title(f"Custom graph comparing: {x_data_label} vs {y_data_label}")
+
+    # Return the axis
+    return custom_ax
