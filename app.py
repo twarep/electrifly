@@ -27,6 +27,8 @@ flights = query_flights()
 # Get the column names from the flight data
 columns = flights.get_flight_columns()
 
+# Get the list of activities from labeled_activities_view
+list_of_activities = flights.get_flight_activities()
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
@@ -78,6 +80,29 @@ def get_flights(date: bool):
     if date:
         return list(flight_data.keys())
     
+    return flight_data
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_flights_act_view_dict(date: bool):
+    """
+    The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
+    It returns data depending if the the input parameter specifies only flight_date to be returned.
+    Note the flight_data is from the labeled_activities_view
+
+    Parameters:
+        date: Boolean value to specify if you only want to return a list of flight dates from the DB.
+
+    Returns:
+        if date is TRUE --> list(flight_data.keys()): List of flight dates in form mm/dd/yyyy
+        if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
+    """
+    flights = query_flights()
+
+    flight_data = flights.get_flight_id_and_dates_act_view()
+
+    if date:
+        return list(flight_data.keys())
+    print(flight_data)
     return flight_data
 
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -311,7 +336,79 @@ app_ui = ui.page_navbar(
                 ),
             ),
                 
-            ui.nav("Insights", "Statistical Insights in Construction!"),
+            ui.nav("Insights", 
+              #-----------------------------------------------------------------------------------
+              # DIVIDES the page into a row, meaning you can put ui elements side by side
+              #-----------------------------------------------------------------------------------
+                ui.row( 
+                  
+                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Motor Power vs. SOC Rate of Change</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "power_soc_rate_state",
+                                "Choose flight date(s):",
+                                get_flights_act_view_dict(True),
+                                selected=get_flights_act_view_dict(True)[0],
+                                multiple=True,
+                            ),
+                            ui.input_select(
+                                "select_activities",
+                                "Choose activities:",
+                                list_of_activities,
+                                multiple=True,
+                            ),
+                        width=3),
+                        ui.panel_main(
+                            ui.output_plot("power_soc_rate_of_change_scatter_plot")
+                        ),
+                    position='right'
+                    )),
+                    ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Plane Operations vs. SOC Rate of Change Statistics </b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "soc_roc_state",
+                                    "Choose flight date(s):",
+                                    get_flights_act_view_dict(True),
+                                    selected=get_flights_act_view_dict(True)[0],
+                                    multiple=False,
+                                ),
+                            width=3),
+                            ui.panel_main(
+                                ui.output_table("soc_roc_table")
+                            ),
+                        position='right'
+                    )),  
+                ),
+                ui.row( 
+                  
+                  ui.column(12, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Temperature vs. SOC Rate of Change</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.layout_sidebar(
+                        ui.panel_sidebar(
+                            ui.input_select(
+                                "temp_soc_rate_state",
+                                "Choose flight date(s):",
+                                get_flights(True),
+                                selected=get_flights(True)[0],
+                                multiple=True,
+                            ),
+                        width=3),
+                        ui.panel_main(
+                            ui.output_plot("temp_soc_rate_of_change_scatter_plot")
+                        ),
+                    position='right'
+                    )) 
+                )),
         ),
             
         ),  
@@ -495,6 +592,83 @@ def server(input: Inputs, output: Outputs, session: Session):
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: DATA ANALYSIS SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # START: INSIGHTS SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def power_soc_rate_of_change_scatter_plot():
+        """
+        The function uses the input from the 'power_soc_rate_state' parameter to get data on power, soc rate of change, and activities for all the selected dates.
+        Returns 
+            power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+        """
+        # Get all flight data
+        flight_data = get_flights_act_view_dict(False)
+
+        flight_dates = input.power_soc_rate_state()
+        activities_filter = input.select_activities()
+        flight_ids = []
+
+        # Add flight ids to list
+        for flight_date in flight_dates:
+            flight_ids.append(flight_data[flight_date])
+
+        # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
+        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_ids, flight_dates, activities_filter)
+
+        # Return the power vs. soc rate of change scatter plot
+        return power_soc_rate_of_change_scatterplot
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def soc_roc_table(): 
+        """
+        The function uses the input from the 'soc_roc_state' parameter to get data on soc rate of change stats per activity for the selected date.
+        Returns 
+            soc_roc_df: a dataframe that will output as a table.
+        """
+        # Get the flight ID corresponding to the chosen date
+        flight_date = input.soc_roc_state()
+
+        flight_id = get_flights_act_view_dict(False)[flight_date] #########
+
+        soc_roc_df = query_flights().get_soc_roc_stats_by_id(flight_id)
+
+        return soc_roc_df 
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def temp_soc_rate_of_change_scatter_plot():
+        """
+        The function uses the input from the 'temp_soc_rate_state' parameter to get data on temp and soc rate of change for all the selected dates.
+        Returns 
+            temp_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+        """
+        # Get all flight data
+        flight_data = get_flights(False)
+
+        flight_dates = input.temp_soc_rate_state()
+        flight_ids = []
+
+        # Add flight ids to list
+        for flight_date in flight_dates:
+            flight_ids.append(flight_data[flight_date])
+
+        # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
+        temp_soc_rate_of_change_scatterplot = Graphing.temp_soc_rate_scatterplot(flight_ids, flight_dates)
+
+        # Return the power vs. soc rate of change scatter plot
+        return temp_soc_rate_of_change_scatterplot
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # END: INSIGHTS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
