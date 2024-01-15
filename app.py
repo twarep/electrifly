@@ -30,6 +30,7 @@ columns = flights.get_flight_columns()
 # Get the list of activities from labeled_activities_view
 list_of_activities = flights.get_flight_activities()
 
+
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
 def connect_to_db(provider: str):
@@ -61,7 +62,7 @@ def uploaded_cols():
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_flights(date: bool):
+def get_flights(date: bool, columns=["id", "flight_date"], table="flights"):
     """
     The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
     It returns data depending if the the input parameter specifies only flight_date to be returned.
@@ -75,35 +76,13 @@ def get_flights(date: bool):
     """
     flights = query_flights()
 
-    flight_data = flights.get_flight_id_and_dates()
+    flight_data = flights.get_flight_id_and_dates(columns, table)
 
     if date:
         return list(flight_data.keys())
     
     return flight_data
 
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_flights_act_view_dict(date: bool):
-    """
-    The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
-    It returns data depending if the the input parameter specifies only flight_date to be returned.
-    Note the flight_data is from the labeled_activities_view
-
-    Parameters:
-        date: Boolean value to specify if you only want to return a list of flight dates from the DB.
-
-    Returns:
-        if date is TRUE --> list(flight_data.keys()): List of flight dates in form mm/dd/yyyy
-        if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
-    """
-    flights = query_flights()
-
-    flight_data = flights.get_flight_id_and_dates_act_view()
-
-    if date:
-        return list(flight_data.keys())
-    print(flight_data)
-    return flight_data
 
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
@@ -114,44 +93,62 @@ def get_most_recent_run_time():
     return log_content
 
 
+# Initialize all the flight dates.
+all_flight_dates = get_flights(True)
+act_view_flight_dates = get_flights(True, ["fw_flight_id", "flight_date"], "labeled_activities_view")
+all_flight_data = get_flights(False)
+act_view_all_data = get_flights(False, ["fw_flight_id", "flight_date"], "labeled_activities_view")
+
+
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_navbar(
     # {"style": "color: blue"},
     shinyswatch.theme.zephyr(),
-
-    # UPLOAD SCREEN        ################################################################################################################################
+    # ===============================================================================================================================================================
+    # START: UPLOAD SCREEN
+    # ===============================================================================================================================================================
     ui.nav("Upload Data",
-            #column selection panel
-            ui.div(
+        # Column selection panel
+        ui.div(
             # Dropdown with checkboxes
-            ui.input_select("selected_cols", "Select Columns to Preview",choices= list(uploaded_cols().columns), multiple=True),
-            style="margin-top:40px;"),  
-
-            #table header
-            ui.div(
-                ui.include_css("bootstrap.css"), ui.h4("Most Recent Flight and Weather Data Records"), 
-                style="margin-top: 3px;"),  
-            #table ouptut
-            ui.div(ui.output_data_frame("uploaded_data_df"),
-                    ui.include_css("bootstrap.css"),
-                    style="margin-top: 2px; max-height: 3000px;",),
-                        # Display the most recent run time
-            ui.div(
-                ui.div(ui.output_text("most_recent_run")),
-                style="margin-top: 10px;"
-            ),
-           ),
-    # DATA ANALYSIS SCREEN ################################################################################################################################
+            ui.input_select("selected_cols", "Select Columns to Preview", choices=list(uploaded_cols().columns), multiple=True),
+            style="margin-top:40px;"
+        ),  
+        # Table header
+        ui.div(
+            ui.include_css("bootstrap.css"), ui.h4("Most Recent Flight and Weather Data Records"), 
+            style="margin-top: 3px;"
+        ), 
+        # Table ouptut
+        ui.div(
+            ui.output_data_frame("uploaded_data_df"),
+            ui.include_css("bootstrap.css"),
+            style="margin-top: 2px; max-height: 3000px;"
+        ),
+        # Display the most recent run time
+        ui.div(
+            ui.div(ui.output_text("most_recent_run")),
+            style="margin-top: 10px;"
+        ),
+    ),
+    # ===============================================================================================================================================================
+    # End: UPLOAD SCREEN
+    # ===============================================================================================================================================================
+    # ===============================================================================================================================================================
+    # DATA ANALYSIS SCREEN 
+    # ===============================================================================================================================================================
     ui.nav("Data Analysis", 
         ui.include_css("bootstrap.css"),
-            x.ui.card(
-                x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-                x.ui.card_body("""Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. 
-                               Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.""")
-                ),
-            #This creates the tabs between the recommended graph screen and the insights
+        x.ui.card(
+            x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
+            x.ui.card_body("""Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. 
+                            Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.""")
+        ),
+        # This creates the tabs between the recommended graph screen and the insights
         ui.navset_tab(
-            # RECOMMENDED GRAPHS TAB ################################################################################################################################
+            # ===============================================================================================================================================================
+            # RECOMMENDED GRAPHS TAB
+            # ===============================================================================================================================================================
             ui.nav("Recommended Graphs", 
               #-----------------------------------------------------------------------------------
               # DIVIDES the page into a row, meaning you can put ui elements side by side
@@ -166,8 +163,8 @@ app_ui = ui.page_navbar(
                             ui.input_select(
                                 "soc",
                                 "Choose flight date(s):",
-                                get_flights(True),
-                                selected=get_flights(True)[0],
+                                all_flight_dates,
+                                selected=all_flight_dates[0],
                                 multiple=True,
                             ),
                             div(HTML("<p>To select multiple dates:</p>")),
@@ -201,8 +198,8 @@ app_ui = ui.page_navbar(
                             ui.input_select(
                                 "weather_state",
                                 "Choose flight date(s):",
-                                get_flights(True),
-                                selected=get_flights(True)[0],
+                                all_flight_dates,
+                                selected=all_flight_dates[0],
                             ),
                         width=3),
                         ui.panel_main(
@@ -222,8 +219,8 @@ app_ui = ui.page_navbar(
                                 ui.input_select(
                                     "power",
                                     "Choose flight date(s):",
-                                    get_flights(True),
-                                    selected=get_flights(True)[0],
+                                    all_flight_dates,
+                                    selected=all_flight_dates[0],
                                     multiple=True,
                                 ),
                                 div(HTML("<p>To select multiple dates:</p>")),
@@ -260,7 +257,7 @@ app_ui = ui.page_navbar(
                                 ui.input_select(
                                     "map_state",
                                     "Choose flight date(s):",
-                                    get_flights(True),
+                                    all_flight_dates,
                                 ),
                                 width=3
                             ),
@@ -276,14 +273,14 @@ app_ui = ui.page_navbar(
                 ui.row( 
                     ui.column(6,
                         div(HTML("<hr>")),
-                        div(HTML("<p><b>Number of Circuits</b></p>")),
+                        div(HTML("<p><b>Custom Graphs</b></p>")),
                         div(HTML("<hr>")),
                         ui.layout_sidebar(
                             ui.panel_sidebar(
                                 ui.input_select(
                                     "select_flights",
                                     "Choose flight date:",
-                                    get_flights(True),
+                                    all_flight_dates,
                                     multiple=False,
                                 ),
                                 ui.input_select(
@@ -321,8 +318,8 @@ app_ui = ui.page_navbar(
                                 ui.input_select(
                                     "num_ciruits_state",
                                     "Choose flight date:",
-                                    get_flights(True),
-                                    selected=get_flights(True)[0],
+                                    all_flight_dates,
+                                    selected=all_flight_dates[0],
                                     multiple=False,
                                 ),
                                 width=3
@@ -351,9 +348,9 @@ app_ui = ui.page_navbar(
                             ui.input_select(
                                 "power_soc_rate_state",
                                 "Choose flight date(s):",
-                                get_flights_act_view_dict(True),
-                                selected=get_flights_act_view_dict(True)[0],
-                                multiple=True,
+                                act_view_flight_dates,
+                                selected=act_view_flight_dates[0],
+                                multiple=False,
                             ),
                             ui.input_select(
                                 "select_activities",
@@ -376,8 +373,8 @@ app_ui = ui.page_navbar(
                                 ui.input_select(
                                     "soc_roc_state",
                                     "Choose flight date(s):",
-                                    get_flights_act_view_dict(True),
-                                    selected=get_flights_act_view_dict(True)[0],
+                                    act_view_flight_dates,
+                                    selected=act_view_flight_dates[0],
                                     multiple=False,
                                 ),
                             width=3),
@@ -398,8 +395,8 @@ app_ui = ui.page_navbar(
                             ui.input_select(
                                 "temp_soc_rate_state",
                                 "Choose flight date(s):",
-                                get_flights(True),
-                                selected=get_flights(True)[0],
+                                all_flight_dates,
+                                selected=all_flight_dates[0],
                                 multiple=True,
                             ),
                         width=3),
@@ -463,7 +460,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     def weather_interactive(): 
         # Get the flight ID corresponding to the chosen date
         flight_date = input.weather_state()
-        flight_id = get_flights(False)[flight_date]
+        flight_id = all_flight_data[flight_date]
         weather_df = query_weather().get_weather_by_flight_id(flight_id)
         return weather_df 
 
@@ -478,7 +475,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         graph_type = input.select_graph()
         x_variable = input.select_x_variable()
         y_variable = input.select_y_variable()
-        flight_id = get_flights(False)[flight_date]
+        flight_id = all_flight_data[flight_date]
 
         # Make the graph
         created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variable, y_variable)
@@ -498,7 +495,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             soc_graph: a matplotlib figure plot with the data plotted already.
         """
         # Get all flight data for interactive plot
-        flight_data = get_flights(False)
+        flight_data = all_flight_data
         flight_dates = input.soc()
         flight_ids = []
 
@@ -524,7 +521,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             motor_power_graph: a matplotlib figure plot with the data plotted already.
         """
         # Get all flight data for interactive plot
-        flight_data = get_flights(False)
+        flight_data = all_flight_data
         flight_dates = input.power()
         flight_ids = []
 
@@ -552,7 +549,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Get the flight id
         flight_date = input.map_state()
-        flight_id = get_flights(False)[flight_date]
+        flight_id = all_flight_data[flight_date]
         
         # Call the graphing function to map the latitudes and longitudes
         figure, latitudes, longitudes = Graphing.create_mapbox_map_per_flight(flight_id)
@@ -583,7 +580,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Get the flight id
         flight_date = input.num_ciruits_state()
-        flight_id = get_flights(False)[flight_date]
+        flight_id = all_flight_data[flight_date]
 
         query_conn = query_flights()
         query_result = query_conn.get_number_of_circuits(flight_id)
@@ -608,18 +605,18 @@ def server(input: Inputs, output: Outputs, session: Session):
             power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """
         # Get all flight data
-        flight_data = get_flights_act_view_dict(False)
+        flight_data = act_view_all_data
 
-        flight_dates = input.power_soc_rate_state()
+        flight_date = input.power_soc_rate_state()
         activities_filter = input.select_activities()
-        flight_ids = []
+        flight_id = flight_data[flight_date]
 
-        # Add flight ids to list
-        for flight_date in flight_dates:
-            flight_ids.append(flight_data[flight_date])
+        # # Add flight ids to list
+        # for flight_date in flight_dates:
+        #     flight_ids.append(flight_data[flight_date])
 
         # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
-        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_ids, flight_dates, activities_filter)
+        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_id, flight_date, activities_filter)
 
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot
@@ -636,7 +633,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Get the flight ID corresponding to the chosen date
         flight_date = input.soc_roc_state()
 
-        flight_id = get_flights_act_view_dict(False)[flight_date] #########
+        flight_id = act_view_all_data[flight_date] #########
 
         soc_roc_df = query_flights().get_soc_roc_stats_by_id(flight_id)
 
@@ -652,7 +649,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             temp_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """
         # Get all flight data
-        flight_data = get_flights(False)
+        flight_data = all_flight_data
 
         flight_dates = input.temp_soc_rate_state()
         flight_ids = []

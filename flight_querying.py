@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 import psycopg2
+from time import time
 
 
 class query_flights:
@@ -46,49 +47,30 @@ class query_flights:
     
 
     # Get Flights Function -----------------------------------------------------------------------------------------------------------------
-    def get_flights(self, columns: list):
+    def get_flights(self, columns: list, table):
         """
-        The function runs the following query: SELECT id, flight_date FROM flights. This gets all the flight id's and dates of the flight.
+        The function runs the following query: SELECT {columns} FROM {table}. This gets all the flight id's and dates of the flight.
         """
+
+        start = time()
 
         # Make query
         if len(columns) == 0:
-            query = "SELECT * FROM flights"
+            query = f"SELECT * FROM {table}"
         else:
             str_column = "".join([f"{column}, " for column in columns])[:-2]
-            query = f"SELECT {str_column} FROM flights"
+            query = f"SELECT {str_column} FROM {table}"
 
-        # Make database connection
-        engine = self.connect()
-
-        # Select the data based on the query
-        flights = pd.read_sql_query(query, engine)
-
-        # Dispose of the connection, so we don't overuse it.
-        engine.dispose()
-
-        return flights
-    
-    # Get Flights From 'labeled_activities_view' Function -----------------------------------------------------------------------------------------------------------------
-    def get_flights_act_view(self, columns: list):
-        """
-        The function runs the following query: SELECT flight_id, flight_date FROM labeled_activities_view. This gets all the flight id's and dates of the flight.
-        """
-
-        # Make query
-        if len(columns) == 0:
-            query = "SELECT * FROM labeled_activities_view"
-        else:
-            str_column = "".join([f"{column}, " for column in columns])[:-2]
-            query = f"SELECT {str_column} FROM labeled_activities_view"
-
-        # Make database connection
-        engine = self.connect()
-
-        # Select the data based on the query
         print(query)
+
+        # Make database connection
+        engine = self.connect()
+
+        # Select the data based on the query
         flights = pd.read_sql_query(query, engine)
-        print("finished reading query")
+
+        query_time = time() - start
+        print(f"Query time on pandas = {query_time}")
 
         # Dispose of the connection, so we don't overuse it.
         engine.dispose()
@@ -138,7 +120,7 @@ class query_flights:
         return flight_data
     
     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
-    def get_flight_data_every_half_min_on_id(self, columns: list, id: int):
+    def get_flight_data_every_half_min_on_id(self, id: int):
         """
         The function runs a query to get the fw_flight_id, activity, time, soc, and power from labeled activities view in 30 sec intervals.
         """
@@ -157,11 +139,11 @@ class query_flights:
                 FROM
                     labeled_activities_view
                 WHERE
-                    fw_flight_id = {str(id)} 
+                    fw_flight_id = {str(id)}
                 GROUP BY
                     fw_flight_id, activity, time_min_rounded
                 ORDER BY
-                    fw_flight_id, activity, time_min_rounded;
+                    fw_flight_id, time_min_rounded, activity;
 
                 """
 
@@ -210,7 +192,7 @@ class query_flights:
 
 
     # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
-    def get_flight_id_and_dates(self):
+    def get_flight_id_and_dates(self, columns, table):
         """
         Function gets all flight ids and dates and returns a dictionary of flight_date: flight_id
         """
@@ -219,36 +201,11 @@ class query_flights:
         flight_dict = {}
 
         # Get all the flights
-        flights_df = self.get_flights(["id", "flight_date"])
+        flights_df = self.get_flights(columns, table)
 
         # Change to Numpy
-        ids = flights_df["id"].to_numpy()
-        flight_dates = flights_df["flight_date"].to_numpy()
-
-        # Loop over all the flight dates to input into dictionary
-        for i in range(len(flight_dates)):
-            
-            # Create a string object to show the date in mm/dd/year format. Create Key: Value relation.
-            date = flight_dates[i].strftime("%m/%d/%Y")
-            flight_dict[date] = ids[i]
-
-        return flight_dict
-    
-    # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
-    def get_flight_id_and_dates_act_view(self):
-        """
-        Function gets all flight ids and dates from labeled_activities_view and returns a dictionary of flight_date: flight_id
-        """
-
-        # Initialize the dictionary
-        flight_dict = {}
-
-        # Get all the flights
-        flights_df = self.get_flights_act_view(["fw_flight_id", "flight_date"])
-
-        # Change to Numpy
-        ids = flights_df["fw_flight_id"].to_numpy()
-        flight_dates = flights_df["flight_date"].to_numpy()
+        ids = flights_df[columns[0]].to_numpy()
+        flight_dates = flights_df[columns[1]].to_numpy()
 
         # Loop over all the flight dates to input into dictionary
         for i in range(len(flight_dates)):
@@ -310,56 +267,54 @@ class query_flights:
         return flight_dict
     
     # Get Flight Id, Motor power, SOC rate, and activities Function -------------------------------------------------------------------------
-    def get_flight_power_soc_rate(self, flight_ids: list, activities_filter: list):
+    def get_flight_power_soc_rate(self, id: list, activities_filter: list):
         """
         Function that uses the flight ids to get their respective time, motor power, soc, soc rate of change, and activity columns. 
         Then, returns a dictionary of 
         fw_flight_id: {time: [], motor_power: [], soc: [], soc_rate_of_change: [], activity: []}
         """
-
+        start_time = time()
         # Initialize the dictionary
         flight_dict = {}
 
-        # Get time, power, soc, and soc rate data for the specific flight(s)
-        for id in flight_ids:
+        # Get the flight data
+        flights_df = self.get_flight_data_every_half_min_on_id(id)
 
-            # Get the flight data
-            flights_df = self.get_flight_data_every_half_min_on_id(["fw_flight_id", "time_min", "motor_power", "bat_1_soc", "bat_2_soc", "activity"], id)
+        after_time = time() - start_time
+        print(f"1) Seconds passed after getting 30-second data: {after_time}")
+        after_time = time()
 
-            # Change to Numpy
-            times = flights_df["time_min_rounded"].to_numpy()
-            motor_power = flights_df["motor_power"].to_numpy()
-            activity = flights_df["activity"].to_numpy()
-            soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
+        # Change to Numpy
+        times = flights_df["time_min_rounded"].to_numpy()
+        motor_power = flights_df["motor_power"].to_numpy()
+        activity = flights_df["activity"].to_numpy()
+        soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
 
-            # Calculate SOC rate of change
-            # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
-            soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
-            # Append a 0 to soc_rate_of_change to keep the array sizes consistent
-            soc_rate_of_change = np.append(soc_rate_of_change, 0) 
+        # Calculate SOC rate of change
+        # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+        soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+        # Append a 0 to soc_rate_of_change to keep the array sizes consistent
+        soc_rate_of_change = np.append(soc_rate_of_change, 0)
 
-            # Filter based on activities_filter 
-            # If certain activities are selected by the user in the filter, update the variables
-            # Otherwise, it will default to all activities in the flight
-            if(len(activities_filter) != 0):
-                filter_mask = np.isin(activity, activities_filter)
-                times = times[filter_mask]
-                motor_power = motor_power[filter_mask]
-                soc = soc[filter_mask]
-                soc_rate_of_change = soc_rate_of_change[filter_mask]
-                activity = activity[filter_mask]
+        after_time_2 = time() - after_time
+        print(f"2) Seconds passed changing data: {after_time_2}") 
+        after_time_2 = time()
 
-            flight_dict[id] = {"time_min_rounded": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
+        # Filter based on activities_filter
+        # If certain activities are selected by the user in the filter, update the variables
+        # Otherwise, it will default to all activities in the flight
+        if(len(activities_filter) != 0):
+            filter_mask = np.isin(activity, activities_filter)
+            times = times[filter_mask]
+            motor_power = motor_power[filter_mask]
+            soc = soc[filter_mask]
+            soc_rate_of_change = soc_rate_of_change[filter_mask]
+            activity = activity[filter_mask]
 
-            # # Find the minimum time_min value across all entries
-            # min_time_min = min(flight_dict[key]['time_min'] for key in flight_dict)
+        after_time_3 = time() - after_time_2
+        print(f"3) Seconds passed after masking: {after_time_3}") 
 
-            # # Create a list of keys for entries that have the minimum time_min value
-            # keys_to_remove = [key for key in flight_dict if flight_dict[key]['time_min'] == min_time_min]
-
-            # # Remove these entries from the dictionary
-            # for key in keys_to_remove:
-            #     del flight_dict[key]
+        flight_dict[id] = {"time_min_rounded": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
 
         return flight_dict
     
@@ -450,6 +405,7 @@ class query_flights:
 
         return num_circuits
     
+
     def get_flight_activities(self):
         """
             Function that gets a list of all possible unique flight activities from the labeled_activities_view
@@ -470,6 +426,7 @@ class query_flights:
 
         return result_list
     
+    
     def get_soc_roc_stats_by_id(self, flight_id):
         """
         Function that uses a flight id to get the soc rate of change and calculates its stats (min, max, mean, standard deviation, variance). 
@@ -478,7 +435,7 @@ class query_flights:
         engine = self.connect()
 
         # Get the flight data
-        result_df = self.get_flight_data_every_half_min_on_id(["fw_flight_id", "time_min_rounded", "bat_1_soc", "bat_2_soc", "activity"], flight_id)
+        result_df = self.get_flight_data_every_half_min_on_id(flight_id)
 
         # Change to Numpy
         times = result_df["time_min_rounded"].to_numpy()
