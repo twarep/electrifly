@@ -143,7 +143,7 @@ class query_flights:
                 GROUP BY
                     fw_flight_id, activity, time_min_rounded
                 ORDER BY
-                    fw_flight_id, time_min_rounded, activity;
+                    fw_flight_id, activity, time_min_rounded;
 
                 """
 
@@ -442,14 +442,46 @@ class query_flights:
         activity = result_df["activity"].to_numpy()
         soc = (result_df["bat_1_soc"].to_numpy() + result_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
 
-        # Calculate SOC rate of change
-        # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
-        soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+        soc_rate_of_change = [0]
+        current_activity = activity[0]
+        indexer = 0
+
+        print(current_activity)
+
+        for i in range(1, len(activity)):
+
+            new_activity = activity[i]
+
+            print(f"This is the new activity {new_activity}")
+
+            if new_activity != current_activity or i == len(activity) - 1:
+
+                # Calculate SOC rate of change
+                # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+                temp_soc = soc[indexer:i]
+                temp_times = times[indexer:i]
+                temp_rate_of_change = (temp_soc[1:] - temp_soc[:-1]) / (temp_times[1:] - temp_times[:-1])
+
+                # Append a 0 to soc_rate_of_change to keep the array sizes consistent
+                temp_rate_of_change = np.append(temp_rate_of_change, 0)
+                soc_rate_of_change = soc_rate_of_change.append(list(temp_rate_of_change))
+
+                indexer = i
+                current_activity = new_activity
+
+        # # Calculate SOC rate of change
+        # # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+        # soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+
         # Append a 0 to soc_rate_of_change to keep the array sizes consistent
-        soc_rate_of_change = np.append(soc_rate_of_change, 0)
+        # soc_rate_of_change = np.append(soc_rate_of_change, 0)
+        soc_rate_of_change.pop(0)
 
         # Dispose of the connection, so we don't overuse it.
         engine.dispose()
+
+        print(f"Length of activity: {len(activity)} -------------------------------------------------------------------------")
+        print(f"Length of activity: {len(soc_rate_of_change)} ---------------------------------------------------------------")
 
         # Add activity and SOC information into dataframe
         df = pd.DataFrame({
