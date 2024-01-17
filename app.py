@@ -135,7 +135,7 @@ app_ui = ui.page_navbar(
     # End: UPLOAD SCREEN
     # ===============================================================================================================================================================
     # ===============================================================================================================================================================
-    # DATA ANALYSIS SCREEN 
+    # START: DATA ANALYSIS SCREEN 
     # ===============================================================================================================================================================
     ui.nav("Data Analysis", 
         ui.include_css("bootstrap.css"),
@@ -147,70 +147,56 @@ app_ui = ui.page_navbar(
         # This creates the tabs between the recommended graph screen and the insights
         ui.navset_tab(
             # ===============================================================================================================================================================
-            # RECOMMENDED GRAPHS TAB
+            # START: Recommended Graphs Tab
             # ===============================================================================================================================================================
             ui.nav("Recommended Graphs", 
-              #-----------------------------------------------------------------------------------
-              # DIVIDES the page into a row, meaning you can put ui elements side by side
-              #-----------------------------------------------------------------------------------
-              ui.row( 
-                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.layout_sidebar(
-                        ui.panel_sidebar(
-                            ui.input_select(
-                                "soc",
-                                "Choose flight date(s):",
-                                all_flight_dates,
-                                selected=all_flight_dates[0],
-                                multiple=True,
-                            ),
-                            div(HTML("<p>To select multiple dates:</p>")),
-                            div(HTML("""<table>
-                                          <tr>
-                                            <th>Windows</th>
-                                          </tr>
-                                          <tr>
-                                            <td>`ctrl` + click</td>
-                                        </table>
-                                        <table>
-                                          <tr>
-                                            <th>Mac</th>
-                                          </tr>
-                                          <tr>
-                                            <td>'cmd' + click</td>
-                                          </tr>
-                                        </table>""")),
-                                width=3
-                        ),
-                        ui.panel_main(
-                            ui.output_plot("soc_time_graph")
-                        ),
-                    )),
-                  ui.column(6,
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.layout_sidebar(
-                        ui.panel_sidebar(
-                            ui.input_select(
-                                "weather_state",
-                                "Choose flight date(s):",
-                                all_flight_dates,
-                                selected=all_flight_dates[0],
-                            ),
-                        width=3),
-                        ui.panel_main(
-                            ui.output_table("weather_interactive")
-                        ),
-                    position='right'
-                    )),
-                ),
-
                 ui.row( 
-                    ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    # Put columns within the rows, the column first param is the width, your total widths add up to 12
+                    ui.column(6, 
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "soc",
+                                    "Choose flight date(s):",
+                                    all_flight_dates,
+                                    selected=all_flight_dates[0],
+                                    multiple=True,
+                                ),
+                                div(HTML("<p>To select multiple dates:</p>")),
+                                div(HTML("<table><tr><th>Windows</th></tr><tr><td>`ctrl` + click</td></table><table><tr><th>Mac</th></tr><tr><td>'cmd' + click</td></tr></table>")),
+                                width=3
+                            ),
+                            ui.panel_main(
+                                ui.output_plot("soc_time_graph")
+                            ),
+                        )
+                    ),
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "weather_state",
+                                    "Choose flight date(s):",
+                                    all_flight_dates,
+                                    selected=all_flight_dates[0],
+                                ),
+                                width=3
+                            ),
+                            ui.panel_main(
+                                ui.output_table("weather_interactive")
+                            ),
+                            position='right'
+                        )
+                    ),
+                ),
+                ui.row( 
+                    ui.column(6,
                         div(HTML("<hr>")),
                         div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")),
                         div(HTML("<hr>")),
@@ -224,29 +210,14 @@ app_ui = ui.page_navbar(
                                     multiple=True,
                                 ),
                                 div(HTML("<p>To select multiple dates:</p>")),
-                                div(HTML("""<table>
-                                            <tr>
-                                                <th>Windows</th>
-                                            </tr>
-                                            <tr>
-                                                <td>`ctrl` + click</td>
-                                            </table>
-                                            <table>
-                                            <tr>
-                                                <th>Mac</th>
-                                            </tr>
-                                            <tr>
-                                                <td>'cmd' + click</td>
-                                            </tr>
-                                            </table>""")),
-                                    width=3
+                                div(HTML("""<table><tr><th>Windows</th></tr><tr><td>`ctrl` + click</td></table><table><tr><th>Mac</th></tr><tr><td>'cmd' + click</td></tr></table>""")),
+                                width=3
                             ),
                             ui.panel_main(
                                 ui.output_plot("power_time_graph")
                             ),
                         )
                     ),
-                    # This is the start of the code for the flight circuit map #################################################################
                     ui.column(6,
                         div(HTML("<hr>")),
                         div(HTML("<p><b>Flight Circuit Map</b></p>")),
@@ -266,10 +237,8 @@ app_ui = ui.page_navbar(
                             ),
                             position='right'
                         ),
-                    # This is the end of the code for the flight circuit map #################################################################
                     ),
                 ),
-
                 ui.row( 
                     ui.column(6,
                         div(HTML("<hr>")),
@@ -307,9 +276,8 @@ app_ui = ui.page_navbar(
                                 ui.output_plot("custom_graph"),
                             ),
                         )
-                    ), # buffer for the left side
-                    # This is the start of the code for the number of circuits #################################################################
-                    ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    ), 
+                    ui.column(6, 
                         div(HTML("<hr>")),
                         div(HTML("<p><b>Number of Circuits</b></p>")),
                         div(HTML("<hr>")),
@@ -329,42 +297,43 @@ app_ui = ui.page_navbar(
                             ),
                         )
                     ),
-                    # This is the end of the code for the number of circuits #################################################################
                 ),
             ),
-                
-            ui.nav("Insights", 
-              #-----------------------------------------------------------------------------------
-              # DIVIDES the page into a row, meaning you can put ui elements side by side
-              #-----------------------------------------------------------------------------------
+            # ===============================================================================================================================================================
+            # START: Statistical Insights TAB
+            # ===============================================================================================================================================================
+            ui.nav("Statistical Insights", 
                 ui.row( 
-                  
-                  ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Motor Power vs. SOC Rate of Change</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.layout_sidebar(
-                        ui.panel_sidebar(
-                            ui.input_select(
-                                "power_soc_rate_state",
-                                "Choose flight date(s):",
-                                act_view_flight_dates,
-                                selected=act_view_flight_dates[0],
-                                multiple=False,
+                    # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    ui.column(6, 
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Motor Power vs. SOC Rate of Change</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_select(
+                                    "power_soc_rate_state",
+                                    "Choose flight date(s):",
+                                    act_view_flight_dates,
+                                    selected=act_view_flight_dates[0],
+                                    multiple=False,
+                                ),
+                                ui.input_select(
+                                    "select_activities",
+                                    "Choose activities:",
+                                    list_of_activities,
+                                    selected=list_of_activities,
+                                    multiple=True,
+                                ),
+                                width=3
                             ),
-                            ui.input_select(
-                                "select_activities",
-                                "Choose activities:",
-                                list_of_activities,
-                                multiple=True,
+                            ui.panel_main(
+                                ui.output_plot("power_soc_rate_of_change_scatter_plot")
                             ),
-                        width=3),
-                        ui.panel_main(
-                            ui.output_plot("power_soc_rate_of_change_scatter_plot")
-                        ),
-                    position='right'
-                    )),
-                    ui.column(6, # put columns within the rows, the column first param is the width, your total widths add up to 12
+                            position='right'
+                        )
+                    ),
+                    ui.column(6,
                         div(HTML("<hr>")),
                         div(HTML("<p><b>Plane Operations vs. SOC Rate of Change Statistics </b></p>")),
                         div(HTML("<hr>")),
@@ -377,65 +346,50 @@ app_ui = ui.page_navbar(
                                     selected=act_view_flight_dates[0],
                                     multiple=False,
                                 ),
-                            width=3),
+                                width=3
+                            ),
                             ui.panel_main(
                                 ui.output_table("soc_roc_table")
                             ),
-                        position='right'
-                    )),  
+                            position='right'
+                        )
+                    ),  
                 ),
-                ui.row( 
-                  
-                  ui.column(12, # put columns within the rows, the column first param is the width, your total widths add up to 12
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Temperature vs. SOC Rate of Change</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.layout_sidebar(
-                        ui.panel_sidebar(
-                            ui.input_select(
-                                "temp_soc_rate_state",
-                                "Choose flight date(s):",
-                                all_flight_dates,
-                                selected=all_flight_dates[0],
-                                multiple=True,
-                            ),
-                        width=3),
-                        ui.panel_main(
-                            ui.output_plot("temp_soc_rate_of_change_scatter_plot")
-                        ),
-                    position='right'
-                    )) 
-                )),
-        ),
-            
-        ),  
-
-    #ML RECOMMENDATIONS SCREEN
-    ui.nav("Simulation", 
-            ui.row( 
-                  ui.column(6,
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Number of Feasible Flights</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.panel_main(
-                            ui.output_table("simulation_table", style="width: 70%; height: 300px;")
-                        ),
-                    ),
-
-                    ui.column(6,
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.panel_main(
-                            ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
-                        ),
-                    ),
-                ),
-            
-                
-                
             ),
-# simulation.result_table_colours
+            # ===============================================================================================================================================================
+            # END: Statistical Insights TAB
+            # ===============================================================================================================================================================
+        ),    
+    ),  
+    # ===============================================================================================================================================================
+    # END: DATA ANALYSIS SCREEN 
+    # ===============================================================================================================================================================
+    # ===============================================================================================================================================================
+    # START: ML RECOMMENDATIONS SCREEN
+    # ===============================================================================================================================================================
+    ui.nav("Simulation", 
+        ui.row( 
+            ui.column(6,
+                div(HTML("<hr>")),
+                div(HTML("<p><b>Number of Feasible Flights</b></p>")),
+                div(HTML("<hr>")),
+                ui.panel_main(
+                        ui.output_table("simulation_table", style="width: 70%; height: 300px;")
+                ),
+            ),
+            ui.column(6,
+                div(HTML("<hr>")),
+                div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                div(HTML("<hr>")),
+                ui.panel_main(
+                    ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
+                ),
+            ),
+        ),      
+    ),
+    # ===============================================================================================================================================================
+    # END: ML RECOMMENDATIONS SCREEN
+    # ===============================================================================================================================================================
     title="ElectriFly",
 )
 
@@ -611,10 +565,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         activities_filter = input.select_activities()
         flight_id = flight_data[flight_date]
 
-        # # Add flight ids to list
-        # for flight_date in flight_dates:
-        #     flight_ids.append(flight_data[flight_date])
-
         # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
         power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_id, flight_date, activities_filter)
 
@@ -638,31 +588,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         soc_roc_df = query_flights().get_soc_roc_stats_by_id(flight_id)
 
         return soc_roc_df 
-    
-    # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    @output
-    @render.plot(alt="An interactive plot")
-    def temp_soc_rate_of_change_scatter_plot():
-        """
-        The function uses the input from the 'temp_soc_rate_state' parameter to get data on temp and soc rate of change for all the selected dates.
-        Returns 
-            temp_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
-        """
-        # Get all flight data
-        flight_data = all_flight_data
-
-        flight_dates = input.temp_soc_rate_state()
-        flight_ids = []
-
-        # Add flight ids to list
-        for flight_date in flight_dates:
-            flight_ids.append(flight_data[flight_date])
-
-        # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
-        temp_soc_rate_of_change_scatterplot = Graphing.temp_soc_rate_scatterplot(flight_ids, flight_dates)
-
-        # Return the power vs. soc rate of change scatter plot
-        return temp_soc_rate_of_change_scatterplot
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: INSIGHTS SCREEN 
@@ -719,6 +644,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # new = styled_data.set_table_styles()
         return styled_data
     
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     # Define a function to determine the cell background color
     def style_cell(val):
         if val == 'red':
@@ -727,15 +653,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             return "background-color: #fdd835; color: #fdd835;"
         elif val == 'green':
             return "background-color: #43a047; color: #43a047;"
-
-        #return simulation.result_table_colours
-
-        # flight_date = input.weather_state()
-        # flight_id = get_flights(False)[flight_date]
-        # weather_df = query_weather().get_weather_by_flight_id(flight_id)
-        # return weather_df 
     
-     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.table
     def flight_planning_table(): 
@@ -744,6 +663,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_plan = simulation.feasible_flights
         # new = styled_data.set_table_styles()
         return flight_plan
+    
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: SIMULATION SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------

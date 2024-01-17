@@ -119,6 +119,7 @@ class query_flights:
 
         return flight_data
     
+
     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
     def get_flight_data_every_half_min_on_id(self, id: int):
         """
@@ -155,7 +156,8 @@ class query_flights:
 
         return flight_data
     
-     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
+
+    # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
     def get_temp_data_every_half_min_on_id(self, columns: list, id: int):
         """
         The function runs a query to get the fw_flight_id, time, soc, and temp from flight_weather_data_view in 30 sec intervals.
@@ -266,6 +268,7 @@ class query_flights:
 
         return flight_dict
     
+
     # Get Flight Id, Motor power, SOC rate, and activities Function -------------------------------------------------------------------------
     def get_flight_power_soc_rate(self, id: list, activities_filter: list):
         """
@@ -273,16 +276,11 @@ class query_flights:
         Then, returns a dictionary of 
         fw_flight_id: {time: [], motor_power: [], soc: [], soc_rate_of_change: [], activity: []}
         """
-        start_time = time()
         # Initialize the dictionary
         flight_dict = {}
 
         # Get the flight data
         flights_df = self.get_flight_data_every_half_min_on_id(id)
-
-        after_time = time() - start_time
-        print(f"1) Seconds passed after getting 30-second data: {after_time}")
-        after_time = time()
 
         # Change to Numpy
         times = flights_df["time_min_rounded"].to_numpy()
@@ -296,10 +294,6 @@ class query_flights:
         # Append a 0 to soc_rate_of_change to keep the array sizes consistent
         soc_rate_of_change = np.append(soc_rate_of_change, 0)
 
-        after_time_2 = time() - after_time
-        print(f"2) Seconds passed changing data: {after_time_2}") 
-        after_time_2 = time()
-
         # Filter based on activities_filter
         # If certain activities are selected by the user in the filter, update the variables
         # Otherwise, it will default to all activities in the flight
@@ -311,46 +305,12 @@ class query_flights:
             soc_rate_of_change = soc_rate_of_change[filter_mask]
             activity = activity[filter_mask]
 
-        after_time_3 = time() - after_time_2
-        print(f"3) Seconds passed after masking: {after_time_3}") 
-
         flight_dict[id] = {"time_min_rounded": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
 
         return flight_dict
     
-    # Get temperature, soc, and SOC rate Function -------------------------------------------------------------------------
-    def get_temp_and_soc_rate(self, flight_ids: list):
-        """
-        Function that uses the flight ids to get their respective time, temperature, soc, and soc rate of change columns. 
-        Then, returns a dictionary of 
-        fw_flight_id: {time: [], temperature: [], soc: [], soc_rate_of_change: []}
-        """
 
-        # Initialize the dictionary
-        flight_dict = {}
-
-        # Get time, power, soc, and soc rate data for the specific flight(s)
-        for id in flight_ids:
-
-            # Get the flight data
-            flights_df = self.get_temp_data_every_half_min_on_id(["fw_flight_id", "time_min", "temperature", "bat_1_soc", "bat_2_soc"], id)
-
-            # Change to Numpy
-            times = flights_df["time_min_rounded"].to_numpy()
-            temperature = flights_df["temperature"].to_numpy()
-            soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
-
-            # Calculate SOC rate of change
-            # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
-            soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
-            # Append a 0 to soc_rate_of_change to keep the array sizes consistent
-            soc_rate_of_change = np.append(soc_rate_of_change, 0) 
-
-            flight_dict[id] = {"time_min_rounded": times,  "soc": soc, "soc_rate_of_change": soc_rate_of_change, "temperature": temperature}
-
-        return flight_dict
-
-
+    # Function --------------------------------------------------------------------------------
     def get_number_of_circuits(self, flight_id):
         """
         Function that uses a flight id to get the number of circuits. Then, returns the number of circuits.
@@ -442,46 +402,15 @@ class query_flights:
         activity = result_df["activity"].to_numpy()
         soc = (result_df["bat_1_soc"].to_numpy() + result_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
 
-        soc_rate_of_change = [0]
-        current_activity = activity[0]
-        indexer = 0
-
-        print(current_activity)
-
-        for i in range(1, len(activity)):
-
-            new_activity = activity[i]
-
-            print(f"This is the new activity {new_activity}")
-
-            if new_activity != current_activity or i == len(activity) - 1:
-
-                # Calculate SOC rate of change
-                # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
-                temp_soc = soc[indexer:i]
-                temp_times = times[indexer:i]
-                temp_rate_of_change = (temp_soc[1:] - temp_soc[:-1]) / (temp_times[1:] - temp_times[:-1])
-
-                # Append a 0 to soc_rate_of_change to keep the array sizes consistent
-                temp_rate_of_change = np.append(temp_rate_of_change, 0)
-                soc_rate_of_change = soc_rate_of_change.append(list(temp_rate_of_change))
-
-                indexer = i
-                current_activity = new_activity
-
-        # # Calculate SOC rate of change
-        # # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
-        # soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+        # Calculate SOC rate of change
+        # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+        soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
 
         # Append a 0 to soc_rate_of_change to keep the array sizes consistent
-        # soc_rate_of_change = np.append(soc_rate_of_change, 0)
-        soc_rate_of_change.pop(0)
+        soc_rate_of_change = np.append(soc_rate_of_change, 0)
 
         # Dispose of the connection, so we don't overuse it.
         engine.dispose()
-
-        print(f"Length of activity: {len(activity)} -------------------------------------------------------------------------")
-        print(f"Length of activity: {len(soc_rate_of_change)} ---------------------------------------------------------------")
 
         # Add activity and SOC information into dataframe
         df = pd.DataFrame({
