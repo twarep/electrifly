@@ -4,7 +4,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from weather_forcast_querying import get_forecast_by_current_date
 import forecast
-import numpy
+import numpy as np
 
 # How long does 1 single flight take (on average: including time for inspection, flight, charging):
 avg_inspection_time_before_flight = 7.41
@@ -13,15 +13,21 @@ avg_charging_time = 58.56
 total_flight_time = avg_inspection_time_before_flight + avg_flight_time + avg_charging_time
 print ("This is the total flight time:", total_flight_time)
 
-# Pull in weather data [PETER]
 # Classify the weather data into zones (9 to 10 am -> green zone)
 # Need to find a period of time for 30 minutes FOR flight but need 1.5 hours total for everything
     #STRIP INTO TIME INTERVALS
 
-#pull in forecasted weather data (right now it's hardcoded)
+# pull in forecasted weather data (right now it's hardcoded)
 forecast_df = get_forecast_by_current_date()
 forecast_date = forecast_df["Forecast Date"]
 forecast_time_et = forecast_df["Forecast Time"]
+
+# store explanations for zone reasoning
+explanation_df = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time_et,
+    "Explanation": np.empty((len(forecast_df), 0)).tolist(),
+})
 
 #VISIBILITY:
 visibility = forecast_df["Visibility"]
@@ -35,10 +41,20 @@ for i in visibility_SM.index:
         visability_zone = "gray"
     elif(visibility_SM[i]) < 3:
         visability_zone = "red"
+        exp = "Visibility is red because " + str(visibility_SM) + " is less than the threshold of 3."
+        explanation_df.at[i, 'Explanation'].append(exp)
+        print(explanation_df)
+
     elif (visibility_SM[i]< 6):
         visability_zone = "yellow"
+        exp = "Visibility is yellow because " + str(visibility_SM) + " is less than the threshold of 6."
+        explanation_df.at[i, 'Explanation'].append(exp)
+        print(explanation_df)
     else:
         visability_zone = "green"
+        exp = "Visibility is green"
+        explanation_df.at[i, 'Explanation'].append(exp)
+        print(explanation_df)
     visability_zone_list.append(visability_zone)
 # Create a new DataFrame
 visability_zone_df_all = pd.DataFrame({
@@ -46,6 +62,7 @@ visability_zone_df_all = pd.DataFrame({
     "Forecast Time": forecast_time_et,
     "Visibility SM": visibility_SM,
     "Visibility Zone": visability_zone_list
+    
 })
 
 #CLOUD (pulled from weathercode):
@@ -236,33 +253,7 @@ temperature_df_all = pd.DataFrame({
     "Temperature Zone": temperature_zone_list
 })
 
-# lightning_potential_index_zone = ""
-# lightning_potential_index = forecast_df["Lightning Potential"] 
-# lightning_potential_index_zone_list = []
 
-# for i in lightning_potential_index.index:
-#     if (pd.isna(lightning_potential_index[i])):
-#         lightning_potential_index_zone = "gray"
-#     elif (lightning_potential_index[i] > 0):
-#         lightning_potential_index_zone = "yellow"
-#     else:
-#         lightning_potential_index = "green"
-#     lightning_potential_index_zone_list.append(lightning_potential_index_zone)
-
-# # Create a new DataFrame
-# lightning_potential_index_df_all = pd.DataFrame({
-#     "Forecast Date": forecast_date,
-#     "Forecast Time": forecast_time_et,
-#     "Lightning Potential Index": lightning_potential_index,
-#     "Lightning Potential Index": lightning_potential_index_zone_list
-# })
-
-# print(lightning_potential_index_df_all)
-
-#sunrise "If any part of the flight is between: 
-# RED is 30 mins AFTER sunset and 30 mins BEFORE sunrise 
-#yellow as (15 mins BEFORE sunset to 30 mins AFTER sunset) and (30 mins BEFORE sunrise to 15 min after sunrise)
-# green as 15 min after sunrise and 15 mins before sunset
 
 sunrise = forecast_df["Sunrise"]
 sunset = forecast_df["Sunset"] 
@@ -326,12 +317,14 @@ def prioritize_colors(row):
 # Create a new column 'final_color' based on the prioritized colors
 zones_df_all['final_zone'] = zones_df_all.apply(prioritize_colors, axis=1)
 
-
+test = {"a": 1}
 
 final_zones_color = pd.DataFrame({
     "Forecast Date": forecast_date,
     "Forecast Time": forecast_time_et,
-    "Zone": zones_df_all['final_zone']
+    "Zone": zones_df_all['final_zone'],
+    "Explanation": test # if yellow or red, add in explanatory data structure
+    # {(date, time, zone): [rain > 0, cloud cover > 50%]}
 })
 
 #extract each date into its own column
@@ -340,10 +333,15 @@ final_zones_color = pd.DataFrame({
 
 displayhook(final_zones_color.iloc[96])
 
+# day 1
 df0 = final_zones_color.iloc[0:96, 1] 
 df1 = final_zones_color.iloc[0:96, 2] 
+
+# day 2
 df2 = final_zones_color.iloc[96:192, 2] 
 df2 = df2.reset_index() 
+
+# day 3
 df3 = final_zones_color.iloc[192:288, 2] 
 df3 = df3.reset_index() 
 
