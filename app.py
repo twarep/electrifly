@@ -313,7 +313,7 @@ app_ui = ui.page_navbar(
                             ui.panel_sidebar(
                                 ui.input_select(
                                     "power_soc_rate_state",
-                                    "Choose flight date(s):",
+                                    "Choose flight date:",
                                     act_view_flight_dates,
                                     selected=act_view_flight_dates[0],
                                     multiple=False,
@@ -341,7 +341,7 @@ app_ui = ui.page_navbar(
                             ui.panel_sidebar(
                                 ui.input_select(
                                     "soc_roc_state",
-                                    "Choose flight date(s):",
+                                    "Choose flight date:",
                                     act_view_flight_dates,
                                     selected=act_view_flight_dates[0],
                                     multiple=False,
