@@ -151,127 +151,73 @@ app_ui = ui.page_navbar(
             # ===============================================================================================================================================================
             ui.nav("Recommended Graphs", 
                 div(HTML("<hr>")),
-                div(HTML("""<p> This section </p>""")),
+                div(HTML("""<p><b> Single Date Graphs </b></p>""")),
                 div(HTML("<hr>")),
-                ui.input_select(
-                    "singular_flight_date",
-                    "Choose flight date(s):",
-                    all_flight_dates,
-                    selected=all_flight_dates[0],
-                    multiple=True,
-                ),
-                div(HTML("<hr>")),
-                ui.row( 
-                    # Put columns within the rows, the column first param is the width, your total widths add up to 12
+                ui.row(
                     ui.column(6, 
-                        div(HTML("<hr>")),
-                        div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
-                        div(HTML("<hr>")),
-                        ui.layout_sidebar(
-                            ui.panel_sidebar(
-                                ui.input_select(
-                                    "soc",
-                                    "Choose flight date(s):",
-                                    all_flight_dates,
-                                    selected=all_flight_dates[0],
-                                    multiple=True,
-                                ),
-                                div(HTML("<p>To select multiple dates:</p>")),
-                                div(HTML("<table><tr><th>Windows</th></tr><tr><td>`ctrl` + click</td></table><table><tr><th>Mac</th></tr><tr><td>'cmd' + click</td></tr></table>")),
-                                width=3
-                            ),
-                            ui.panel_main(
-                                ui.output_plot("soc_time_graph")
-                            ),
+                        ui.input_select(
+                            "singular_flight_date",
+                            "Choose Flight Date:",
+                            all_flight_dates,
+                            selected=all_flight_dates[0]
                         )
                     ),
-                    ui.column(6,
-                        div(HTML("<hr>")),
+                    ui.column(6, 
+                        ui.output_text("num_circuits")
+                    )
+                ),
+                ui.row(
+                    # Put columns within the rows, the column first param is the width, your total widths add up to 12
+                    ui.column(6, 
                         div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
-                        div(HTML("<hr>")),
+                        div(HTML("<hr>")), 
                         ui.layout_sidebar(
                             ui.panel_sidebar(
-                                ui.input_select(
-                                    "weather_state",
-                                    "Choose flight date(s):",
-                                    all_flight_dates,
-                                    selected=all_flight_dates[0],
-                                ),
-                                width=3
+                                width=0
                             ),
                             ui.panel_main(
                                 ui.output_table("weather_interactive")
-                            ),
-                            position='right'
-                        )
-                    ),
-                ),
-                ui.row( 
-                    ui.column(6,
-                        div(HTML("<hr>")),
-                        div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")),
-                        div(HTML("<hr>")),
-                        ui.layout_sidebar(
-                            ui.panel_sidebar(
-                                ui.input_select(
-                                    "power",
-                                    "Choose flight date(s):",
-                                    all_flight_dates,
-                                    selected=all_flight_dates[0],
-                                    multiple=True,
-                                ),
-                                div(HTML("<p>To select multiple dates:</p>")),
-                                div(HTML("""<table><tr><th>Windows</th></tr><tr><td>`ctrl` + click</td></table><table><tr><th>Mac</th></tr><tr><td>'cmd' + click</td></tr></table>""")),
-                                width=3
-                            ),
-                            ui.panel_main(
-                                ui.output_plot("power_time_graph")
-                            ),
+                            )
                         )
                     ),
                     ui.column(6,
-                        div(HTML("<hr>")),
-                        div(HTML("<p><b>Flight Circuit Map</b></p>")),
-                        div(HTML("<hr>")),
-                        ui.output_text("flight_gps_response_text"),
-                        ui.layout_sidebar(
-                            ui.panel_sidebar(
-                                ui.input_select(
-                                    "map_state",
-                                    "Choose flight date(s):",
-                                    all_flight_dates,
-                                ),
-                                width=3
-                            ),
-                            ui.panel_main(
-                                output_widget("lat_long_map")
-                            ),
-                            position='right'
-                        ),
+                        div(HTML("<p><b>Flight Map</b></p>")),
+                        div(HTML("<hr>")), 
+                        output_widget("lat_long_map")
                     ),
                 ),
+                div(HTML("<hr>")),
+                div(HTML("<hr>")),
+                div(HTML("""<p><b> Multiple Date Graphs </b></p>""")),
+                div(HTML("<hr>")),
                 ui.row(
                     ui.column(6, 
-                        div(HTML("<hr>")),
-                        div(HTML("<p><b>Number of Circuits</b></p>")),
-                        div(HTML("<hr>")),
-                        ui.layout_sidebar(
-                            ui.panel_sidebar(
-                                ui.input_select(
-                                    "num_ciruits_state",
-                                    "Choose flight date:",
-                                    all_flight_dates,
-                                    selected=all_flight_dates[0],
-                                    multiple=False,
-                                ),
-                                width=3
-                            ),
-                            ui.panel_main(
-                                ui.output_text("num_circuits"),
-                            ),
-                        )
+                        div(HTML("<p>To select multiple dates:</p>")),
+                        div(HTML("<table><tr><th>Windows</th></tr><tr><td>ctrl + click</td></table><table><tr><th>Mac</th></tr><tr><td>cmd + click</td></tr></table>"))
                     ),
+                    ui.column(6, 
+                        ui.input_select(
+                            "multi_select_flight_dates",
+                            "Choose Flight date(s):",
+                            all_flight_dates,
+                            selected=all_flight_dates[0],
+                            multiple=True,
+                        )
+                    )
                 ),
+                ui.row(
+                    ui.column(6,
+                        div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.output_plot("soc_time_graph")
+                    ),
+                    ui.column(6,
+                        div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.output_plot("power_time_graph")
+                    )
+                ),
+                div(HTML("<hr>"))
             ),
             # ===============================================================================================================================================================
             # START: CUSTOM GRAPH TAB
@@ -440,11 +386,10 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.table
     def weather_interactive(): 
         # Get the flight ID corresponding to the chosen date
-        flight_date = input.weather_state()
+        flight_date = input.singular_flight_date()
         flight_id = all_flight_data[flight_date]
         weather_df = query_weather().get_weather_by_flight_id(flight_id)
         return weather_df 
-
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -464,7 +409,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the custom graph
         return created_custom_graph         
 
-
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot(alt="An interactive plot")
@@ -477,7 +421,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         """
         # Get all flight data for interactive plot
         flight_data = all_flight_data
-        flight_dates = input.soc()
+        flight_dates = input.multi_select_flight_dates()
         flight_ids = []
 
         # Add flight ids to list
@@ -490,7 +434,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the SOC graph
         return soc_graph
         
-    
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot(alt="An interactive plot")
@@ -503,7 +446,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         """
         # Get all flight data for interactive plot
         flight_data = all_flight_data
-        flight_dates = input.power()
+        flight_dates = input.multi_select_flight_dates()
         flight_ids = []
 
         # Add flight ids to list
@@ -515,7 +458,6 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Return the Motor Power graph
         return motor_power_graph
-
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -529,7 +471,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         """
 
         # Get the flight id
-        flight_date = input.map_state()
+        flight_date = input.singular_flight_date()
         flight_id = all_flight_data[flight_date]
         
         # Call the graphing function to map the latitudes and longitudes
@@ -560,13 +502,14 @@ def server(input: Inputs, output: Outputs, session: Session):
         """
 
         # Get the flight id
-        flight_date = input.num_ciruits_state()
+        flight_date = input.singular_flight_date()
         flight_id = all_flight_data[flight_date]
 
         query_conn = query_flights()
         query_result = query_conn.get_number_of_circuits(flight_id)
 
-        return query_result
+        # Send number of flights with entire string --> The number of circuits for the chosen flight is: {query_result}
+        return f"The number of circuits for the chosen flight is: {query_result}"
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: DATA ANALYSIS SCREEN 
