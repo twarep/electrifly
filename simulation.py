@@ -41,12 +41,10 @@ for i in visibility_SM.index:
         visability_zone = "gray"
     elif(visibility_SM[i]) < 3:
         visability_zone = "red"
-        exp = "Visibility is red because " + str(round(visibility_SM[i],2)) + " is less than the threshold of 3."
+        exp = "Red zone because visability is " + str(round(visibility_SM[i],2)) + " which is less than the threshold of 3."
         explanation_df.at[i, 'Explanation'].append(exp)
     elif (visibility_SM[i]< 6):
         visability_zone = "yellow"
-        exp = "Visibility is yellow because " + str(round(visibility_SM[i],2)) + " is less than the threshold of 6."
-        explanation_df.at[i, 'Explanation'].append(exp)
     else:
         visability_zone = "green"
     visability_zone_list.append(visability_zone)
@@ -69,7 +67,7 @@ for i in cloud.index:
         cloud_zone = "gray"
     elif cloud[i] == 3:
         cloud_zone = "red"
-        exp = "Cloud is red because it has a value of 3."
+        exp = "Red zone due to heavy cloud cover"
         explanation_df.at[i, 'Explanation'].append(exp)
     elif cloud[i] == 2:
         cloud_zone = "yellow"
@@ -96,7 +94,7 @@ for i in rain.index:
         rain_zone = "gray"   
     elif rain[i] == 65:
         rain_zone = "red"
-        exp = "Rain is red because it has a value of of 65."
+        exp = "Red zone due to strong rain"
         explanation_df.at[i, 'Explanation'].append(exp)
     elif rain[i] == 63:
         rain_zone = "yellow"
@@ -122,7 +120,7 @@ for i in rain_shower.index:
         rain_shower_zone = "gray"
     elif rain_shower[i] == 82:
         rain_shower_zone = "red"
-        exp = "Rain shower is red because it has a value of 82."
+        exp = "Red zone due to strong rain showers"
         explanation_df.at[i, 'Explanation'].append(exp)
     elif rain_shower[i] == 81:
         rain_shower_zone = "yellow"
@@ -149,7 +147,7 @@ for i in thunderstorm.index:
         thunderstorm_zone = "gray"
     elif thunderstorm[i] == 96:
         thunderstorm_zone = "red"
-        exp = "Thunderstorm is red because it has a value of 96."
+        exp = "Red zone due to thunderstorms"
         explanation_df.at[i, 'Explanation'].append(exp)
     else:
         thunderstorm_zone = "green"
@@ -173,7 +171,7 @@ for i in snowfall.index:
         snowfall_zone = "gray"
     elif (snowfall[i] == 71) or (snowfall[i] == 73) or (snowfall[i] == 75) or (snowfall[i] == 77) or (snowfall[i] == 85) or (snowfall[i] == 86):
         snowfall_zone = "red"
-        exp = "Snowfall is red because there is snowfall."
+        exp = "Red zone due to snowfall"
         explanation_df.at[i, 'Explanation'].append(exp)
     else:
         snowfall_zone = "green"
@@ -197,7 +195,7 @@ for i in freezing_rain.index:
         freezing_rain_zone = "gray"
     elif (freezing_rain[i] == 66) or (freezing_rain[i] == 67) or (freezing_rain[i] == 56) or (freezing_rain[i] == 57):
         freezing_rain_zone = "red"
-        exp = "Freezing rain is red because there is freezing rain."
+        exp = "Red zone due to freezing rain"
         explanation_df.at[i, 'Explanation'].append(exp)
     else:
         freezing_rain_zone = "green"
@@ -222,7 +220,7 @@ for i in wind_gusts.index:
         wind_gusts_zone = "gray"    
     elif (wind_gusts[i]) >= 30:
         wind_gusts_zone = "red"
-        exp = "Wind gust is red because " + str(round(wind_gusts[i],2)) + " is greater than the threshold of 30."
+        exp = "Red zone because wind gust is " + str(round(wind_gusts[i],2)) + " which is greater than the threshold of 30."
         explanation_df.at[i, 'Explanation'].append(exp)
     elif (wind_gusts[i] >= 25):
         wind_gusts_zone = "yellow"
@@ -248,7 +246,7 @@ for i in temperature.index:
         temperature_zone = "gray"
     elif (temperature[i] > 35) or (temperature[i] < -20):
         temperature_zone = "red"
-        exp = "Temperature is red because " + str(round(temperature[i],2)) + " is less than the threshold of -20 or greater than the threshold of 35."
+        exp = "Red zone because temperature is " + str(round(temperature[i],2)) + " which is less than the threshold of -20 or greater than the threshold of 35."
         explanation_df.at[i, 'Explanation'].append(exp)
     elif (temperature[i] > 30) or (temperature[i] < -10):
         temperature_zone = "yellow"
@@ -276,7 +274,7 @@ for i in forecast_time_et.index:
     sunrise_30 = datetime.combine(forecast_date[i],sunrise[i])
     if (forecast_time_et[i] > (sunset_30 + delta_thirty).time()) or (forecast_time_et[i] < (sunrise_30-delta_thirty).time()):
         sunrise_sunset_zone = "red"
-        exp = "Sunrise/sunset is red because it is 30 minutes after sunset or 30 minutes before sunrise."
+        exp = "Red zone because time is 30 minutes after sunset or 30 minutes before sunrise."
         explanation_df.at[i, 'Explanation'].append(exp)
         
     elif (((sunset_30 - delta_fifteen).time()) < (forecast_time_et[i]) < (sunset_30 + delta_thirty).time()) or (((sunrise_30 - delta_thirty).time() < (forecast_time_et[i]) < (sunrise_30 + delta_fifteen).time())):
