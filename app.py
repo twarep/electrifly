@@ -43,15 +43,25 @@ def connect_to_db(provider: str):
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def uploaded_data():
-     engine = connect_to_db("PostgreSQL")
-     query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+    engine = connect_to_db("PostgreSQL")
+    query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+
     # Execute the query and fetch the data into a DataFrame
-     uploaded_data_df = pd.read_sql(query, con=engine)
-     uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
+    uploaded_data_df = pd.read_sql(query, con=engine)
+    uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
     # Convert the 'flight_date' column back to a string
-     uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
-     engine.dispose()
-     return uploaded_data_df
+    uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
+    # Rename columns to be human readable
+    readable_columns = ['Fw Flight ID','Flight Date','Flight ID','Time (Min)','Bat 1 Current','Bat 1 Voltage','Bat 2 Current','Bat 2 Voltage','Bat 1 SOC','Bat 2 SOC',
+                        'Bat 1 SOH', 'Bat 2 SOH', 'Bat 1 Min Cell Temp', 'Bat 2 Min Cell Temp', 'Bat 1 Max Cell Temp', 'Bat 2 Max Cell Temp', 'Bat 1 Avg Cell Temp', 'Bat 2 Avg Cell Temp', 'Bat 1 Min Cell Volt', 'Bat 2 Min Cell Volt',
+                        'Bat 1 Max Cell Volt', 'Bat 2 Max Cell Volt', 'Requested Torque', 'Motor RPM', 'Motor Power', 'Motor Temp', 'Indicated Air Speed', 'Stall Warn Active', 'Inverter Temp', 'Bat 1 Cooling Temp',
+                        'Inverter Cooling Temp 1', 'Inverter Cooling Temp 2', 'Remaining Flight Time', 'Pressure Altitude', 'Latitude', 'Longitude', 'Ground Speed', 'Pitch', 'Roll', 'Time Stamp',
+                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature', 'ISO Leakage Current', 'ID', 'Weather Date', 'Weather Time UTC', 'Temperature','Dewpoint',
+                        'Relative Humidity','Wind Direction', 'Wind Speed', 'Pressure Altimeter','Sea Level Pressure', 'Visibility', 'Wind Gust', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
+                        'Sky Coverage 4', 'Sky Level 1', 'Sky Level 2','Sky Level 3','Sky Level 4','Weather Codes', 'Metar']
+    uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
+    engine.dispose()
+    return uploaded_data_df
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -614,8 +624,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         selected_columns = input.selected_cols()
         if not selected_columns:
             # Return the entire DataFrame as default when no columns are selected
-            default_columns = uploaded_data_df.loc[:,["flight_id","flight_date", "weather_time_utc", "time_min","bat_1_soc", 
-                                               "bat_2_soc","motor_power", "motor_temp"]]
+            default_columns = uploaded_data_df.loc[:,["Flight ID","Flight Date", "Weather Time UTC", "Time (Min)","Bat 1 SOC", 
+                                               "Bat 2 SOC","Motor Power", "Motor Temp"]]
             return default_columns
         else:
             # Filter the DataFrame based on the selected columns
