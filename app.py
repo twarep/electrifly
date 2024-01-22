@@ -150,6 +150,17 @@ app_ui = ui.page_navbar(
             # START: Recommended Graphs Tab
             # ===============================================================================================================================================================
             ui.nav("Recommended Graphs", 
+                div(HTML("<hr>")),
+                div(HTML("""<p> This section </p>""")),
+                div(HTML("<hr>")),
+                ui.input_select(
+                    "singular_flight_date",
+                    "Choose flight date(s):",
+                    all_flight_dates,
+                    selected=all_flight_dates[0],
+                    multiple=True,
+                ),
+                div(HTML("<hr>")),
                 ui.row( 
                     # Put columns within the rows, the column first param is the width, your total widths add up to 12
                     ui.column(6, 
@@ -239,44 +250,7 @@ app_ui = ui.page_navbar(
                         ),
                     ),
                 ),
-                ui.row( 
-                    ui.column(6,
-                        div(HTML("<hr>")),
-                        div(HTML("<p><b>Custom Graphs</b></p>")),
-                        div(HTML("<hr>")),
-                        ui.layout_sidebar(
-                            ui.panel_sidebar(
-                                ui.input_select(
-                                    "select_flights",
-                                    "Choose flight date:",
-                                    all_flight_dates,
-                                    multiple=False,
-                                ),
-                                ui.input_select(
-                                    "select_graph",
-                                    "Choose the graph type:",
-                                    ["Line Plot", "Scatter Plot"],
-                                    multiple=False,
-                                ),
-                                ui.input_select(
-                                    "select_x_variable",
-                                    "Choose the Independent (X) variable:",
-                                    columns,
-                                    multiple=False,
-                                ),
-                                ui.input_select(
-                                    "select_y_variable",
-                                    "Choose the Dependent (Y) variable:",
-                                    columns,
-                                    multiple=False,
-                                ),
-                                width=3
-                            ),
-                            ui.panel_main(
-                                ui.output_plot("custom_graph"),
-                            ),
-                        )
-                    ), 
+                ui.row(
                     ui.column(6, 
                         div(HTML("<hr>")),
                         div(HTML("<p><b>Number of Circuits</b></p>")),
@@ -298,6 +272,59 @@ app_ui = ui.page_navbar(
                         )
                     ),
                 ),
+            ),
+            # ===============================================================================================================================================================
+            # START: CUSTOM GRAPH TAB
+            # ===============================================================================================================================================================
+            ui.nav("Custom Graph",
+                div(HTML("<hr>")),
+                div(HTML("""<p>The <b>Custom Graphs</b> feature is a one-of-a-kind feature empowering 
+                         you with the ability to visualize flight data the way you want. Here is a simple way to use the custom graph:</p>""")),
+                div(
+                    HTML("""<ol> 
+                        <li> Select the date for which you want to view the data, and </li>
+                        <li> Select the type of graph you want to see, then </li>
+                        <li> Select the X (independent) variable on the graph, </li>
+                        <li> Lastly select the Y (dependent) variable on the graph. </li>
+                        </ol>"""
+                    )
+                ),
+                div(HTML("<hr>")),
+                ui.row(
+                    ui.column(3,
+                        ui.input_select(
+                            "select_flights",
+                            "Flight date:",
+                            all_flight_dates,
+                            multiple=False,
+                        )
+                    ),
+                    ui.column(3,
+                        ui.input_select(
+                            "select_graph",
+                            "Graph type:",
+                            ["Line Plot", "Scatter Plot"],
+                            multiple=False,
+                        )
+                    ),
+                    ui.column(3,
+                        ui.input_select(
+                            "select_x_variable",
+                            "Independent (X) variable:",
+                            columns,
+                            multiple=False,
+                        )
+                    ),
+                    ui.column(3,
+                        ui.input_select(
+                            "select_y_variable",
+                            "Dependent (Y) variable:",
+                            columns,
+                            multiple=False,
+                        )
+                    ),
+                ),
+                ui.output_plot("custom_graph")
             ),
             # ===============================================================================================================================================================
             # START: Statistical Insights TAB
