@@ -544,7 +544,9 @@ def server(input: Inputs, output: Outputs, session: Session):
     def simulation_table(): 
         # Apply conditional formatting
         #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
-        styled_data = simulation.result_table_colours.style.applymap(style_cell)
+        # styled_data = simulation.result_table_colours.style.applymap(style_cell)
+        styled_data = simulation.result_table_colours
+
         # new = styled_data.set_table_styles()
         return styled_data
     
