@@ -540,7 +540,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
-    @render.table
+    @render.table(columns=["Forecast Time", simulation.first_date, simulation.second_date, simulation.third_date])
     def simulation_table(): 
         # Apply conditional formatting
         #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
