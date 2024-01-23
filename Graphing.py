@@ -76,7 +76,7 @@ def create_mapbox_map_per_flight(flight_id: int):
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def soc_graph(flight_ids: list, flight_dates: list):
+def soc_graph(flight_ids: list):
     """
     The function takes in flight ids and dates and creates a single matplotlib figure line graph of soc vs. time with warning and danger zones. 
 
@@ -115,11 +115,11 @@ def soc_graph(flight_ids: list, flight_dates: list):
 
         # Define the date and id
         id = flight_ids[i]
-        date = flight_dates[i]
 
         # Get the soc and time and plot it with a legend label
         soc = flight_data[id]['soc']
         time = flight_data[id]['time_min']
+        date = flight_data[id]["date"]
         soc_ax.plot(time, soc, label=date)
     
     # Add labels and legend to plot
@@ -137,7 +137,7 @@ def soc_graph(flight_ids: list, flight_dates: list):
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def power_graph(flight_ids: list, flight_dates: list):
+def power_graph(flight_ids: list):
     """
     The function takes in flight ids and dates and creates a single matplotlib figure scatter graph of motor_power vs. time. 
 
@@ -163,11 +163,11 @@ def power_graph(flight_ids: list, flight_dates: list):
 
         # Define the date and id
         id = flight_ids[i]
-        date = flight_dates[i]
 
         # Get the soc and time and plot it with a legend label
         motor_power = flight_data[id]['motor_power']
         time = flight_data[id]['time_min']
+        date = flight_data[id]["date"]
         power_ax.scatter(time, motor_power, s=10, label=date)
     
     # Add labels and legend to plot
@@ -185,7 +185,7 @@ def power_graph(flight_ids: list, flight_dates: list):
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def power_soc_rate_scatterplot(flight_id: list, flight_dates: list, activities_filter: list):
+def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
     """
     The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of motor_power vs. SOC rate of change.
     A legend of activities is also included. 
@@ -259,13 +259,27 @@ def power_soc_rate_scatterplot(flight_id: list, flight_dates: list, activities_f
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def custom_graph_creation(graph_type: str, flight_id, x_data_label: str, y_data_label: str):
+def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variable: str, x_label: str, y_label: str):
 
     # Make the query connection
     flight_db_conn = query_flights()
-    query_result = flight_db_conn.get_flight_data_on_id([x_data_label, y_data_label], flight_id)
-    x_ax_data = query_result[x_data_label].to_numpy()
-    y_ax_data = query_result[y_data_label].to_numpy()
+
+    # Get data from x-variables
+    query_result = flight_db_conn.get_flight_data_on_id(x_variable, flight_id)
+
+    if len(x_variable) == 2:
+        x_ax_data = (query_result[x_variable[0]].to_numpy() + query_result[x_variable[1]].to_numpy()) / 2
+    else:
+        x_ax_data = query_result[x_variable].to_numpy()
+
+    # Get data from y-variables if they are not the same as the x-variables
+    if y_variable != x_variable:
+        query_result = flight_db_conn.get_flight_data_on_id(y_variable, flight_id)
+    
+    if len(y_variable) == 2:
+        y_ax_data = (query_result[y_variable[0]].to_numpy() + query_result[y_variable[1]].to_numpy()) / 2
+    else:
+        y_ax_data = query_result[y_variable].to_numpy()
 
     # Set Plot
     custom_figure = plt.figure()
@@ -280,9 +294,9 @@ def custom_graph_creation(graph_type: str, flight_id, x_data_label: str, y_data_
         custom_ax.scatter(x_ax_data, y_ax_data, s=5, c='blue')
     
     # Add labels and legend to plot
-    custom_ax.set_xlabel(x_data_label)
-    custom_ax.set_ylabel(y_data_label)
-    custom_ax.set_title(f"{x_data_label} vs {y_data_label}")
+    custom_ax.set_xlabel(x_label)
+    custom_ax.set_ylabel(y_label)
+    custom_ax.set_title(f"{x_label} vs {y_label}")
 
     # Return the axis
     return custom_ax
