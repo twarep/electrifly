@@ -2,6 +2,7 @@
 
 import psycopg2
 from sqlalchemy import create_engine
+from sqlalchemy.types import Float
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
@@ -129,8 +130,14 @@ def push_flight_data(df, flight_id):
   # create sqlalchemy connection
   engine_string = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
   engine = create_engine(engine_string)
+  # set column types explicitly for error prevention for empty columns
+  explicit_columns = {'lat': Float(), 'lng': Float(), 'ground_speed': Float(),
+                      'motor_temp': Float(), 'ias': Float(), 'inverter_temp': Float(),
+                      'pressure_alt': Float(), 'pitch': Float(), 'roll': Float(),
+                      'heading': Float(), 'stall_diff_pressure': Float(), 'qng': Float(),
+                      'oat': Float()}
   # add new table to db
-  df.to_sql(table_name, engine, if_exists="fail", index=False)
+  df.to_sql(table_name, engine, if_exists="fail", index=False, dtype=explicit_columns)
   engine.dispose()  
 
 # query weather df for all records in between the given times
