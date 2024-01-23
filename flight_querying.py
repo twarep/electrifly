@@ -5,6 +5,8 @@ import numpy as np
 import os
 import psycopg2
 from time import time
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
 class query_flights:
@@ -52,8 +54,6 @@ class query_flights:
         The function runs the following query: SELECT {columns} FROM {table}. This gets all the flight id's and dates of the flight.
         """
 
-        start = time()
-
         # Make query
         if len(columns) == 0:
             query = f"SELECT * FROM {table}"
@@ -69,9 +69,6 @@ class query_flights:
         # Select the data based on the query
         flights = pd.read_sql_query(query, engine)
 
-        query_time = time() - start
-        print(f"Query time on pandas = {query_time}")
-
         # Dispose of the connection, so we don't overuse it.
         engine.dispose()
 
@@ -85,7 +82,7 @@ class query_flights:
         """
 
         # Make query
-        query = f"SELECT * FROM flights WHERE id == {str(id)}"
+        query = f"SELECT * FROM flights WHERE id = {str(id)}"
 
         # Make database connection
         engine = self.connect()
@@ -196,7 +193,7 @@ class query_flights:
     # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
     def get_flight_id_and_dates(self, columns, table):
         """
-        Function gets all flight ids and dates and returns a dictionary of flight_date: flight_id
+        Function gets all flight ids and dates and returns a dictionary of flight_id : flight_date 
         """
 
         # Initialize the dictionary
@@ -209,12 +206,21 @@ class query_flights:
         ids = flights_df[columns[0]].to_numpy()
         flight_dates = flights_df[columns[1]].to_numpy()
 
+        if len(columns) > 2:
+            flight_times = flights_df[columns[2]].to_numpy()
+            datetimes = [datetime.combine(flight_dates[i], flight_times[i]) - relativedelta(hours=5) for i in range(len(flight_dates))]
+
         # Loop over all the flight dates to input into dictionary
         for i in range(len(flight_dates)):
             
             # Create a string object to show the date in mm/dd/year format. Create Key: Value relation.
-            date = flight_dates[i].strftime("%m/%d/%Y")
-            flight_dict[date] = ids[i]
+            if len(columns) > 2:
+                date = datetimes[i].strftime("%b %d, %Y at %I:%M %p")
+            else:
+                date = flight_dates[i].strftime("%B %d, %Y")
+
+            id = str(ids[i])
+            flight_dict[id] = date
 
         return flight_dict
     
@@ -234,12 +240,14 @@ class query_flights:
 
             # Get the flight data
             flights_df = self.get_flight_data_on_id(["flight_id", "time_min", "bat_1_soc", "bat_2_soc"], id)
+            flight_date_df = self.get_flight_by_id(id)
 
             # Change to Numpy
             times = flights_df["time_min"].to_numpy()
             soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2
+            date = flight_date_df["flight_date"].iloc[0].strftime("%b %d, %Y")
 
-            flight_dict[id] = {"soc": soc, "time_min": times}
+            flight_dict[id] = {"soc": soc, "time_min": times, "date": date}
 
         return flight_dict
 
@@ -259,12 +267,14 @@ class query_flights:
 
             # Get the flight data
             flights_df = self.get_flight_data_on_id(["flight_id", "time_min", "motor_power"], id)
+            flight_date_df = self.get_flight_by_id(id)
 
             # Change to Numpy
             times = flights_df["time_min"].to_numpy()
             motor_power = flights_df["motor_power"].to_numpy()
+            date = flight_date_df["flight_date"].iloc[0].strftime("%b %d, %Y")
 
-            flight_dict[id] = {"motor_power": motor_power, "time_min": times}
+            flight_dict[id] = {"motor_power": motor_power, "time_min": times, "date": date}
 
         return flight_dict
     

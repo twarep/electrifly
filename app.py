@@ -24,11 +24,30 @@ import os
 # Getting initial data
 flights = query_flights()
 
-# Get the column names from the flight data
-columns = flights.get_flight_columns()
-
 # Get the list of activities from labeled_activities_view
 list_of_activities = flights.get_flight_activities()
+
+# List of variables
+custom_variables_columns = {
+    "Time (min)": ["time_min"], 
+    "Current": ["bat_1_current", "bat_2_current"], 
+    "Voltage": ["bat_1_voltage", "bat_2_voltage"], 
+    "State-of-Charge": ["bat_1_soc", "bat_2_soc"], 
+    "State-of-Health": ["bat_1_soh", "bat_2_soh"], 
+    "Average Cell Temperature": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"],
+    "Minimum Cell Temperature": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"],
+    "Maximum Cell Temperature": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"],
+    "Minimum Cell Volt": ["bat_1_min_cell_volt", "bat_2_min_cell_volt"],
+    "Maximum Cell Volt": ["bat_1_max_cell_volt", "bat_2_max_cell_volt"],
+    "Inverter Cooling Temperature": ["inverter_cooling_temp_1", "inverter_cooling_temp_1"],
+    "Motor RPM": ["motor_rpm"],
+    "Motor Power": ["motor_power"],
+    "Motor Temperature": ["motor_temp"],
+    "Requested Torque": ["requested_torque"],
+    "Indicated Air Speed": ["ias"],
+    "Pressure Altitude": ["pressure_alt"],
+}
+custom_variables = list(custom_variables_columns.keys())
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -62,24 +81,19 @@ def uploaded_cols():
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_flights(date: bool, columns=["id", "flight_date"], table="flights"):
+def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
     """
     The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
-    It returns data depending if the the input parameter specifies only flight_date to be returned.
 
     Parameters:
         date: Boolean value to specify if you only want to return a list of flight dates from the DB.
 
     Returns:
-        if date is TRUE --> list(flight_data.keys()): List of flight dates in form mm/dd/yyyy
         if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
     """
     flights = query_flights()
 
     flight_data = flights.get_flight_id_and_dates(columns, table)
-
-    if date:
-        return list(flight_data.keys())
     
     return flight_data
 
@@ -93,13 +107,6 @@ def get_most_recent_run_time():
     return log_content
 
 
-# Initialize all the flight dates.
-all_flight_dates = get_flights(True)
-act_view_flight_dates = get_flights(True, ["fw_flight_id", "flight_date"], "labeled_activities_view")
-all_flight_data = get_flights(False)
-act_view_all_data = get_flights(False, ["fw_flight_id", "flight_date"], "labeled_activities_view")
-
-
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_navbar(
     # {"style": "color: blue"},
@@ -111,7 +118,7 @@ app_ui = ui.page_navbar(
         # Column selection panel
         ui.div(
             # Dropdown with checkboxes
-            ui.input_select("selected_cols", "Select Columns to Preview", choices=list(uploaded_cols().columns), multiple=True),
+            ui.input_selectize("selected_cols", "Select Columns to Preview", choices=list(uploaded_cols().columns), multiple=True),
             style="margin-top:40px;"
         ),  
         # Table header
@@ -151,71 +158,25 @@ app_ui = ui.page_navbar(
             # ===============================================================================================================================================================
             ui.nav("Recommended Graphs", 
                 div(HTML("<hr>")),
-                div(HTML("""<p><b> Single Date Graphs </b></p>""")),
-                div(HTML("<hr>")),
+                div(HTML("<h3> Single Date Graphs </h3>")),
                 ui.row(
-                    ui.column(6, 
-                        ui.input_select(
-                            "singular_flight_date",
-                            "Choose Flight Date:",
-                            all_flight_dates,
-                            selected=all_flight_dates[0]
-                        )
-                    ),
-                    ui.column(6, 
-                        ui.output_text("num_circuits")
-                    )
+                    ui.column(6, ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights())),
+                    ui.column(6, ui.output_text("num_circuits"))
                 ),
                 ui.row(
                     # Put columns within the rows, the column first param is the width, your total widths add up to 12
-                    ui.column(6, 
-                        div(HTML("<p><b>Weather Data for Selected Flights</b></p>")),
-                        div(HTML("<hr>")), 
-                        ui.layout_sidebar(
-                            ui.panel_sidebar(
-                                width=0
-                            ),
-                            ui.panel_main(
-                                ui.output_table("weather_interactive")
-                            )
-                        )
-                    ),
-                    ui.column(6,
-                        div(HTML("<p><b>Flight Map</b></p>")),
-                        div(HTML("<hr>")), 
-                        output_widget("lat_long_map")
-                    ),
+                    ui.column(6, div(HTML("<p><b>Weather Data for Selected Flights</b></p>")), div(HTML("<hr>")), ui.panel_main(ui.output_table("weather_interactive"))),
+                    ui.column(6, div(HTML("<p><b>Flight Map</b></p>")), div(HTML("<hr>")), output_widget("lat_long_map")),
                 ),
                 div(HTML("<hr>")),
                 div(HTML("<hr>")),
-                div(HTML("""<p><b> Multiple Date Graphs </b></p>""")),
-                div(HTML("<hr>")),
+                div(HTML("<h3> Multiple Date Graphs </h3>")),
                 ui.row(
-                    ui.column(6, 
-                        div(HTML("<p>To select multiple dates:</p>")),
-                        div(HTML("<table><tr><th>Windows</th></tr><tr><td>ctrl + click</td></table><table><tr><th>Mac</th></tr><tr><td>cmd + click</td></tr></table>"))
-                    ),
-                    ui.column(6, 
-                        ui.input_select(
-                            "multi_select_flight_dates",
-                            "Choose Flight date(s):",
-                            all_flight_dates,
-                            selected=all_flight_dates[0],
-                            multiple=True,
-                        )
-                    )
+                    ui.column(12, ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True))
                 ),
                 ui.row(
-                    ui.column(6,
-                        div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")),
-                        div(HTML("<hr>")),
-                        ui.output_plot("soc_time_graph")
-                    ),
-                    ui.column(6,
-                        div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")),
-                        div(HTML("<hr>")),
-                        ui.output_plot("power_time_graph")
-                    )
+                    ui.column(6, div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")), div(HTML("<hr>")), ui.output_plot("soc_time_graph")),
+                    ui.column(6, div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")), div(HTML("<hr>")), ui.output_plot("power_time_graph"))
                 ),
                 div(HTML("<hr>"))
             ),
@@ -237,38 +198,10 @@ app_ui = ui.page_navbar(
                 ),
                 div(HTML("<hr>")),
                 ui.row(
-                    ui.column(3,
-                        ui.input_select(
-                            "select_flights",
-                            "Flight date:",
-                            all_flight_dates,
-                            multiple=False,
-                        )
-                    ),
-                    ui.column(3,
-                        ui.input_select(
-                            "select_graph",
-                            "Graph type:",
-                            ["Line Plot", "Scatter Plot"],
-                            multiple=False,
-                        )
-                    ),
-                    ui.column(3,
-                        ui.input_select(
-                            "select_x_variable",
-                            "Independent (X) variable:",
-                            columns,
-                            multiple=False,
-                        )
-                    ),
-                    ui.column(3,
-                        ui.input_select(
-                            "select_y_variable",
-                            "Dependent (Y) variable:",
-                            columns,
-                            multiple=False,
-                        )
-                    ),
+                    ui.column(3, ui.input_selectize("select_flights", "Flight Date:", get_flights())),
+                    ui.column(3, ui.input_selectize("select_graph", "Graph Type:", ["Line Plot", "Scatter Plot"])),
+                    ui.column(3, ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_variables, selected=custom_variables[0])),
+                    ui.column(3, ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_variables, selected=custom_variables[3])),
                 ),
                 ui.output_plot("custom_graph")
             ),
@@ -276,6 +209,8 @@ app_ui = ui.page_navbar(
             # START: Statistical Insights TAB
             # ===============================================================================================================================================================
             ui.nav("Statistical Insights", 
+                div(HTML("<hr>")),
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
                 ui.row( 
                     # put columns within the rows, the column first param is the width, your total widths add up to 12
                     ui.column(6, 
@@ -284,25 +219,10 @@ app_ui = ui.page_navbar(
                         div(HTML("<hr>")),
                         ui.layout_sidebar(
                             ui.panel_sidebar(
-                                ui.input_select(
-                                    "power_soc_rate_state",
-                                    "Choose flight date:",
-                                    act_view_flight_dates,
-                                    selected=act_view_flight_dates[0],
-                                    multiple=False,
-                                ),
-                                ui.input_select(
-                                    "select_activities",
-                                    "Choose activities:",
-                                    list_of_activities,
-                                    selected=list_of_activities,
-                                    multiple=True,
-                                ),
+                                ui.input_selectize("select_activities", "Choose activities:", list_of_activities, selected=list_of_activities, multiple=True),
                                 width=3
                             ),
-                            ui.panel_main(
-                                ui.output_plot("power_soc_rate_of_change_scatter_plot")
-                            ),
+                            ui.panel_main(ui.output_plot("power_soc_rate_of_change_scatter_plot")),
                             position='right'
                         )
                     ),
@@ -310,22 +230,7 @@ app_ui = ui.page_navbar(
                         div(HTML("<hr>")),
                         div(HTML("<p><b>Plane Operations vs. SOC Rate of Change Statistics </b></p>")),
                         div(HTML("<hr>")),
-                        ui.layout_sidebar(
-                            ui.panel_sidebar(
-                                ui.input_select(
-                                    "soc_roc_state",
-                                    "Choose flight date:",
-                                    act_view_flight_dates,
-                                    selected=act_view_flight_dates[0],
-                                    multiple=False,
-                                ),
-                                width=3
-                            ),
-                            ui.panel_main(
-                                ui.output_table("soc_roc_table")
-                            ),
-                            position='right'
-                        )
+                        ui.panel_main(ui.output_table("soc_roc_table"))
                     ),  
                 ),
             ),
@@ -346,17 +251,13 @@ app_ui = ui.page_navbar(
                 div(HTML("<hr>")),
                 div(HTML("<p><b>Number of Feasible Flights</b></p>")),
                 div(HTML("<hr>")),
-                ui.panel_main(
-                        ui.output_table("simulation_table", style="width: 70%; height: 300px;")
-                ),
+                ui.panel_main(ui.output_table("simulation_table", style="width: 70%; height: 300px;")),
             ),
             ui.column(6,
                 div(HTML("<hr>")),
                 div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
                 div(HTML("<hr>")),
-                ui.panel_main(
-                    ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
-                ),
+                ui.panel_main(ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")),
             ),
         ),      
     ),
@@ -386,8 +287,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.table
     def weather_interactive(): 
         # Get the flight ID corresponding to the chosen date
-        flight_date = input.singular_flight_date()
-        flight_id = all_flight_data[flight_date]
+        flight_id = input.singular_flight_date()
         weather_df = query_weather().get_weather_by_flight_id(flight_id)
         return weather_df 
 
@@ -397,14 +297,15 @@ def server(input: Inputs, output: Outputs, session: Session):
     def custom_graph():
 
         # Get all the inputs
-        flight_date = input.select_flights()
+        flight_id = input.select_flights()
         graph_type = input.select_graph()
-        x_variable = input.select_x_variable()
-        y_variable = input.select_y_variable()
-        flight_id = all_flight_data[flight_date]
+        x_var_label = input.select_x_variable()
+        y_var_label = input.select_y_variable()
+        x_variables = custom_variables_columns[x_var_label]
+        y_variables = custom_variables_columns[y_var_label]
 
         # Make the graph
-        created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variable, y_variable)
+        created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
 
         # Return the custom graph
         return created_custom_graph         
@@ -420,16 +321,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             soc_graph: a matplotlib figure plot with the data plotted already.
         """
         # Get all flight data for interactive plot
-        flight_data = all_flight_data
-        flight_dates = input.multi_select_flight_dates()
-        flight_ids = []
-
-        # Add flight ids to list
-        for flight_date in flight_dates:
-            flight_ids.append(flight_data[flight_date])
+        flight_ids = input.multi_select_flight_dates()
 
         # Graph the SOC
-        soc_graph = Graphing.soc_graph(flight_ids, flight_dates)
+        soc_graph = Graphing.soc_graph(flight_ids)
 
         # Return the SOC graph
         return soc_graph
@@ -445,16 +340,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             motor_power_graph: a matplotlib figure plot with the data plotted already.
         """
         # Get all flight data for interactive plot
-        flight_data = all_flight_data
-        flight_dates = input.multi_select_flight_dates()
-        flight_ids = []
-
-        # Add flight ids to list
-        for flight_date in flight_dates:
-            flight_ids.append(flight_data[flight_date])
+        flight_ids = input.multi_select_flight_dates()
         
         # Graph the Motor Power
-        motor_power_graph = Graphing.power_graph(flight_ids, flight_dates)
+        motor_power_graph = Graphing.power_graph(flight_ids)
 
         # Return the Motor Power graph
         return motor_power_graph
@@ -471,8 +360,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         """
 
         # Get the flight id
-        flight_date = input.singular_flight_date()
-        flight_id = all_flight_data[flight_date]
+        flight_id = input.singular_flight_date()
         
         # Call the graphing function to map the latitudes and longitudes
         figure, latitudes, longitudes = Graphing.create_mapbox_map_per_flight(flight_id)
@@ -502,8 +390,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         """
 
         # Get the flight id
-        flight_date = input.singular_flight_date()
-        flight_id = all_flight_data[flight_date]
+        flight_id = input.singular_flight_date()
 
         query_conn = query_flights()
         query_result = query_conn.get_number_of_circuits(flight_id)
@@ -529,14 +416,11 @@ def server(input: Inputs, output: Outputs, session: Session):
             power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """
         # Get all flight data
-        flight_data = act_view_all_data
-
-        flight_date = input.power_soc_rate_state()
+        flight_id = input.statistical_time()
         activities_filter = input.select_activities()
-        flight_id = flight_data[flight_date]
 
         # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
-        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_id, flight_date, activities_filter)
+        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_id, activities_filter)
 
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot
@@ -551,9 +435,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             soc_roc_df: a dataframe that will output as a table.
         """
         # Get the flight ID corresponding to the chosen date
-        flight_date = input.soc_roc_state()
-
-        flight_id = act_view_all_data[flight_date] #########
+        flight_id = input.statistical_time()
 
         soc_roc_df = query_flights().get_soc_roc_stats_by_id(flight_id)
 
