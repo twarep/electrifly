@@ -169,7 +169,7 @@ def weather_flight_rel(filtered_df, flight_id):
     current_weather_id = select(weather_query, weather_values)
     # push these values to flight_weather table
     flight_weather_insert_query = "INSERT INTO flight_weather (flight_id, weather_id) VALUES (%s, %s)"
-    values = (flight_id, current_weather_id[0]) # NEED TO EDIT
+    values = (flight_id, current_weather_id[0])
     execute(flight_weather_insert_query, values)
 
 # takes in weather dataframe and id list, queries flights to 

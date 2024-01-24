@@ -103,7 +103,6 @@ def weather_data(date_list, ids_list, driver, download_dir):
   # transform the weather_data into DB format
   df = weather_transformation(df)
   # map out each weather data field to a flight
-  print(ids_list)
   relevant_weather(df, ids_list)
 
   # delete the temp files from disk
