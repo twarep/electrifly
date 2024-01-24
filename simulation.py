@@ -362,13 +362,16 @@ second_date= final_zones_color.iloc[96, 0]
 third_date= final_zones_color.iloc[192, 0]
 
 full = [df0, df1, df2, df3]
-result_table_colours = pd.concat(full, axis=1)
-result_table_colours.columns = ["Forecast Time", first_date, "Explanation", "index", second_date, 
-                                "Explanation", "index", third_date, "Explanation"]
-del result_table_colours['index']
-print(result_table_colours)
-
-# result_table_colours.to_csv('result_table_colours')
+zones_table = pd.concat(full, axis=1)
+zones_table.columns = ["Forecast Time", first_date, "Explanation 1", "index", second_date, 
+                                "Explanation 2", "index", third_date, "Explanation 3"]
+del zones_table['index']
+# separates the explanations from the zone colours
+explanation_cols = ["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]
+explanations_table = zones_table[explanation_cols].copy()
+# remove the explanation columns from the zones_table
+for col in explanation_cols[1:]:
+    zones_table.pop(col)
 
 #STEP 1: Find the total flight tight 97.47 -> approx 105 -> 6 or 7 blocks
 
@@ -381,8 +384,9 @@ finish_times = []
 countSafe = 0
 countModSafe = 0
 cellBlock = 0
-
-dayOne = result_table_colours.iloc[:, 0:2]
+print(zones_table)
+print(zones_table.columns)
+dayOne = zones_table.iloc[:, 0:2]
 date = dayOne.iloc[:, 0]
 colour = dayOne.iloc[:, 1]
 

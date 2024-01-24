@@ -543,11 +543,11 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.table(columns=["Forecast Time", simulation.first_date, simulation.second_date, simulation.third_date])
     def simulation_table(): 
         # Apply conditional formatting
-        #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
-        # styled_data = simulation.result_table_colours.style.applymap(style_cell)
-        styled_data = simulation.result_table_colours
+        styled_data = simulation.zones_table.style.applymap(style_cell)
+        # 1. how to get explanations in without displaying in cols
+        # 2. how do we use popovers to map to this table
+        # styled_data = simulation.result_table_colours
 
-        # new = styled_data.set_table_styles()
         return styled_data
     
     # Define a function to determine the cell background color
