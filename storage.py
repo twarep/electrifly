@@ -143,19 +143,29 @@ def push_flight_data(df, flight_id):
 # query weather df for all records in between the given times
 def query_weather_df(df, date, start_time, end_time):
   # Filter the DataFrame based on the conditions
+  # case one: time falls in the interval [start time of flight, end time of flight]
   filtered_df = df[
       (df['weather_date'] == date) &
       (df['weather_time_utc'] >= start_time) &
       (df['weather_time_utc'] <= end_time)
   ]
+  # case two: no time within the start or end, get the closest one before
+  if filtered_df.empty:
+    df['weather_time_utc'] = pd.to_datetime(df['weather_time_utc'], format='%H:%M:%S').dt.time
+    times_before = df[(df['weather_time_utc'] < start_time) & (df['weather_date'] == date)]
+    filtered_df = times_before.loc[[times_before.index.max()]]
+  # case three: times exists within the interval, but doesnt cover all of the interval
+  else:
+    # if we missed any time in flight due to first weather data being recorded after the flight started
+    min_weather_index = filtered_df.iloc[[0]]['weather_time_utc'].index[0]
+    if filtered_df.iloc[[0]]['weather_time_utc'].values[0] > start_time:
+      # get the previous record from the original df and add it to the top of the filtered_df
+      previous_weather_reading = df.loc[[min_weather_index - 1]]
+      filtered_df = pd.concat([previous_weather_reading, filtered_df])
   return filtered_df
 
 # creates a relationship between flight id and weather id
-def weather_flight_rel(filtered_df):
-  weather_id_list = []
-  flight_id_list = []
-  min_time_list = []
-  max_time_list = []
+def weather_flight_rel(filtered_df, flight_id):
   # query filtered_df to get the id of all records with the needed dates and times
   for index, row in filtered_df.iterrows():
     weather_date = row["weather_date"]
@@ -164,25 +174,10 @@ def weather_flight_rel(filtered_df):
     weather_values = (weather_date, weather_time_utc,)
     # get weather id for the current record
     current_weather_id = select(weather_query, weather_values)
-    weather_id_list.append(current_weather_id[0])
-    # find flight id that occurred on the same day
-    flight_query = "SELECT id FROM flights WHERE flight_date=%s"
-    flight_values = (weather_date,)
-    current_flight_id = select(flight_query, flight_values)
-    flight_id_list.append(current_flight_id[0])
-    # get the min and max times for the given flight
-    min_time_query = "SELECT MIN(weather_time_utc) FROM weather WHERE weather_date=%s"
-    max_time_query = "SELECT MAX(weather_time_utc) FROM weather WHERE weather_date=%s"
-    current_flight_min_time = select(min_time_query, flight_values)
-    min_time_list.append(current_flight_min_time[0])
-    current_flight_max_time = select(max_time_query, flight_values)
-    max_time_list.append(current_flight_max_time[0])
     # push these values to flight_weather table
     flight_weather_insert_query = "INSERT INTO flight_weather (flight_id, weather_id) VALUES (%s, %s)"
-    values = (current_flight_id[0], current_weather_id[0])
+    values = (flight_id, current_weather_id[0])
     execute(flight_weather_insert_query, values)
-
-
 
 # takes in weather dataframe and id list, queries flights to 
 # determine which weather data corresponds to which flight
@@ -208,7 +203,7 @@ def relevant_weather(df, id_list):
     # insert new weather data into weather table
     filtered_df.to_sql("weather", engine, if_exists="append", index=False)
     # create relationship between flight and newly added weather data
-    weather_flight_rel(filtered_df)
+    weather_flight_rel(filtered_df, id)
     engine.dispose()
 
 
