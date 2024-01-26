@@ -256,20 +256,26 @@ app_ui = ui.page_navbar(
     # START: ML RECOMMENDATIONS SCREEN
     # ===============================================================================================================================================================
     ui.nav("Simulation", 
-        ui.row( 
-            ui.column(6,
-                div(HTML("<hr>")),
-                div(HTML("<p><b>Number of Feasible Flights</b></p>")),
-                div(HTML("<hr>")),
-                ui.panel_main(ui.output_table("simulation_table", style="width: 70%; height: 300px;")),
-            ),
-            ui.column(6,
-                div(HTML("<hr>")),
-                div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
-                div(HTML("<hr>")),
-                ui.panel_main(ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")),
-            ),
-        ),      
+        ui.nav("Forecasting",
+            ui.row( 
+                ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Number of Feasible Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(ui.output_table("simulation_table", style="width: 70%; height: 300px;")),
+                ),
+                ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")),
+                ),
+            )
+        ),
+        ui.nav("Fligh Operations Modeling", 
+            ui.input_selectize("flight_operations", "Choose Flight Date:", ["Take-off", "Stall", "Cruise"], multiple=True), 
+            ui.output_text("showing_ml")
+        ) 
     ),
     # ===============================================================================================================================================================
     # END: ML RECOMMENDATIONS SCREEN
@@ -284,6 +290,11 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    @render.text 
+    def showing_ml():
+        data = input.flight_operations()
+        return f"Flight Operations chosen: {data}" 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
