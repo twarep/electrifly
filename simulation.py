@@ -367,11 +367,20 @@ zones_table.columns = ["Forecast Time", first_date, "Explanation 1", "index", se
                                 "Explanation 2", "index", third_date, "Explanation 3"]
 del zones_table['index']
 # separates the explanations from the zone colours
-explanation_cols = ["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]
-explanations_table = zones_table[explanation_cols].copy()
+explanation_cols = ["Forecast Time", first_date, second_date, third_date]
+removal_cols = ["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]
+explanations_table = pd.DataFrame(data=zones_table[["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]], index=zones_table.index)
+explanations_table = explanations_table.rename(columns={"Explanation 1": first_date, "Explanation 2": second_date, "Explanation 3": third_date})
+
+# explanations_table = zones_table[explanation_cols].copy()
 # remove the explanation columns from the zones_table
-for col in explanation_cols[1:]:
+for col in removal_cols[1:]:
     zones_table.pop(col)
+print("-"*100)
+print(zones_table)
+print("-"*100)
+print(explanations_table)
+print("-"*100)
 
 #STEP 1: Find the total flight tight 97.47 -> approx 105 -> 6 or 7 blocks
 
