@@ -160,7 +160,7 @@ app_ui = ui.page_navbar(
                                           <tr>
                                             <td>'cmd' + click</td>
                                           </tr>
-                                        </table>""")),
+                                        </tab le>""")),
                                 width=3
                         ),
                         ui.panel_main(
@@ -324,7 +324,7 @@ app_ui = ui.page_navbar(
                     div(HTML("<p><b>Number of Feasible Flights</b></p>")),
                     div(HTML("<hr>")),
                     ui.panel_main(
-                            ui.output_table("simulation_table", style="width: 70%; height: 300px;")
+                            ui.output_table("simulation_table")
                         ),
                     ),
 
@@ -543,15 +543,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.table(columns=["Forecast Time", simulation.first_date, simulation.second_date, simulation.third_date])
     def simulation_table(): 
         # Apply conditional formatting
-        # styled_data = simulation.zones_table.style.applymap(style_cell)
         zones = simulation.zones_table
         explanations = simulation.explanations_table
-        styled_data = zones.style.set_tooltips(explanations).applymap(style_cell)
-        #styled_data = styled_data.style.applymap(style_cell)
-        # 1. how to get explanations in without displaying in cols
-        # 2. how do we use popovers to map to this table
-        # styled_data = simulation.result_table_colours
-
+        styled_data = zones.style.set_tooltips(explanations, props='visibility: hidden; position: absolute; z-index: 1; border: 1px solid #000066;'
+                         'background-color: white; color: #000066; font-size: 0.8em;'
+                         'transform: translate(0px, -24px); padding: 0.6em; border-radius: 0.5em;').applymap(style_cell).set_table_styles(
+                             [{'selector': 'td', 'props': 'border: 5px solid white;'}])
         return styled_data
     
     # Define a function to determine the cell background color
