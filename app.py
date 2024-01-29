@@ -18,14 +18,33 @@ from dotenv import load_dotenv
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
+from datetime import datetime, timedelta
 import simulation
 import os
+
+flight_operation_dictionary = {"Activity": [], "Time (minutes)": []}
 
 # Getting initial data
 flights = query_flights()
 
 # Get the list of activities from labeled_activities_view
 list_of_activities = flights.get_flight_activities()
+
+# Getting the dates to be used in the ML UI:
+# Get current date
+current_date = datetime.now().date()
+string_current_date = current_date.strftime("%Y-%m-%d")
+
+# Get tomorrow's date
+tomorrow_date = current_date + timedelta(days=1)
+string_tomorrow_date = tomorrow_date.strftime("%Y-%m-%d")
+
+# Get the day after tomorrow's date
+day_after_tomorrow_date = current_date + timedelta(days=2)
+string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%Y-%m-%d")
+
+# Create a list and add the dates
+list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
 
 # List of variables
 custom_variables_columns = {
@@ -274,12 +293,21 @@ app_ui = ui.page_navbar(
                 )
             ),
             ui.nav("Flight Operations Modeling", 
+                # Selecting the date
+                ui.row(
+                    ui.column(6,
+                        ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, width=6, selected=None)
+                    ),
+                    ui.column(6,
+                        ui.output_ui("time_selector")
+                    )
+                ),
                 ui.row(
                     ui.column(6,
                         ui.input_selectize("flight_operations", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None)
                     ),
                     ui.column(6,
-                        ui.output_ui("minute_selector")
+                        ui.output_ui("duration_of_activity")
                     )
                 ),
                 ui.row(
@@ -302,36 +330,11 @@ app_ui = ui.page_navbar(
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def server(input: Inputs, output: Outputs, session: Session):
-
-    flight_operation_output_table = pd.DataFrame(columns=["Activity", "Time (minutes)"])
   
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    @output
-    @render.ui
-    @reactive.event(input.flight_operations)
-    def minute_selector():
-        flight_activity = input.flight_operations()
-
-        if flight_activity == "":
-            return ui.output_text("Please select a flight activity")
-        else:
-            return ui.input_numeric("minute_chooser", f"Choose number of minutes for {flight_activity}:", 1, min=1, max=60)
-
-    @output
-    @render.data_frame 
-    @reactive.event(input.select_activity)
-    def activity_selection_output():
-
-        flight_activity = input.flight_operations()
-        flight_minutes = input.minute_chooser()
-
-        new_flight_table = flight_operation_output_table.append({"Activity": flight_activity, "Time (minutes)": flight_minutes})
-
-        return new_flight_table
-
+    
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
@@ -576,6 +579,51 @@ def server(input: Inputs, output: Outputs, session: Session):
         # new = styled_data.set_table_styles()
         return flight_plan
     
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.date_operations)
+    def time_selector():
+        flight_dates = input.date_operations()
+
+        if flight_dates == "":
+            return ui.output_text("Please select a date to fly")
+        else:
+            return ui.input_selectize("testing", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.flight_operations)
+    def duration_of_activity():
+        flight_activity = input.flight_operations()
+
+        if flight_activity == "":
+            return ui.output_text("Please select a flight activity")
+        else:
+            return ui.input_numeric("duration_chooser", f"Choose number of minutes for {flight_activity}:", 1, min=1, max=60)
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.data_frame 
+    @reactive.event(input.select_activity)
+    def activity_selection_output():
+
+        global flight_operation_dictionary
+
+        button_selection = input.select_activity()
+        operation = input.flight_operations()
+        operation_duration = input.duration_chooser()
+
+        if button_selection > 0:
+            flight_operation_dictionary["Activity"].append(operation)
+            flight_operation_dictionary["Time (minutes)"].append(operation_duration)
+            flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
+        else:
+            flight_operation_output_table = pd.DataFrame(columns=["Activity", "Time (minutes)"])
+        
+        return flight_operation_output_table
+
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: SIMULATION SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
