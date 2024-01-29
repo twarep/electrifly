@@ -443,8 +443,8 @@ class query_flights:
         query = f"""SELECT tfa.time_min AS Time,
                         tfa.flight_id AS id, 
                         tfa.activity AS Exercise, 
-                        fl.bat_1_soc AS SOC,
-                        fl.bat_1_avg_cell_temp AS Cell_Temperature,
+                        ((fl.bat_1_soc + fl.bat_2_soc) / 2) AS SOC,
+                        ((fl.bat_1_avg_cell_temp + fl.bat_2_avg_cell_temp) / 2) AS Cell_Temperature,
                         fl.motor_rpm AS Motor_RPM, 
                         fl.motor_power AS Motor_Power,
                         fl.motor_temp AS Motor_Temperature,
@@ -468,5 +468,3 @@ class query_flights:
 
         # Return the data
         return flight_data
-
-
