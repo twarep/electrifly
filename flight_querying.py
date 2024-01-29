@@ -442,9 +442,14 @@ class query_flights:
         # Make the query
         query = f"""SELECT tfa.time_min AS Time,
                         tfa.flight_id AS id, 
-                        tfa.activity AS Exercise, 
-                        fl.bat_1_soc AS SOC,
-                        fl.bat_1_avg_cell_temp AS Cell_Temperature,
+                        tfa.activity AS Exercise,
+                        tfa.temperature AS Environment_Temperature,
+                        tfa.dewpoint AS Dewpoint,
+                        tfa.relative_humidity AS Humidity,
+                        tfa.wind_speed AS Wind_Speed,
+                        tfa.visibility AS Visibility,
+                        ((fl.bat_1_soc + fl.bat_2_soc) / 2) AS SOC,
+                        ((fl.bat_1_avg_cell_temp + fl.bat_2_avg_cell_temp) / 2) AS Cell_Temperature,
                         fl.motor_rpm AS Motor_RPM, 
                         fl.motor_power AS Motor_Power,
                         fl.motor_temp AS Motor_Temperature,
@@ -455,7 +460,7 @@ class query_flights:
                         fl.inverter_temp AS Inverter_Temperature,
                         fl.pitch AS Pitch,
                         fl.roll AS Roll
-                    FROM flight_activities \"tfa\" 
+                    FROM labeled_activities_view \"tfa\" 
                     INNER JOIN flightdata_{flight} \"fl\" 
                         ON tfa.time_min=fl.time_min AND tfa.flight_id=fl.flight_id
                     WHERE fl.flight_id={flight}"""
