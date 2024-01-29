@@ -256,26 +256,42 @@ app_ui = ui.page_navbar(
     # START: ML RECOMMENDATIONS SCREEN
     # ===============================================================================================================================================================
     ui.nav("Simulation", 
-        ui.nav("Forecasting",
-            ui.row( 
-                ui.column(6,
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Number of Feasible Flights</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.panel_main(ui.output_table("simulation_table", style="width: 70%; height: 300px;")),
+        ui.navset_tab(
+            ui.nav("Forecasting",
+                ui.row( 
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Number of Feasible Flights</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.panel_main(ui.output_table("simulation_table", style="width: 70%; height: 300px;")),
+                    ),
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.panel_main(ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")),
+                    )
+                )
+            ),
+            ui.nav("Flight Operations Modeling", 
+                ui.row(
+                    ui.column(6,
+                        ui.input_selectize("flight_operations", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None)
+                    ),
+                    ui.column(6,
+                        ui.output_ui("minute_selector")
+                    )
                 ),
-                ui.column(6,
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.panel_main(ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")),
-                ),
+                ui.row(
+                    ui.column(8),
+                    ui.column(4,
+                        ui.input_action_button("select_activity", "Add activity"),
+                    )
+                ), 
+                div(HTML("<hr>")),
+                ui.output_data_frame("activity_selection_output")
             )
-        ),
-        ui.nav("Fligh Operations Modeling", 
-            ui.input_selectize("flight_operations", "Choose Flight Date:", ["Take-off", "Stall", "Cruise"], multiple=True), 
-            ui.output_text("showing_ml")
-        ) 
+        )
     ),
     # ===============================================================================================================================================================
     # END: ML RECOMMENDATIONS SCREEN
@@ -286,15 +302,35 @@ app_ui = ui.page_navbar(
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def server(input: Inputs, output: Outputs, session: Session):
+
+    flight_operation_output_table = pd.DataFrame(columns=["Activity", "Time (minutes)"])
   
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    @render.text 
-    def showing_ml():
-        data = input.flight_operations()
-        return f"Flight Operations chosen: {data}" 
+    @output
+    @render.ui
+    @reactive.event(input.flight_operations)
+    def minute_selector():
+        flight_activity = input.flight_operations()
+
+        if flight_activity == "":
+            return ui.output_text("Please select a flight activity")
+        else:
+            return ui.input_numeric("minute_chooser", f"Choose number of minutes for {flight_activity}:", 1, min=1, max=60)
+
+    @output
+    @render.data_frame 
+    @reactive.event(input.select_activity)
+    def activity_selection_output():
+
+        flight_activity = input.flight_operations()
+        flight_minutes = input.minute_chooser()
+
+        new_flight_table = flight_operation_output_table.append({"Activity": flight_activity, "Time (minutes)": flight_minutes})
+
+        return new_flight_table
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -494,11 +530,14 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.text
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
         return f"Last data retrieval: {most_recent_run_time}"  
+    
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
