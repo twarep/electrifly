@@ -53,6 +53,9 @@ for i in visibility_SM.index:
         explanation_df.at[i, 'Explanation'].append(exp)
     visability_zone_list.append(visability_zone)
 # Create a new DataFrame
+
+format = '%H:%M'
+
 visability_zone_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
     "Forecast Time": forecast_time_et,
@@ -329,7 +332,19 @@ def prioritize_colors(row):
 # Create a new column 'final_color' based on the prioritized colors
 zones_df_all['final_zone'] = zones_df_all.apply(prioritize_colors, axis=1)
 
-test = {"a": 1}
+# print(forecast_time_et)
+# forecast_time_et = forecast_time_et
+# forecast_df_datetime = pd.to_datetime(forecast_df["Forecast Time"])
+# forecast_time_et = forecast_df_datetime.dt.strftime('%H:%M')
+# format = '%H:%M'
+# string_time = forecast_time_et.strftime(format)
+# formatted_list = [forecast_time_et.strftime('%H:%M')]
+# formatted_list = [time.strftime('%H:%M') for time in forecast_time_et]
+# new_test = pd.DataFrame({
+#     "Forecast Time": forecast_time_et,
+# })
+# new_test["forecast_time_et"] = new_test['forecast_time_et'].dt.strftime('%H:%M')
+# print(new_test["forecast_time_et"])test = {"a": 1}
 
 final_zones_color = pd.DataFrame({
     "Forecast Date": forecast_date,
