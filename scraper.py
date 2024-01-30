@@ -87,8 +87,8 @@ def weather_data(date_list, ids_list, driver, download_dir):
   else:
     day_select.select_by_value(day)
   # select the waterloo airport only (cykf)
+  time.sleep(3) # to prevent "Cannot locate option with value: CYKF;" error
   waterloo_airport_option = Select(driver.find_element(By.ID, "stations_in"))
-  time.sleep(1)
   waterloo_airport_option.select_by_value("CYKF")
   driver.find_element(By.ID, "stations_add").click()
   # click on the correct download option

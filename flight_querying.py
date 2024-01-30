@@ -433,5 +433,40 @@ class query_flights:
 
         return statistics_df
 
+    # JOIN ML tables Function ------------------------------------------------------------------------------------------------------------
+    def connect_flight_for_ml_data_label(self, flight: int):
+
+        # Make database connection
+        engine = self.connect()
+
+        # Make the query
+        query = f"""SELECT tfa.time_min AS Time,
+                        tfa.flight_id AS id, 
+                        tfa.activity AS Exercise, 
+                        fl.bat_1_soc AS SOC,
+                        fl.bat_1_avg_cell_temp AS Cell_Temperature,
+                        fl.motor_rpm AS Motor_RPM, 
+                        fl.motor_power AS Motor_Power,
+                        fl.motor_temp AS Motor_Temperature,
+                        fl.ias AS Indicated_Air_Speed,
+                        fl.pressure_alt AS Pressure_Altitude,
+                        fl.ground_speed AS Ground_Speed,
+                        fl.oat AS Outside_Air_Temperature,
+                        fl.inverter_temp AS Inverter_Temperature,
+                        fl.pitch AS Pitch,
+                        fl.roll AS Roll
+                    FROM flight_activities \"tfa\" 
+                    INNER JOIN flightdata_{flight} \"fl\" 
+                        ON tfa.time_min=fl.time_min AND tfa.flight_id=fl.flight_id
+                    WHERE fl.flight_id={flight}"""
+
+        # Select the data based on the query
+        flight_data = pd.read_sql_query(query, engine) 
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the data
+        return flight_data
 
 
