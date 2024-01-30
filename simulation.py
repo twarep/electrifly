@@ -41,12 +41,16 @@ for i in visibility_SM.index:
         visability_zone = "gray"
     elif(visibility_SM[i]) < 3:
         visability_zone = "red"
-        exp = "Red zone because visability is " + str(round(visibility_SM[i],2)) + " which is less than the threshold of 3."
+        exp = "Red zone because visibility is " + str(round(visibility_SM[i],2)) + " which is less than the threshold of 3."
         explanation_df.at[i, 'Explanation'].append(exp)
     elif (visibility_SM[i]< 6):
         visability_zone = "yellow"
+        exp = "Yellow zone because visibility is " + str(round(visibility_SM[i],2)) + " which is less than the threshold of 6."
+        explanation_df.at[i, 'Explanation'].append(exp)
     else:
         visability_zone = "green"
+        exp = "Green zone because visibility is clear"
+        explanation_df.at[i, 'Explanation'].append(exp)
     visability_zone_list.append(visability_zone)
 # Create a new DataFrame
 visability_zone_df_all = pd.DataFrame({
