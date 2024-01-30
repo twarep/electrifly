@@ -143,7 +143,7 @@ app_ui = ui.page_navbar(
     # ===============================================================================================================================================================
     # START: UPLOAD SCREEN
     # ===============================================================================================================================================================
-    ui.nav("Upload Data",
+    ui.nav_panel("Upload Data",
         # Column selection panel
         ui.div(
             # Dropdown with checkboxes
@@ -173,19 +173,19 @@ app_ui = ui.page_navbar(
     # ===============================================================================================================================================================
     # START: DATA ANALYSIS SCREEN 
     # ===============================================================================================================================================================
-    ui.nav("Data Analysis", 
+    ui.nav_panel("Data Analysis", 
         ui.include_css("bootstrap.css"),
-        x.ui.card(
-            x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-            x.ui.card_body("""Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. 
-                            Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.""")
+        ui.card(
+            ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
+            """Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. 
+                Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward."""
         ),
         # This creates the tabs between the recommended graph screen and the insights
         ui.navset_tab(
             # ===============================================================================================================================================================
             # START: Recommended Graphs Tab
             # ===============================================================================================================================================================
-            ui.nav("Recommended Graphs", 
+            ui.nav_panel("Recommended Graphs", 
                 div(HTML("<hr>")),
                 div(HTML("<h3> Single Date Graphs </h3>")),
                 ui.row(
@@ -212,7 +212,7 @@ app_ui = ui.page_navbar(
             # ===============================================================================================================================================================
             # START: CUSTOM GRAPH TAB
             # ===============================================================================================================================================================
-            ui.nav("Custom Graph",
+            ui.nav_panel("Custom Graph",
                 div(HTML("<hr>")),
                 div(HTML("""<p>The <b>Custom Graphs</b> feature is a one-of-a-kind feature empowering 
                          you with the ability to visualize flight data the way you want. Here is a simple way to use the custom graph:</p>""")),
@@ -237,7 +237,7 @@ app_ui = ui.page_navbar(
             # ===============================================================================================================================================================
             # START: Statistical Insights TAB
             # ===============================================================================================================================================================
-            ui.nav("Statistical Insights", 
+            ui.nav_panel("Statistical Insights", 
                 div(HTML("<hr>")),
                 ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
                 ui.row( 
@@ -274,9 +274,9 @@ app_ui = ui.page_navbar(
     # ===============================================================================================================================================================
     # START: ML RECOMMENDATIONS SCREEN
     # ===============================================================================================================================================================
-    ui.nav("Simulation", 
+    ui.nav_panel("Simulation", 
         ui.navset_tab(
-            ui.nav("Forecasting",
+            ui.nav_panel("Forecasting",
                 ui.row( 
                     ui.column(6,
                         div(HTML("<hr>")),
@@ -296,32 +296,40 @@ app_ui = ui.page_navbar(
                     ),
                 ),
             ),
-            ui.nav("Flight Operations Modeling", 
+            ui.nav_panel("Flight Operations Modeling", 
                 # Selecting the date
                 ui.row(
                     ui.column(6,
-                        ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, width=6, selected=None)
+                        div(HTML("<hr>")),
+                        ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, width=6, selected=None),
+                        div(HTML("<hr>"))
                     ),
                     ui.column(6,
-                        ui.output_ui("time_selector")
+                        div(HTML("<hr>")),
+                        ui.output_ui("time_selector"),
+                        div(HTML("<hr>"))
                     )
                 ),
-                ui.row(
-                    ui.column(6,
-                        ui.input_selectize("flight_operations", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None)
-                    ),
-                    ui.column(6,
-                        ui.output_ui("duration_of_activity")
-                    )
-                ),
-                ui.row(
-                    ui.column(8),
-                    ui.column(4,
+                ui.layout_columns(
+                    ui.card(
+                        div(HTML("<hr>")),
+                        ui.input_selectize("flight_operations", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None),
+                        div(HTML("<hr>")),
+                        ui.output_ui("duration_of_activity"),
+                        div(HTML("<hr>")),
                         ui.input_action_button("select_activity", "Add activity"),
-                    )
-                ), 
-                div(HTML("<hr>")),
-                ui.output_data_frame("activity_selection_output")
+                        height="100%"
+                    ),
+                    ui.card(
+                        ui.output_data_frame("activity_selection_output"),
+                        height="100%"
+                    ),
+                    ui.card(
+                        ui.input_action_button("reset_activity", "Reset All Activities"),
+                        height="100%"
+                    ),
+                    col_widths=(3, 6, 3)
+                )              
             )
         )
     ),
@@ -553,6 +561,9 @@ def server(input: Inputs, output: Outputs, session: Session):
     # START: SIMULATION SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    # For the selection of the flight operations.
+    table_data_show = reactive.Value(-1)
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.table(columns=["Forecast Time", simulation.first_date, simulation.second_date, simulation.third_date])
@@ -613,23 +624,60 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.data_frame 
-    @reactive.event(input.select_activity)
+    @reactive.event(table_data_show)
     def activity_selection_output():
 
+        # Get the global flight holder variable
         global flight_operation_dictionary
 
-        button_selection = input.select_activity()
+        # Make it a data frame
+        flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
+
+        # Return that data frame
+        return flight_operation_output_table
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(input.reset_activity)
+    def _():
+        
+        # Get the global flight holder variable
+        global flight_operation_dictionary
+
+        # Get the reactive variable:
+        reactive_var = table_data_show.get() - 1
+
+        # Clear all of the activities and times in the variable
+        flight_operation_dictionary["Activity"].clear()
+        flight_operation_dictionary["Time (minutes)"].clear()
+
+        # Set the data show to 0
+        table_data_show.set(reactive_var)
+
+        
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(input.select_activity)
+    def _():
+
+        # Get the global flight holder variable
+        global flight_operation_dictionary
+
+        # Get the reactive variable:
+        reactive_var = table_data_show.get() + 1
+
+        # Get the inputs from the flight operation and time selection criteria
         operation = input.flight_operations()
         operation_duration = input.duration_chooser()
 
-        if button_selection > 0:
-            flight_operation_dictionary["Activity"].append(operation)
-            flight_operation_dictionary["Time (minutes)"].append(operation_duration)
-            flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
-        else:
-            flight_operation_output_table = pd.DataFrame(columns=["Activity", "Time (minutes)"])
-        
-        return flight_operation_output_table
+        # Append all the activities and times in the variable
+        flight_operation_dictionary["Activity"].append(operation)
+        flight_operation_dictionary["Time (minutes)"].append(operation_duration)
+
+        # Set the data show to 1
+        table_data_show.set(reactive_var)
+
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: SIMULATION SCREEN 
