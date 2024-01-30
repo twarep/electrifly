@@ -256,24 +256,30 @@ app_ui = ui.page_navbar(
     # START: ML RECOMMENDATIONS SCREEN
     # ===============================================================================================================================================================
     ui.nav("Simulation", 
-        ui.row( 
-            ui.column(6,
-                div(HTML("<hr>")),
-                div(HTML("<p><b>Number of Feasible Flights</b></p>")),
-                div(HTML("<hr>")),
-                ui.panel_main(ui.output_table("simulation_table", style="width: 70%; height: 300px;")),
+            ui.row( 
+                  ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Number of Feasible Flights</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(
+                            ui.output_table("simulation_table")
+                        ),
+                    ),
+
+                    ui.column(6,
+                    div(HTML("<hr>")),
+                    div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                    div(HTML("<hr>")),
+                    ui.panel_main(
+                            ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
+                        ),
+                    ),
+                ),
+            
+                
+                
             ),
-            ui.column(6,
-                div(HTML("<hr>")),
-                div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
-                div(HTML("<hr>")),
-                ui.panel_main(ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")),
-            ),
-        ),      
-    ),
-    # ===============================================================================================================================================================
-    # END: ML RECOMMENDATIONS SCREEN
-    # ===============================================================================================================================================================
+# simulation.result_table_colours
     title="ElectriFly",
 )
 
@@ -498,12 +504,15 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
-    @render.table
+    @render.table(columns=["Forecast Time", simulation.first_date, simulation.second_date, simulation.third_date])
     def simulation_table(): 
         # Apply conditional formatting
-        #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
-        styled_data = simulation.result_table_colours.style.applymap(style_cell)
-        # new = styled_data.set_table_styles()
+        zones = simulation.zones_table
+        explanations = simulation.explanations_table
+        styled_data = zones.style.set_tooltips(explanations, props='visibility: hidden; position: absolute; z-index: 1; border: 1px solid #000066;'
+                         'background-color: white; color: #000066; font-size: 0.8em;'
+                         'transform: translate(0px, -24px); padding: 0.6em; border-radius: 0.5em;').applymap(style_cell).set_table_styles(
+                             [{'selector': 'td', 'props': 'border: 5px solid white;'}])
         return styled_data
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
