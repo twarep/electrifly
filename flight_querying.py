@@ -475,7 +475,7 @@ class query_flights:
     
 
     # JOIN ML tables Function ------------------------------------------------------------------------------------------------------------
-    def connect_flight_for_ml_data_prescription2(self, flight: int):
+    def connect_flight_for_ml_data_prescription(self, flight: int):
 
         # Make database connection
         engine = self.connect()
@@ -493,8 +493,8 @@ class query_flights:
         # """
         query = f"""SELECT time_min AS Time,
                         flight_id AS id, 
-                        activity AS Exercise,
-                        bat_1_soc AS SOC,
+                        activity,
+                        ((bat_1_soc + bat_2_soc) / 2) AS SOC,
                         motor_power AS Power
                     FROM labeled_activities_view  
                     WHERE labeled_activities_view.flight_id={flight}
