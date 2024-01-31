@@ -255,11 +255,22 @@ app_ui = ui.page_navbar(
     # ===============================================================================================================================================================
     # START: ML RECOMMENDATIONS SCREEN
     # ===============================================================================================================================================================
-    ui.nav("Simulation", 
+    ui.nav("Simulation",
+        x.ui.card(
+            x.ui.card_header("Welcome to ElectriFly's Simulation Interface!"),
+            
+            x.ui.card_body(div(HTML("""<p>The Three Day Flight Forecast determines the safety of flights for each 15 minute block of time for today, and the next two days after.
+                     <br>Upcoming Flights for Today provides times today when flights can safely be scheduled.</p>
+                     
+                     <p>🟩 = Safe for flight<br>
+                     🟨 = Potentially safe for flight<br>
+                     🟥 = Not safe for flight</p>
+                    """)))
+        ),
             ui.row( 
                   ui.column(6,
                     div(HTML("<hr>")),
-                    div(HTML("<p><b>Number of Feasible Flights</b></p>")),
+                    div(HTML("<p><b>Three Day Flight Forecast</b></p>")),
                     div(HTML("<hr>")),
                     ui.panel_main(
                             ui.output_table("simulation_table")
