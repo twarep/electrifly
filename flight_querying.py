@@ -178,7 +178,6 @@ class query_flights:
                     fw_flight_id, time_min_rounded
                 ORDER BY
                     fw_flight_id, time_min_rounded;
-
                 """
 
         # Select the data based on the query
@@ -482,13 +481,16 @@ class query_flights:
         engine = self.connect()
 
         # Make the query
-        query = f"""SELECT time_min AS Time,
-                        flight_id AS id, 
-                        activity AS Exercise,
-                        ((bat_1_soc + bat_2_soc) / 2) AS SOC,
-                        motor_power AS Power
+        query = f"""SELECT 
+                        fw_flight_id, 
+                        activity,
+                        time_min AS time,
+                        ((bat_1_soc + bat_2_soc) / 2) AS soc,
+                        motor_power AS power
                     FROM labeled_activities_view  
-                    WHERE labeled_activities_view.flight_id={flight}"""
+                    WHERE fw_flight_id={flight}
+                    ORDER BY time;
+        """
 
         # Select the data based on the query
         flight_data = pd.read_sql_query(query, engine) 
