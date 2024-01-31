@@ -482,14 +482,13 @@ class query_flights:
         engine = self.connect()
 
         # Make the query
-        query = f"""SELECT tfa.time_min AS Time,
-                        tfa.flight_id AS id, 
-                        tfa.activity AS Exercise,
-                        ((fl.bat_1_soc + fl.bat_2_soc) / 2) AS SOC
-                    FROM labeled_activities_view \"tfa\" 
-                    INNER JOIN flightdata_{flight} \"fl\" 
-                        ON tfa.time_min=fl.time_min AND tfa.flight_id=fl.flight_id
-                    WHERE fl.flight_id={flight}"""
+        query = f"""SELECT time_min AS Time,
+                        flight_id AS id, 
+                        activity AS Exercise,
+                        ((bat_1_soc + bat_2_soc) / 2) AS SOC,
+                        motor_power AS Power
+                    FROM labeled_activities_view  
+                    WHERE labeled_activities_view.flight_id={flight}"""
 
         # Select the data based on the query
         flight_data = pd.read_sql_query(query, engine) 
