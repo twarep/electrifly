@@ -18,14 +18,33 @@ from dotenv import load_dotenv
 import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
+from datetime import datetime, timedelta
 import simulation
 import os
+
+flight_operation_dictionary = {"Activity": [], "Time (minutes)": []}
 
 # Getting initial data
 flights = query_flights()
 
 # Get the list of activities from labeled_activities_view
 list_of_activities = flights.get_flight_activities()
+
+# Getting the dates to be used in the ML UI:
+# Get current date
+current_date = datetime.now().date()
+string_current_date = current_date.strftime("%Y-%m-%d")
+
+# Get tomorrow's date
+tomorrow_date = current_date + timedelta(days=1)
+string_tomorrow_date = tomorrow_date.strftime("%Y-%m-%d")
+
+# Get the day after tomorrow's date
+day_after_tomorrow_date = current_date + timedelta(days=2)
+string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%Y-%m-%d")
+
+# Create a list and add the dates
+list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
 
 # List of variables
 custom_variables_columns = {
@@ -124,7 +143,7 @@ app_ui = ui.page_navbar(
     # ===============================================================================================================================================================
     # START: UPLOAD SCREEN
     # ===============================================================================================================================================================
-    ui.nav("Upload Data",
+    ui.nav_panel("Upload Data",
         # Column selection panel
         ui.div(
             # Dropdown with checkboxes
@@ -154,19 +173,19 @@ app_ui = ui.page_navbar(
     # ===============================================================================================================================================================
     # START: DATA ANALYSIS SCREEN 
     # ===============================================================================================================================================================
-    ui.nav("Data Analysis", 
+    ui.nav_panel("Data Analysis", 
         ui.include_css("bootstrap.css"),
-        x.ui.card(
-            x.ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-            x.ui.card_body("""Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. 
-                            Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.""")
+        ui.card(
+            ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
+            """Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. 
+                Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward."""
         ),
         # This creates the tabs between the recommended graph screen and the insights
         ui.navset_tab(
             # ===============================================================================================================================================================
             # START: Recommended Graphs Tab
             # ===============================================================================================================================================================
-            ui.nav("Recommended Graphs", 
+            ui.nav_panel("Recommended Graphs", 
                 div(HTML("<hr>")),
                 div(HTML("<h3> Single Date Graphs </h3>")),
                 ui.row(
@@ -193,7 +212,7 @@ app_ui = ui.page_navbar(
             # ===============================================================================================================================================================
             # START: CUSTOM GRAPH TAB
             # ===============================================================================================================================================================
-            ui.nav("Custom Graph",
+            ui.nav_panel("Custom Graph",
                 div(HTML("<hr>")),
                 div(HTML("""<p>The <b>Custom Graphs</b> feature is a one-of-a-kind feature empowering 
                          you with the ability to visualize flight data the way you want. Here is a simple way to use the custom graph:</p>""")),
@@ -218,7 +237,7 @@ app_ui = ui.page_navbar(
             # ===============================================================================================================================================================
             # START: Statistical Insights TAB
             # ===============================================================================================================================================================
-            ui.nav("Statistical Insights", 
+            ui.nav_panel("Statistical Insights", 
                 div(HTML("<hr>")),
                 ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
                 ui.row( 
@@ -255,10 +274,9 @@ app_ui = ui.page_navbar(
     # ===============================================================================================================================================================
     # START: ML RECOMMENDATIONS SCREEN
     # ===============================================================================================================================================================
-    ui.nav("Simulation",
-        x.ui.card(
+    ui.nav_panel("Simulation", 
+         x.ui.card(
             x.ui.card_header("Welcome to ElectriFly's Simulation Interface!"),
-            
             x.ui.card_body(div(HTML("""<p>The Three Day Flight Forecast determines the safety of flights for each 15 minute block of time for today, and the next two days after.
                      <br>Upcoming Flights for Today provides times today when flights can safely be scheduled.</p>
                      
@@ -267,30 +285,67 @@ app_ui = ui.page_navbar(
                      🟥 = Not safe for flight</p>
                     """)))
         ),
-            ui.row( 
-                  ui.column(6,
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Three Day Flight Forecast</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.panel_main(
+        ui.navset_tab(
+            ui.nav_panel("Forecasting",
+                ui.row( 
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Three Day Flight Forecast</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.panel_main(
                             ui.output_table("simulation_table")
                         ),
                     ),
-
                     ui.column(6,
-                    div(HTML("<hr>")),
-                    div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
-                    div(HTML("<hr>")),
-                    ui.panel_main(
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.panel_main(
                             ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
                         ),
                     ),
                 ),
-            
-                
-                
             ),
-# simulation.result_table_colours
+            ui.nav_panel("Flight Operations Modeling", 
+                # Selecting the date
+                ui.row(
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, width=6, selected=None),
+                        div(HTML("<hr>"))
+                    ),
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        ui.output_ui("time_selector"),
+                        div(HTML("<hr>"))
+                    )
+                ),
+                ui.layout_columns(
+                    ui.card(
+                        div(HTML("<hr>")),
+                        ui.input_selectize("flight_operations", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None),
+                        div(HTML("<hr>")),
+                        ui.output_ui("duration_of_activity"),
+                        div(HTML("<hr>")),
+                        ui.input_action_button("select_activity", "Add activity"),
+                        height="100%"
+                    ),
+                    ui.card(
+                        ui.output_data_frame("activity_selection_output"),
+                        height="100%"
+                    ),
+                    ui.card(
+                        ui.input_action_button("reset_activity", "Reset All Activities"),
+                        height="100%"
+                    ),
+                    col_widths=(3, 6, 3)
+                )              
+            )
+        )
+    ),
+    # ===============================================================================================================================================================
+    # END: ML RECOMMENDATIONS SCREEN
+    # ===============================================================================================================================================================
     title="ElectriFly",
 )
 
@@ -301,7 +356,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+    
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
@@ -500,11 +555,14 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Filter the DataFrame based on the selected columns
             filtered_df = uploaded_data_df.loc[:, selected_columns]
             return filtered_df
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.text
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
         return f"Last data retrieval: {most_recent_run_time}"  
+    
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -512,6 +570,9 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: SIMULATION SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # For the selection of the flight operations.
+    table_data_show = reactive.Value(-1)
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -546,6 +607,88 @@ def server(input: Inputs, output: Outputs, session: Session):
         # new = styled_data.set_table_styles()
         return flight_plan
     
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.date_operations)
+    def time_selector():
+        flight_dates = input.date_operations()
+
+        if flight_dates == "":
+            return ui.output_text("Please select a date to fly")
+        else:
+            return ui.input_selectize("testing", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.flight_operations)
+    def duration_of_activity():
+        flight_activity = input.flight_operations()
+
+        if flight_activity == "":
+            return ui.output_text("Please select a flight activity")
+        else:
+            return ui.input_numeric("duration_chooser", f"Choose number of minutes for {flight_activity}:", 1, min=1, max=60)
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.data_frame 
+    @reactive.event(table_data_show)
+    def activity_selection_output():
+
+        # Get the global flight holder variable
+        global flight_operation_dictionary
+
+        # Make it a data frame
+        flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
+
+        # Return that data frame
+        return flight_operation_output_table
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(input.reset_activity)
+    def _():
+        
+        # Get the global flight holder variable
+        global flight_operation_dictionary
+
+        # Get the reactive variable:
+        reactive_var = table_data_show.get() - 1
+
+        # Clear all of the activities and times in the variable
+        flight_operation_dictionary["Activity"].clear()
+        flight_operation_dictionary["Time (minutes)"].clear()
+
+        # Set the data show to 0
+        table_data_show.set(reactive_var)
+
+        
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(input.select_activity)
+    def _():
+
+        # Get the global flight holder variable
+        global flight_operation_dictionary
+
+        # Get the reactive variable:
+        reactive_var = table_data_show.get() + 1
+
+        # Get the inputs from the flight operation and time selection criteria
+        operation = input.flight_operations()
+        operation_duration = input.duration_chooser()
+
+        # Append all the activities and times in the variable
+        flight_operation_dictionary["Activity"].append(operation)
+        flight_operation_dictionary["Time (minutes)"].append(operation_duration)
+
+        # Set the data show to 1
+        table_data_show.set(reactive_var)
+
+
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: SIMULATION SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
