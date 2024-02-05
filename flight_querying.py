@@ -480,22 +480,14 @@ class query_flights:
         # Make database connection
         engine = self.connect()
 
-        # Make the query
-        # query = f"""SELECT 
-        #                 fw_flight_id, 
-        #                 activity,
-        #                 time_min AS time,
-        #                 ((bat_1_soc + bat_2_soc) / 2) AS soc,
-        #                 motor_power AS power
-        #             FROM labeled_activities_view  
-        #             WHERE fw_flight_id={flight}
-        #             ORDER BY time;
-        # """
         query = f"""SELECT time_min AS Time,
                         flight_id AS id, 
                         activity,
                         ((bat_1_soc + bat_2_soc) / 2) AS SOC,
-                        motor_power AS Power
+                        motor_power AS Power,
+                        temperature,
+                        visibility,
+                        wind_speed
                     FROM labeled_activities_view  
                     WHERE labeled_activities_view.flight_id={flight}
                     ORDER BY Time"""
