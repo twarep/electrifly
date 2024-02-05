@@ -508,5 +508,42 @@ class query_flights:
 
         # Return the data
         return flight_data
+    
+
+    # JOIN ML tables Function ------------------------------------------------------------------------------------------------------------
+    def connect_flight_for_ml_data_prescription(self, flight: int):
+
+        # Make database connection
+        engine = self.connect()
+
+        # Make the query
+        # query = f"""SELECT 
+        #                 fw_flight_id, 
+        #                 activity,
+        #                 time_min AS time,
+        #                 ((bat_1_soc + bat_2_soc) / 2) AS soc,
+        #                 motor_power AS power
+        #             FROM labeled_activities_view  
+        #             WHERE fw_flight_id={flight}
+        #             ORDER BY time;
+        # """
+        query = f"""SELECT time_min AS Time,
+                        flight_id AS id, 
+                        activity,
+                        ((bat_1_soc + bat_2_soc) / 2) AS SOC,
+                        motor_power AS Power
+                    FROM labeled_activities_view  
+                    WHERE labeled_activities_view.flight_id={flight}
+                    ORDER BY Time"""
+
+        # Select the data based on the query
+        flight_data = pd.read_sql_query(query, engine) 
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the data
+        return flight_data
 
 
+        return flight_data

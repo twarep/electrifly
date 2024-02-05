@@ -4,24 +4,32 @@ import pandas as pd
 from sqlalchemy import create_engine
 from weather_forcast_querying import get_forecast_by_current_date
 import forecast
-import numpy
+import numpy as np
 
 # How long does 1 single flight take (on average: including time for inspection, flight, charging):
 avg_inspection_time_before_flight = 7.41
 avg_flight_time = 31.5
 avg_charging_time = 58.56
 total_flight_time = avg_inspection_time_before_flight + avg_flight_time + avg_charging_time
-print ("This is the total flight time:", total_flight_time)
 
-# Pull in weather data [PETER]
 # Classify the weather data into zones (9 to 10 am -> green zone)
 # Need to find a period of time for 30 minutes FOR flight but need 1.5 hours total for everything
     #STRIP INTO TIME INTERVALS
 
-#pull in forecasted weather data (right now it's hardcoded)
+# pull in forecasted weather data (right now it's hardcoded)
 forecast_df = get_forecast_by_current_date()
 forecast_date = forecast_df["Forecast Date"]
 forecast_time_et = forecast_df["Forecast Time"]
+
+explanations_mapping = {'red': [], 'yellow': [], 'green': []}
+
+# store explanations for zone reasoning
+explanation_df = pd.DataFrame({
+    "Forecast Date": forecast_date,
+    "Forecast Time": forecast_time_et,
+    "Explanation": [{'red': [], 'yellow': [], 'green': []} for _ in range(len(forecast_df))]
+    # "Explanation": np.empty((len(forecast_df), 0)).tolist(),
+})
 
 #VISIBILITY:
 visibility = forecast_df["Visibility"]
@@ -35,10 +43,17 @@ for i in visibility_SM.index:
         visability_zone = "gray"
     elif(visibility_SM[i]) < 3:
         visability_zone = "red"
+        exp = "Visibility is " + str(round(visibility_SM[i],2)) + " which is less than the threshold of 3"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
+        
     elif (visibility_SM[i]< 6):
         visability_zone = "yellow"
+        exp = "Visibility is " + str(round(visibility_SM[i],2)) + " which is less than the threshold of 6"
+        explanation_df.at[i, 'Explanation']['yellow'].append(exp)
     else:
         visability_zone = "green"
+        exp = "Visibility is clear"
+        explanation_df.at[i, 'Explanation']['green'].append(exp)
     visability_zone_list.append(visability_zone)
 # Create a new DataFrame
 
@@ -49,6 +64,7 @@ visability_zone_df_all = pd.DataFrame({
     "Forecast Time": forecast_time_et,
     "Visibility SM": visibility_SM,
     "Visibility Zone": visability_zone_list
+    
 })
 
 #CLOUD (pulled from weathercode):
@@ -61,11 +77,16 @@ for i in cloud.index:
         cloud_zone = "gray"
     elif cloud[i] == 3:
         cloud_zone = "red"
+        exp = "Heavy cloud cover"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
     elif cloud[i] == 2:
         cloud_zone = "yellow"
-    
+        exp = "Moderate cloud cover"
+        explanation_df.at[i, 'Explanation']['yellow'].append(exp)
     else:
         cloud_zone = "green"
+        exp = "Low cloud cover"
+        explanation_df.at[i, 'Explanation']['green'].append(exp)
     cloud_zone_list.append(cloud_zone)
 
 # Create a new DataFrame
@@ -86,10 +107,16 @@ for i in rain.index:
         rain_zone = "gray"   
     elif rain[i] == 65:
         rain_zone = "red"
+        exp = "Strong rain"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
     elif rain[i] == 63:
         rain_zone = "yellow"
+        exp = "Moderate rain"
+        explanation_df.at[i, 'Explanation']['yellow'].append(exp)
     else:
         rain_zone = "green"
+        exp = "Low rain"
+        explanation_df.at[i, 'Explanation']['green'].append(exp)
     rain_zone_list.append(rain_zone)
 
 # Create a new DataFrame
@@ -110,10 +137,16 @@ for i in rain_shower.index:
         rain_shower_zone = "gray"
     elif rain_shower[i] == 82:
         rain_shower_zone = "red"
+        exp = "Strong rain showers"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
     elif rain_shower[i] == 81:
         rain_shower_zone = "yellow"
+        exp = "Moderate rain showers"
+        explanation_df.at[i, 'Explanation']['yellow'].append(exp)
     else:
         rain_shower_zone = "green"
+        exp = "No rain showers"
+        explanation_df.at[i, 'Explanation']['yellow'].append(exp)
     rain_shower_zone_list.append(rain_shower_zone)
 
 # Create a new DataFrame
@@ -135,6 +168,8 @@ for i in thunderstorm.index:
         thunderstorm_zone = "gray"
     elif thunderstorm[i] == 96:
         thunderstorm_zone = "red"
+        exp = "Thunderstorms"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
     else:
         thunderstorm_zone = "green"
     thunderstorm_zone_list.append(thunderstorm_zone)
@@ -157,8 +192,12 @@ for i in snowfall.index:
         snowfall_zone = "gray"
     elif (snowfall[i] == 71) or (snowfall[i] == 73) or (snowfall[i] == 75) or (snowfall[i] == 77) or (snowfall[i] == 85) or (snowfall[i] == 86):
         snowfall_zone = "red"
+        exp = "Snowfall"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
     else:
         snowfall_zone = "green"
+        exp = "No snowfall"
+        explanation_df.at[i, 'Explanation']['green'].append(exp)
     snowfall_zone_list.append(snowfall_zone)
     
 # Create a new DataFrame
@@ -179,8 +218,12 @@ for i in freezing_rain.index:
         freezing_rain_zone = "gray"
     elif (freezing_rain[i] == 66) or (freezing_rain[i] == 67) or (freezing_rain[i] == 56) or (freezing_rain[i] == 57):
         freezing_rain_zone = "red"
+        exp = "Freezing rain"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
     else:
         freezing_rain_zone = "green"
+        exp = "No freezing rain"
+        explanation_df.at[i, 'Explanation']['green'].append(exp)
     freezing_rain_zone_list.append(freezing_rain_zone)
 
 
@@ -202,10 +245,16 @@ for i in wind_gusts.index:
         wind_gusts_zone = "gray"    
     elif (wind_gusts[i]) >= 30:
         wind_gusts_zone = "red"
+        exp = "Wind gust is " + str(round(wind_gusts[i],2)) + " which is greater than the threshold of 30"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
     elif (wind_gusts[i] >= 25):
         wind_gusts_zone = "yellow"
+        exp = "Wind gust is " + str(round(wind_gusts[i],2)) + " which is greater than the threshold of 25"
+        explanation_df.at[i, 'Explanation']['yellow'].append(exp)
     else:
         wind_gusts_zone = "green"
+        exp = "No wind gust"
+        explanation_df.at[i, 'Explanation']['green'].append(exp)
     wind_gusts_zone_list.append(wind_gusts_zone)
 
 
@@ -226,10 +275,16 @@ for i in temperature.index:
         temperature_zone = "gray"
     elif (temperature[i] > 35) or (temperature[i] < -20):
         temperature_zone = "red"
+        exp = "Temperature is " + str(round(temperature[i],2)) + " which is less than the threshold of -20 or greater than the threshold of 35"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
     elif (temperature[i] > 30) or (temperature[i] < -10):
         temperature_zone = "yellow"
+        exp = "Temperature is " + str(round(temperature[i],2)) + " which is less than the threshold of -10 or greater than the threshold of 30"
+        explanation_df.at[i, 'Explanation']['yellow'].append(exp)
     else:
         temperature_zone = "green"
+        exp = "Temperature is safe for flight"
+        explanation_df.at[i, 'Explanation']['green'].append(exp)
     temperature_zone_list.append(temperature_zone)
 # Create a new DataFrame
 temperature_df_all = pd.DataFrame({
@@ -239,34 +294,6 @@ temperature_df_all = pd.DataFrame({
     "Temperature Zone": temperature_zone_list
 })
 
-# lightning_potential_index_zone = ""
-# lightning_potential_index = forecast_df["Lightning Potential"] 
-# lightning_potential_index_zone_list = []
-
-# for i in lightning_potential_index.index:
-#     if (pd.isna(lightning_potential_index[i])):
-#         lightning_potential_index_zone = "gray"
-#     elif (lightning_potential_index[i] > 0):
-#         lightning_potential_index_zone = "yellow"
-#     else:
-#         lightning_potential_index = "green"
-#     lightning_potential_index_zone_list.append(lightning_potential_index_zone)
-
-# # Create a new DataFrame
-# lightning_potential_index_df_all = pd.DataFrame({
-#     "Forecast Date": forecast_date,
-#     "Forecast Time": forecast_time_et,
-#     "Lightning Potential Index": lightning_potential_index,
-#     "Lightning Potential Index": lightning_potential_index_zone_list
-# })
-
-# print(lightning_potential_index_df_all)
-
-#sunrise "If any part of the flight is between: 
-# RED is 30 mins AFTER sunset and 30 mins BEFORE sunrise 
-#yellow as (15 mins BEFORE sunset to 30 mins AFTER sunset) and (30 mins BEFORE sunrise to 15 min after sunrise)
-# green as 15 min after sunrise and 15 mins before sunset
-
 sunrise = forecast_df["Sunrise"]
 sunset = forecast_df["Sunset"] 
 delta_thirty = timedelta(minutes=30)
@@ -275,19 +302,24 @@ delta_fifteen = timedelta(minutes=15)
 sunrise_sunset_zone = ""
 sunrise_sunset_zone_list = []
 
-
 for i in forecast_time_et.index:
     sunset_30 = datetime.combine(forecast_date[i],sunset[i])
     sunrise_30 = datetime.combine(forecast_date[i],sunrise[i])
     if (forecast_time_et[i] > (sunset_30 + delta_thirty).time()) or (forecast_time_et[i] < (sunrise_30-delta_thirty).time()):
         sunrise_sunset_zone = "red"
-    # elif ((forecast_time_et[i] < (sunset_30 - delta_fifteen).time()) and (forecast_time_et[i] > (sunset_30 + delta_thirty).time())) or ((forecast_time_et[i] < (sunrise_30 - delta_thirty).time()) and (forecast_time_et[i] > (sunrise_30 + delta_fifteen).time())):
-    #     sunrise_sunset_zone = "yellow"
+        exp = "Time is 30 minutes after sunset or 30 minutes before sunrise"
+        explanation_df.at[i, 'Explanation']['red'].append(exp)
+        
     elif (((sunset_30 - delta_fifteen).time()) < (forecast_time_et[i]) < (sunset_30 + delta_thirty).time()) or (((sunrise_30 - delta_thirty).time() < (forecast_time_et[i]) < (sunrise_30 + delta_fifteen).time())):
         sunrise_sunset_zone = "yellow"
+        exp = "Time is 15 minutes after sunset or 15 minutes before sunrise"
+        explanation_df.at[i, 'Explanation']['yellow'].append(exp)
     else:
         sunrise_sunset_zone = "green"
+        exp = "Time is safe for flight"
+        explanation_df.at[i, 'Explanation']['green'].append(exp)
     sunrise_sunset_zone_list.append(sunrise_sunset_zone)
+
 # Create a new DataFrame
 sunrise_sunset_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
@@ -296,7 +328,6 @@ sunrise_sunset_df_all = pd.DataFrame({
     "Sunset": sunset,
     "Sunrise Sunset Zone": sunrise_sunset_zone_list
 })
-
 zones_df_all = pd.DataFrame({
     "Forecast Date": forecast_date,
     "Forecast Time": forecast_time_et,
@@ -311,8 +342,8 @@ zones_df_all = pd.DataFrame({
     "Temperature Zone": temperature_zone_list,
     "Sunrise": sunrise,
     "Sunset": sunset,
-    "Sunrise Sunset Zone": sunrise_sunset_zone_list
-    # "Lightning Potential Index": lightning_potential_index_zone_list
+    "Sunrise Sunset Zone": sunrise_sunset_zone_list,
+    "Explanation": explanation_df['Explanation']
 })
 
 # Function to prioritize colors
@@ -341,39 +372,67 @@ zones_df_all['final_zone'] = zones_df_all.apply(prioritize_colors, axis=1)
 #     "Forecast Time": forecast_time_et,
 # })
 # new_test["forecast_time_et"] = new_test['forecast_time_et'].dt.strftime('%H:%M')
-# print(new_test["forecast_time_et"])
+# print(new_test["forecast_time_et"])test = {"a": 1}
 
 final_zones_color = pd.DataFrame({
     "Forecast Date": forecast_date,
     "Forecast Time": forecast_time_et,
-    "Zone": zones_df_all['final_zone']
+    "Zone": zones_df_all['final_zone'],
+    "Explanation": explanation_df['Explanation'] # if yellow or red, add in explanatory data structure
+    # {(date, time, zone): [rain > 0, cloud cover > 50%]}
 })
-
 #extract each date into its own column
 #get rid of the duplicate time columns
 #stitch it together in a dataframe
 
 displayhook(final_zones_color.iloc[96])
 
+# day 1
 df0 = final_zones_color.iloc[0:96, 1] 
-df1 = final_zones_color.iloc[0:96, 2] 
-df2 = final_zones_color.iloc[96:192, 2] 
+df1 = final_zones_color.iloc[0:96, 2:4]
+
+# day 2
+df2 = final_zones_color.iloc[96:192, 2:4] 
 df2 = df2.reset_index() 
-df3 = final_zones_color.iloc[192:288, 2] 
+
+# day 3
+df3 = final_zones_color.iloc[192:288, 2:4] 
 df3 = df3.reset_index() 
 
 first_date= final_zones_color.iloc[0, 0]
 second_date= final_zones_color.iloc[96, 0]
 third_date= final_zones_color.iloc[192, 0]
 
-
-
 full = [df0, df1, df2, df3]
-result_table_colours = pd.concat(full, axis=1)
-result_table_colours.columns = ["Forecast Time", first_date, "index", second_date, "index", third_date]
-del result_table_colours['index']
+zones_table = pd.concat(full, axis=1)
+zones_table.columns = ["Forecast Time", first_date, "Explanation 1", "index", second_date, 
+                                "Explanation 2", "index", third_date, "Explanation 3"]
+del zones_table['index']
+# separates the explanations from the zone colours
+explanation_cols = ["Forecast Time", first_date, second_date, third_date]
+removal_cols = ["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]
+explanations_table = pd.DataFrame(data=zones_table[["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]], index=zones_table.index)
+explanations_table = explanations_table.rename(columns={"Explanation 1": first_date, "Explanation 2": second_date, "Explanation 3": third_date})
 
-# result_table_colours.to_csv('result_table_colours')
+# remove the explanation columns from the zones_table
+for col in removal_cols[1:]:
+    zones_table.pop(col)
+
+for r in zones_table.index:
+    for c in zones_table.columns[1:]:
+        if zones_table.at[r, c] == "red":
+            current_explanation = explanations_table.at[r, c]["red"]
+            explanation_str = ", ".join(current_explanation)
+            explanations_table.loc[r, c] = explanation_str
+        elif zones_table.at[r, c] == "yellow":
+            current_explanation = explanations_table.at[r, c]["yellow"]
+            explanation_str = ", ".join(current_explanation)
+            explanations_table.loc[r, c] = explanation_str
+        elif zones_table.at[r, c] == "green":
+            current_explanation = explanations_table.at[r, c]["green"]
+            explanation_str = ", ".join(current_explanation)
+            explanations_table.loc[r, c] = explanation_str
+
 
 #STEP 1: Find the total flight tight 97.47 -> approx 105 -> 6 or 7 blocks
 
@@ -386,17 +445,11 @@ finish_times = []
 countSafe = 0
 countModSafe = 0
 cellBlock = 0
-
-dayOne = result_table_colours.iloc[:, 0:2]
+#print(zones_table)
+#print(zones_table.columns)
+dayOne = zones_table.iloc[:, 0:2]
 date = dayOne.iloc[:, 0]
 colour = dayOne.iloc[:, 1]
-#date
-# print(dayOne.iloc[:, 0])
-# #color
-# print(dayOne.iloc[:, 1])
-
-# #specific time
-# print(dayOne.iloc[3, 0])
 
 consecutive = False
 number = 0
@@ -419,7 +472,7 @@ for i in range(numRows):
                     
 
                     FinishTime = dayOne.iloc[j, 0]
-                    format = '%H:%M'
+                    format = '%H:%M:%S'
                     number += 1
                     StartTime = StartTime.strftime(format)
                     FinishTime = FinishTime.strftime(format)
@@ -427,8 +480,6 @@ for i in range(numRows):
                     start_times.append(StartTime)
                     finish_times.append(FinishTime)
                     number_ui.append(number)
-                
-                    # print(FinishTime)
                     count = 0
 
             else:
