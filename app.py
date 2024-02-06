@@ -152,7 +152,7 @@ app_ui = ui.page_fillable(
             div(HTML("<hr>")),
                 ui.card(
                     ui.card_header("Welcome to ElectriFly's Data Preview Interface!"),
-                    ui.p("Preview columns and data types swiftly with ease for flight and weather data."), max_height="130px"
+                    ui.p("Preview columns and data types swiftly with ease for flight and weather data."), min_height="130px"
                 ), 
             div(HTML("<hr>")),
             # Column selection panel
