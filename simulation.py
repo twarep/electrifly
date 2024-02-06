@@ -487,7 +487,7 @@ for i in range(numRows):
                 consecutive = False
 
 feasible_flights = pd.DataFrame({
-    "#": number_ui,
+    "Flight No.": number_ui,
     "Start Time": start_times,
     "Finish Time": finish_times
 })
