@@ -117,5 +117,5 @@ plotly==5.10.0
 shinywidgets==0.2.1
 torch==2.2.0
 XStatic-bootswatch==3.3.7.0
-xgboost=2.0.3
-sklearn=1.3.2
+xgboost==2.0.3
+sklearn==1.3.2
