@@ -76,7 +76,7 @@ def execute(query, data=None):
   conn = db_connect()
   # create a cursor object to interact with the database
   cursor = conn.cursor()
-  
+
   # create the flights table
   cursor.execute(query, data)
   
@@ -112,6 +112,13 @@ def push_flight_metadata(id, datetime, notes):
   insert_query = "INSERT INTO flights (id, flight_date, flight_time_utc, flight_notes) VALUES (%s, %s, %s, %s)"
   values = (id, date, time, notes)
   execute(insert_query, values)
+
+# push the scraper runtime to the database
+def push_scraper_runtime(time):
+  execute("DELETE FROM scraper_last_run")
+  time = str(time)
+  insert_query = f"INSERT INTO scraper_last_run (runtime) VALUES ('{time}')"
+  execute(insert_query)
 
 # takes in flight data df, and pushes it to its own data table
 def push_flight_data(df, flight_id):

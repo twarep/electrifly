@@ -7,7 +7,7 @@ import psycopg2
 from time import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from storage import execute
+from storage import execute, select
 
 class query_flights:
 
@@ -60,8 +60,6 @@ class query_flights:
         else:
             str_column = "".join([f"{column}, " for column in columns])[:-2]
             query = f"SELECT {str_column} FROM {table}"
-
-        print(query)
 
         # Make database connection
         engine = self.connect()
@@ -206,7 +204,6 @@ class query_flights:
                     fw_flight_id, time_min_rounded
                 ORDER BY
                     fw_flight_id, time_min_rounded;
-
                 """
 
         # Select the data based on the query
@@ -424,6 +421,11 @@ class query_flights:
 
         return result_list
     
+    def get_last_scraper_runtime(self):
+        """
+            Function that returns the most recent runtime of the scraper
+        """
+        return select("select * from scraper_last_run")[0]
     
     def get_soc_roc_stats_by_id(self, flight_id):
         """
@@ -470,7 +472,12 @@ class query_flights:
         # Make the query
         query = f"""SELECT tfa.time_min AS Time,
                         tfa.flight_id AS id, 
-                        tfa.activity AS Exercise, 
+                        tfa.activity AS Exercise,
+                        tfa.temperature AS Environment_Temperature,
+                        tfa.dewpoint AS Dewpoint,
+                        tfa.relative_humidity AS Humidity,
+                        tfa.wind_speed AS Wind_Speed,
+                        tfa.visibility AS Visibility,
                         ((fl.bat_1_soc + fl.bat_2_soc) / 2) AS SOC,
                         ((fl.bat_1_avg_cell_temp + fl.bat_2_avg_cell_temp) / 2) AS Cell_Temperature,
                         fl.motor_rpm AS Motor_RPM, 
@@ -483,7 +490,7 @@ class query_flights:
                         fl.inverter_temp AS Inverter_Temperature,
                         fl.pitch AS Pitch,
                         fl.roll AS Roll
-                    FROM flight_activities \"tfa\" 
+                    FROM labeled_activities_view \"tfa\" 
                     INNER JOIN flightdata_{flight} \"fl\" 
                         ON tfa.time_min=fl.time_min AND tfa.flight_id=fl.flight_id
                     WHERE fl.flight_id={flight}"""
@@ -525,3 +532,33 @@ class query_flights:
         flight_data = pd.read_sql_query(query, engine) 
         engine.dispose()
         return flight_data
+
+    # JOIN ML tables Function ------------------------------------------------------------------------------------------------------------
+    def connect_flight_for_ml_data_prescription(self, flight: int):
+
+        # Make database connection
+        engine = self.connect()
+
+        query = f"""SELECT time_min AS Time,
+                        flight_id AS id, 
+                        activity,
+                        ((bat_1_soc + bat_2_soc) / 2) AS SOC,
+                        motor_power AS Power,
+                        temperature,
+                        visibility,
+                        wind_speed
+                    FROM labeled_activities_view  
+                    WHERE labeled_activities_view.flight_id={flight}
+                    ORDER BY Time"""
+
+        # Select the data based on the query
+        flight_data = pd.read_sql_query(query, engine) 
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the data
+        return flight_data
+    
+
+
