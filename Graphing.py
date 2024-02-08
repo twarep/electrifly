@@ -291,7 +291,7 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
         custom_ax.plot(x_ax_data, y_ax_data)
 
     elif graph_type == "Scatter Plot":
-        custom_ax.scatter(x_ax_data, y_ax_data, s=5, c='blue')
+        custom_ax.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.05, c='blue')
     
     # Add labels and legend to plot
     custom_ax.set_xlabel(x_label)
