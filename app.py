@@ -129,12 +129,7 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
 
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
-    log_file = 'scraper_run_log.txt'
-    with open(log_file, 'r') as file:
-        log_content = file.read()
-
-    return log_content
-
+    return flights.get_last_scraper_runtime()
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -787,7 +782,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @output
     @render.text
     def most_recent_run():
-        most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
+        most_recent_run_time = str(get_most_recent_run_time())  # Run the scraper.py script when the app is loaded
         return f"Last data retrieval: {most_recent_run_time}"  
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------

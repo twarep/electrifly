@@ -29,7 +29,7 @@ def log_last_run_time():
     current_time = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     # insert the current time into table
     push_scraper_runtime(current_time)
-    
+
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime: str):
 

@@ -7,6 +7,7 @@ import psycopg2
 from time import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from storage import select
 
 
 class query_flights:
@@ -60,8 +61,6 @@ class query_flights:
         else:
             str_column = "".join([f"{column}, " for column in columns])[:-2]
             query = f"SELECT {str_column} FROM {table}"
-
-        print(query)
 
         # Make database connection
         engine = self.connect()
@@ -396,6 +395,11 @@ class query_flights:
 
         return result_list
     
+    def get_last_scraper_runtime(self):
+        """
+            Function that returns the most recent runtime of the scraper
+        """
+        return select("select * from scraper_last_run")[0]
     
     def get_soc_roc_stats_by_id(self, flight_id):
         """
