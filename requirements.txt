@@ -98,7 +98,7 @@ tqdm==4.65.0
 traitlets==5.9.0
 trio==0.22.0
 trio-websocket==0.10.3
-typing_extensions==4.7.1
+typing_extensions==4.0.0
 tzdata==2023.3
 uc-micro-py==1.0.2
 urllib3==2.0.3
