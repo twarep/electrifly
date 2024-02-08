@@ -126,7 +126,6 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
     
     return flight_data
 
-
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
     log_file = 'scraper_run_log.txt'
