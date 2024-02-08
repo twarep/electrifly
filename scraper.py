@@ -15,7 +15,7 @@ import datetime as dt
 from datetime import datetime, date
 import re
 from transformation import transform_overview_data, weather_transformation
-from storage import table_exists, view_exists, db_connect, execute, push_flight_metadata, push_flight_data, relevant_weather
+from storage import table_exists, view_exists, db_connect, db_disconnect, execute, select, push_flight_metadata, push_flight_data, relevant_weather
 import queries
 import platform
 
@@ -193,6 +193,17 @@ def create_views():
     if not view_exists(view, conn):
       execute(create_queries[view])
 
+# create the flight_activities table and views
+def flight_activity_tables_views():
+  query_list = [queries.CREATE_FLIGHT_ACTIVITIES,
+                queries.ADD_ACTIVITY_COLUMN,
+                queries.LABEL_4620, queries.LABEL_4929,
+                queries.LABEL_4940, queries.LABEL_5019,
+                queries.LABEL_5021, queries.LABEL_5034,
+                queries.LABELED_ACTIVITIES_VIEW]
+  for query in query_list:
+    execute(query)
+
 def scrape(driver, cur, download_dir):
   # then get each data row for the given plane
   rows = driver.find_elements(By.CLASS_NAME, "clickable-aircraft")
@@ -297,6 +308,12 @@ def scrape(driver, cur, download_dir):
     weather_data(date_list, ids_list, driver, download_dir)
   else:
     print("There are no new flights to push to database.")
+
+  conn = db_connect()
+  # check if flight_activities table exists and the manually labelled flightdata exists
+  if not table_exists('flight_activities', conn) and select(queries.MANUAL_FLIGHTS_TO_LABEL)[0]:
+    flight_activity_tables_views()
+    print("Flight activity table and view added, with six manually labelled flights")
 
 if __name__ == '__main__':
   log_last_run_time()
