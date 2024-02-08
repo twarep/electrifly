@@ -93,7 +93,7 @@ starlette==0.28.0
 tenacity==8.2.2
 threadpoolctl==3.2.0
 tomli==2.0.1
-tornado==6.3.2
+tornado==6.3.3
 tqdm==4.65.0
 traitlets==5.9.0
 trio==0.22.0
