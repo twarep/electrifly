@@ -98,7 +98,7 @@ def soc_graph(flight_ids: list):
     danger_zone = [0, 15, 15, 0]
 
     # Set Plot
-    soc_figure = plt.figure(figsize=(8, 8))
+    soc_figure = plt.figure(figsize=(6, 6))
     soc_figure.tight_layout()
 
     # Fill ranges
@@ -153,7 +153,7 @@ def power_graph(flight_ids: list):
     flight_data = flight_db_conn.get_flight_motor_power_and_time(flight_ids)
 
     # Set Plot
-    power_figure = plt.figure(figsize=(8, 8))
+    power_figure = plt.figure(figsize=(6, 6))
     power_figure.tight_layout()
 
     # Plot the graphs
@@ -200,7 +200,7 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
     flight_data = flight_db_conn.get_flight_power_soc_rate(flight_id, activities_filter)
 
     # Set Plot
-    scatter_figure = plt.figure(figsize=(8, 8))
+    scatter_figure = plt.figure(figsize=(6, 6))
     scatter_ax = scatter_figure.add_subplot(1, 1, 1)
     scatter_figure.tight_layout()
 
@@ -237,9 +237,9 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
         plt.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
                         color=activity_color_map[act], linestyle='--', linewidth=2)
 
-    plt.set_xlabel("Motor Power")
-    plt.set_ylabel("SOC Rate of Change")
-    plt.set_title("Motor Power vs. SOC Rate of Change Scatterplot")
+    plt.xlabel("Motor Power")
+    plt.ylabel("SOC Rate of Change")
+    plt.title("Motor Power vs. SOC Rate of Change Scatterplot")
 
     # Create a legend with unique entries
     # Handles are references to the plot elements, and labels are the text descriptions for these elements
@@ -251,7 +251,7 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
 
     # Create and set the legend for the scatter plot
     # *zip(*unique) unpacks the unique handle-label pairs into separate tuples of handles and labels
-    plt.legend(*zip(*unique), loc='upper left', fontsize="7", bbox_to_anchor=(1.01, 1.01))
+    plt.legend(*zip(*unique), loc='upper right', fontsize="7")
 
     return scatter_figure
 
@@ -280,7 +280,7 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
         y_ax_data = query_result[y_variable].to_numpy()
 
     # Set Plot
-    custom_figure = plt.figure(figsize=(8, 8))
+    custom_figure = plt.figure(figsize=(6, 6))
     custom_figure.tight_layout()
 
     # For each graph type graph different things.
@@ -291,9 +291,9 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
         plt.scatter(x_ax_data, y_ax_data, s=5, c='blue')
     
     # Add labels and legend to plot
-    plt.set_xlabel(x_label)
-    plt.set_ylabel(y_label)
-    plt.set_title(f"{x_label} vs {y_label}")
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(f"{x_label} vs {y_label}")
 
     # Return the axis
     return custom_figure
