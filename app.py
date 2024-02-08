@@ -83,7 +83,7 @@ def connect_to_db(provider: str):
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def uploaded_data():
     engine = connect_to_db("PostgreSQL")
-    query = "SELECT * FROM flight_weather_data_view WHERE time_min > 0.05 LIMIT 10;"
+    query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
 
     # Execute the query and fetch the data into a DataFrame
     uploaded_data_df = pd.read_sql(query, con=engine)
@@ -95,7 +95,7 @@ def uploaded_data():
                         'Bat 1 SOH', 'Bat 2 SOH', 'Bat 1 Min Cell Temp', 'Bat 2 Min Cell Temp', 'Bat 1 Max Cell Temp', 'Bat 2 Max Cell Temp', 'Bat 1 Avg Cell Temp', 'Bat 2 Avg Cell Temp', 'Bat 1 Min Cell Volt', 'Bat 2 Min Cell Volt',
                         'Bat 1 Max Cell Volt', 'Bat 2 Max Cell Volt', 'Requested Torque', 'Motor RPM', 'Motor Power', 'Motor Temp', 'Indicated Air Speed', 'Stall Warn Active', 'Inverter Temp', 'Bat 1 Cooling Temp',
                         'Inverter Cooling Temp 1', 'Inverter Cooling Temp 2', 'Remaining Flight Time', 'Pressure Altitude', 'Latitude', 'Longitude', 'Ground Speed', 'Pitch', 'Roll', 'Time Stamp',
-                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature', 'ISO Leakage Current', 'ID', 'Weather Date', 'Weather Time UTC', 'Temperature','Dewpoint',
+                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature','Dewpoint',
                         'Relative Humidity','Wind Direction', 'Wind Speed', 'Pressure Altimeter','Sea Level Pressure', 'Visibility', 'Wind Gust', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
                         'Sky Coverage 4', 'Sky Level 1', 'Sky Level 2','Sky Level 3','Sky Level 4','Weather Codes', 'Metar']
     uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
@@ -127,15 +127,9 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
     
     return flight_data
 
-
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
-    log_file = 'scraper_run_log.txt'
-    with open(log_file, 'r') as file:
-        log_content = file.read()
-
-    return log_content
-
+    return flights.get_last_scraper_runtime()
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_fluid(
@@ -143,7 +137,7 @@ app_ui = ui.page_fluid(
     shinyswatch.theme.zephyr(),
     ui.navset_card_pill(  
         # ===============================================================================================================================================================
-        # START: DATA PREVIEW SCREEN
+        # START: UPLOAD SCREEN
         # ===============================================================================================================================================================
         ui.nav_panel("ElectriFly", "Homepage content"),
         ui.nav_panel("Data Preview",
@@ -175,12 +169,12 @@ app_ui = ui.page_fluid(
             ui.div(
                 ui.output_data_frame("uploaded_data_df"),
                 ui.include_css("bootstrap.css"),
-                style="margin-top: 2px; max-height: 3400px;"
+                style="margin-top: 2px; max-height: 3000px;"
             ),
             # Display the most recent run time
             ui.div(
                 ui.div(ui.output_text("most_recent_run")),
-                style="margin-top: 15px;"
+                style="margin-top: 10px;"
             ),
         # ===============================================================================================================================================================
         # End: UPLOAD SCREEN
@@ -384,7 +378,6 @@ app_ui = ui.page_fluid(
             # ===============================================================================================================================================================
             ui.nav_panel("Flight Exercise Planning", 
             div(HTML("<h2> Flight Exercise Planning </h2>")),
-            div(HTML("<hr>")),
                 # Selecting the date
                 ui.row(
                     ui.column(6,
@@ -471,7 +464,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.plot(alt="An interactive plot")
     def soc_time_graph():
         """
-        The function uses the input from the 'state' parameter to get data on soc vs. time for all the selected dates.
+        The function uses the input from the 'state' parameter to get data on soc vs time for all the selected dates.
 
         Returns 
             soc_graph: a matplotlib figure plot with the data plotted already.
@@ -490,7 +483,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.plot(alt="An interactive plot")
     def power_time_graph():
         """
-        The function uses the input from the 'power' parameter to get data on power vs. time for all the selected dates.
+        The function uses the input from the 'power' parameter to get data on power vs time for all the selected dates.
 
         Returns 
             motor_power_graph: a matplotlib figure plot with the data plotted already.
@@ -613,8 +606,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         selected_columns = input.selected_cols()
         if not selected_columns:
             # Return the entire DataFrame as default when no columns are selected
-            default_columns = uploaded_data_df.loc[:,["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", 
-                                               "Bat 1 Max Cell Temp", "Temperature", "Visibility"]]
+            default_columns = uploaded_data_df.loc[:,["Flight ID","Flight Date", "Weather Time UTC", "Time (Min)","Bat 1 SOC", 
+                                               "Bat 2 SOC","Motor Power", "Motor Temp"]]
             return default_columns
         else:
             # Filter the DataFrame based on the selected columns
@@ -626,7 +619,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.text
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
-        return f"Last data retrieval: {most_recent_run_time}"  
+        return f"Data was last refreshed at: {most_recent_run_time}"  
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 

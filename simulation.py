@@ -3,7 +3,6 @@ from sys import displayhook
 import pandas as pd
 from sqlalchemy import create_engine
 from weather_forcast_querying import get_forecast_by_current_date
-import forecast
 import numpy as np
 
 # How long does 1 single flight take (on average: including time for inspection, flight, charging):
@@ -387,8 +386,12 @@ final_zones_color = pd.DataFrame({
 
 displayhook(final_zones_color.iloc[96])
 
+# Convert each time object to string and remove seconds
+formatted_time_series = forecast_time_et.apply(lambda x: x.strftime('%H:%M'))
+print(type(formatted_time_series))
 # day 1
-df0 = final_zones_color.iloc[0:96, 1] 
+df0 = final_zones_color.iloc[0:96, 1]
+# df0_formatted = df0.apply(lambda x: x.strftime('%H:%M'))
 df1 = final_zones_color.iloc[0:96, 2:4]
 
 # day 2
@@ -403,16 +406,24 @@ first_date= final_zones_color.iloc[0, 0]
 second_date= final_zones_color.iloc[96, 0]
 third_date= final_zones_color.iloc[192, 0]
 
+
+# Converting dates into readable
+formatted_first_date = first_date.strftime("%b %d, %Y")
+formatted_second_date = second_date.strftime("%b %d, %Y")
+formatted_third_date = third_date.strftime("%b %d, %Y")
+
+# df_formatted = pd.DataFrame({'Time': formatted_time_series})
+
 full = [df0, df1, df2, df3]
 zones_table = pd.concat(full, axis=1)
-zones_table.columns = ["Forecast Time", first_date, "Explanation 1", "index", second_date, 
-                                "Explanation 2", "index", third_date, "Explanation 3"]
+zones_table.columns = ["Forecast Time", formatted_first_date, "Explanation 1", "index", formatted_second_date, 
+                                "Explanation 2", "index", formatted_third_date, "Explanation 3"]
 del zones_table['index']
 # separates the explanations from the zone colours
-explanation_cols = ["Forecast Time", first_date, second_date, third_date]
+explanation_cols = ["Forecast Time", formatted_first_date, formatted_second_date, formatted_third_date]
 removal_cols = ["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]
 explanations_table = pd.DataFrame(data=zones_table[["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]], index=zones_table.index)
-explanations_table = explanations_table.rename(columns={"Explanation 1": first_date, "Explanation 2": second_date, "Explanation 3": third_date})
+explanations_table = explanations_table.rename(columns={"Explanation 1": formatted_first_date, "Explanation 2": formatted_second_date, "Explanation 3": formatted_third_date})
 
 # remove the explanation columns from the zones_table
 for col in removal_cols[1:]:
@@ -447,6 +458,10 @@ countModSafe = 0
 cellBlock = 0
 #print(zones_table)
 #print(zones_table.columns)
+
+# new_full = [df0, df1, df2, df3]
+# zones_table_new = pd.concat(full, axis=1)
+
 dayOne = zones_table.iloc[:, 0:2]
 date = dayOne.iloc[:, 0]
 colour = dayOne.iloc[:, 1]
@@ -455,7 +470,7 @@ consecutive = False
 number = 0
 number_ui = []
 # Assuming dayOne is a DataFrame with one column
-numRows = len(dayOne[first_date])
+numRows = len(dayOne[formatted_first_date])
 for i in range(numRows):
     count = 0
     if (dayOne.iloc[i, 1] == 'green') and (i != numRows) and (i+1 != numRows) and (i+2 != numRows):
@@ -472,7 +487,7 @@ for i in range(numRows):
                     
 
                     FinishTime = dayOne.iloc[j, 0]
-                    format = '%H:%M:%S'
+                    format = '%H:%M'
                     number += 1
                     StartTime = StartTime.strftime(format)
                     FinishTime = FinishTime.strftime(format)
@@ -487,7 +502,7 @@ for i in range(numRows):
                 consecutive = False
 
 feasible_flights = pd.DataFrame({
-    "#": number_ui,
+    "Flight No.": number_ui,
     "Start Time": start_times,
     "Finish Time": finish_times
 })
