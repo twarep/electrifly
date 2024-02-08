@@ -113,6 +113,12 @@ def push_flight_metadata(id, datetime, notes):
   values = (id, date, time, notes)
   execute(insert_query, values)
 
+# push the scraper runtime to the database
+def push_scraper_runtime(time):
+  insert_query = "INSERT INTO scraper_last_run VALUES (%s)"
+  values = (time)
+  execute(insert_query, values)
+
 # takes in flight data df, and pushes it to its own data table
 def push_flight_data(df, flight_id):
   columns = list(df.columns.values)

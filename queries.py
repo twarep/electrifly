@@ -315,3 +315,9 @@ WHERE
     table_schema = 'your_schema_name'
     AND table_name IN ('flightdata_4620', 'flightdata_4929', 'flightdata_4940', 'flightdata_5019', 'flightdata_5021', 'flightdata_5034')
 """
+
+SCRAPER_RUNTIME = """
+CREATE TABLE scraper_last_run (
+    runtime TIMESTAMP
+);
+"""

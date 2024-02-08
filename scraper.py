@@ -15,19 +15,21 @@ import datetime as dt
 from datetime import datetime, date
 import re
 from transformation import transform_overview_data, weather_transformation
-from storage import table_exists, view_exists, db_connect, db_disconnect, execute, select, push_flight_metadata, push_flight_data, relevant_weather
+from storage import table_exists, view_exists, db_connect, execute, select, push_flight_metadata, push_flight_data, push_scraper_runtime, relevant_weather
 import queries
 import platform
 
 # Path variables
 chromedriver_path = "./dependencies/chromedriver-win64/chromedriver.exe"
 def log_last_run_time():
-    log_file = 'scraper_run_log.txt'
+    # check if the scraper_last_run table exists
+    conn = db_connect()
+    if not table_exists('scraper_last_run', conn):
+      execute(queries.SCRAPER_RUNTIME)
     current_time = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    with open(log_file, 'w') as file:
-        file.write(f'{current_time}')
-
+    # insert the current time into table
+    push_scraper_runtime(current_time)
+    
 # converts the string time given by Pipistrel UI to a datetime object
 def convert_str_to_datetime(str_datetime: str):
 
