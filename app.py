@@ -82,7 +82,7 @@ def connect_to_db(provider: str):
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def uploaded_data():
     engine = connect_to_db("PostgreSQL")
-    query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+    query = "SELECT * FROM flight_weather_data_view WHERE time_min > 0.05 LIMIT 10;"
 
     # Execute the query and fetch the data into a DataFrame
     uploaded_data_df = pd.read_sql(query, con=engine)
@@ -142,32 +142,42 @@ app_ui = ui.page_fillable(
     # {"style": "color: blue"},
     shinyswatch.theme.zephyr(),
     ui.navset_card_pill(  
+
         # ===============================================================================================================================================================
-        # START: UPLOAD SCREEN
+        # START: DATA PREVIEW SCREEN
         # ===============================================================================================================================================================
         ui.nav_panel("ElectriFly", "Homepage content"),
         ui.nav_panel("Data Preview",
+            div(HTML("<h2> Data Preview </h2>")),
+            div(HTML("<hr>")),
+                ui.card(
+                    ui.card_header("Welcome to ElectriFly's Data Preview Interface!"),
+                    ui.p("Preview columns and data types swiftly with ease for flight and weather data."), min_height="130px"
+                ), 
+            div(HTML("<hr>")),
             # Column selection panel
             ui.div(
-                # Dropdown with checkboxes
-                ui.input_selectize("selected_cols", "Select Columns to Preview", choices=list(uploaded_cols().columns), multiple=True),
-                style="margin-top:40px;"
-            ),  
             # Table header
             ui.div(
-                ui.include_css("bootstrap.css"), ui.h4("Most Recent Flight and Weather Data Records"), 
-                style="margin-top: 3px;"
+                ui.include_css("bootstrap.css"), ui.h3("Most Recent Flight and Weather Data Records"), 
+                style="margin-top: 2px;"
             ), 
+            # Dropdown with checkboxes
+            ui.input_selectize("selected_cols", "Select Columns to Preview", choices=list(uploaded_cols().columns), multiple=True,selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", 
+                                               "Bat 1 Max Cell Temp", "Temperature", "Visibility"],width="50%"),
+            style="margin-top:20px;"
+            ),  
+
             # Table ouptut
             ui.div(
                 ui.output_data_frame("uploaded_data_df"),
                 ui.include_css("bootstrap.css"),
-                style="margin-top: 2px; max-height: 3000px;"
+                style="margin-top: 2px; max-height: 3400px;"
             ),
             # Display the most recent run time
             ui.div(
                 ui.div(ui.output_text("most_recent_run")),
-                style="margin-top: 10px;"
+                style="margin-top: 15px;"
             ),
         # ===============================================================================================================================================================
         # End: UPLOAD SCREEN
@@ -765,8 +775,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         selected_columns = input.selected_cols()
         if not selected_columns:
             # Return the entire DataFrame as default when no columns are selected
-            default_columns = uploaded_data_df.loc[:,["Flight ID","Flight Date", "Weather Time UTC", "Time (Min)","Bat 1 SOC", 
-                                               "Bat 2 SOC","Motor Power", "Motor Temp"]]
+            default_columns = uploaded_data_df.loc[:,["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", 
+                                               "Bat 1 Max Cell Temp", "Temperature", "Visibility"]]
             return default_columns
         else:
             # Filter the DataFrame based on the selected columns
