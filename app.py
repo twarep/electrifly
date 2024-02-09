@@ -205,7 +205,7 @@ app_ui = ui.page_fluid(
                         ),
                         div(HTML("<hr>")),
                         ui.card(
-                            ui.card_header("Weather Data for Selected Flights"),
+                            ui.card_header("Weather Data for Selected Flight"),
                             ui.output_table("weather_interactive"),
                             min_height="450px"
                         ),
@@ -214,7 +214,7 @@ app_ui = ui.page_fluid(
                         ui.card(
                             ui.card_header("Flight Map"),
                             output_widget("lat_long_map"),
-                            height="600px"
+                            min_height="665px"
                         )
                     )
                 ),  
@@ -233,9 +233,9 @@ app_ui = ui.page_fluid(
                             left="0px",
                             top="10%",
                             width="100%",
-                            height='100%',
+                            height='85%',
                         ),
-                        min_height="600px"
+                        min_height="700px"
                     ),
                     ui.card(
                         ui.card_header("Multi-Flight Power Setting vs. Time"),
@@ -248,9 +248,9 @@ app_ui = ui.page_fluid(
                             left="0px",
                             top="10%",
                             width="100%",
-                            height='100%',
+                            height='85%',
                         ),
-                        min_height="600px"
+                        min_height="700px"
                     ),
                     col_widths=(2, 5, 5)
                 )
