@@ -7,8 +7,7 @@ import psycopg2
 from time import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from storage import select
-
+from storage import execute, select
 
 class query_flights:
 
@@ -73,6 +72,34 @@ class query_flights:
 
         return flights
     
+    # get all Flight IDs ------------------------------------------------------------------------------------------------------------
+    def get_flight_ids(self):
+        """
+        The function runs the following query: SELECT id FROM flights. This gets all the flight IDs in the database.
+        """
+        query = "SELECT id FROM flights"
+        engine = self.connect()
+        flight_ids = pd.read_sql_query(query, engine)
+        engine.dispose()
+        return flight_ids
+    
+    # add flight to flight activities table ------------------------------------------------------------------------------------------------------------
+    def add_flight_activities(self, id: int):
+        """
+        The function runs the following query: INSERT INTO flight_activities (flight_id, time_min) SELECT flight_id, time_min FROM flightdata_<ID>. 
+        This adds the flight with the given id to the flight_activities table
+        """
+        query = f"INSERT INTO flight_activities (flight_id, time_min) SELECT flight_id, time_min FROM flightdata_{str(id)}"
+        execute(query, id)
+
+    # add flight activity to a given flight id and time_min ------------------------------------------------------------------------------------------------------------
+    def add_flight_activity(self, flight_id: int, time_min: float, activity: str):
+        """
+        The function runs the following query: UPDATE flight_activities SET activity={activity} WHERE flight_id={flight_id} AND time_min={time_min}
+        This should be run after a flight is labelled and has activity mappings that need to be pushed to the flight_activities table
+        """
+        query = f"UPDATE flight_activities SET activity='{str(activity)}' WHERE flight_id={str(flight_id)} AND time_min={time_min}"
+        execute(query)
 
     # Get Flight by Id Function ------------------------------------------------------------------------------------------------------------
     def get_flight_by_id(self, id: int):
@@ -477,6 +504,34 @@ class query_flights:
         # Return the data
         return flight_data
     
+    # get flight data for labelling ------------------------------------------------------------------------------------------------------------
+    def get_flightdata_for_ml_data_label(self, flight: int):
+        """
+        Function that given a flight id returns the data needed to label exercises for that flight.
+        """
+        engine = self.connect()
+
+        query = f"""SELECT 
+                      flight_id AS id, 
+                      time_min AS time,
+                      ((bat_1_soc + bat_2_soc) / 2) AS soc,
+                      ((bat_1_avg_cell_temp + bat_2_avg_cell_temp) / 2) AS cell_temperature,
+                      motor_rpm AS motor_rpm, 
+                      motor_power AS motor_power,
+                      motor_temp AS motor_temperature,
+                      ias AS indicated_air_speed,
+                      pressure_alt AS pressure_altitude,
+                      ground_speed AS ground_speed,
+                      oat AS outside_air_temperature,
+                      inverter_temp AS inverter_temperature,
+                      pitch AS pitch,
+                      roll AS roll
+                    FROM flightdata_{flight}
+                 """
+
+        flight_data = pd.read_sql_query(query, engine) 
+        engine.dispose()
+        return flight_data
 
     # JOIN ML tables Function ------------------------------------------------------------------------------------------------------------
     def connect_flight_for_ml_data_prescription(self, flight: int):
