@@ -98,17 +98,16 @@ def soc_graph(flight_ids: list):
     danger_zone = [0, 15, 15, 0]
 
     # Set Plot
-    soc_figure = plt.figure()
-    soc_ax = soc_figure.add_subplot(1, 1, 1)
+    soc_figure = plt.figure(figsize=(6, 6))
     soc_figure.tight_layout()
 
     # Fill ranges
-    soc_ax.fill(x_zone, warning_zone, c="yellow", alpha=0.5)
-    soc_ax.fill(x_zone, danger_zone, c='r', alpha=0.5)
+    plt.fill(x_zone, warning_zone, c="yellow", alpha=0.5)
+    plt.fill(x_zone, danger_zone, c='r', alpha=0.5)
 
     # Add text to fill ranges
-    soc_ax.text(0.2, 20.5, 'Warning', fontweight='bold')
-    soc_ax.text(0.2, 5.5, 'Danger', fontweight='bold', c='white')
+    plt.text(0.2, 20.5, 'Warning', fontweight='bold')
+    plt.text(0.2, 5.5, 'Danger', fontweight='bold', c='white')
 
     # Plot the graphs
     for i in range(0, len(flight_ids)):
@@ -120,20 +119,20 @@ def soc_graph(flight_ids: list):
         soc = flight_data[id]['soc']
         time = flight_data[id]['time_min']
         date = flight_data[id]["date"]
-        soc_ax.plot(time, soc, label=date)
+        plt.plot(time, soc, label=date)
     
     # Add labels and legend to plot
-    soc_ax.set_xlim([0, 55])
-    soc_ax.set_ylim([-1, 101])
-    soc_ax.set_xlabel("time (min)")
-    soc_ax.set_ylabel("SOC")
-    soc_ax.set_title("Time vs SOC")
+    plt.xlim([0, 55])
+    plt.ylim([-1, 101])
+    plt.xlabel("time (min)")
+    plt.ylabel("SOC")
+    plt.title("Time vs SOC")
     
     # plt.legend(loc="lower left")
-    soc_ax.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
+    plt.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
             borderaxespad=0, frameon=False)
 
-    return soc_ax
+    return soc_figure
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -154,8 +153,7 @@ def power_graph(flight_ids: list):
     flight_data = flight_db_conn.get_flight_motor_power_and_time(flight_ids)
 
     # Set Plot
-    power_figure = plt.figure()
-    power_ax = power_figure.add_subplot(1, 1, 1)
+    power_figure = plt.figure(figsize=(6, 6))
     power_figure.tight_layout()
 
     # Plot the graphs
@@ -168,20 +166,20 @@ def power_graph(flight_ids: list):
         motor_power = flight_data[id]['motor_power']
         time = flight_data[id]['time_min']
         date = flight_data[id]["date"]
-        power_ax.scatter(time, motor_power, s=10, label=date)
+        plt.scatter(time, motor_power, s=10, label=date)
     
     # Add labels and legend to plot
-    power_ax.set_xlim([0, 55])
-    power_ax.set_ylim([-1, 70])
-    power_ax.set_xlabel("time (min)")
-    power_ax.set_ylabel("Motor power (kilowatts-KW)")
-    power_ax.set_title("Time vs Motor power")
+    plt.xlim([0, 55])
+    plt.ylim([-1, 70])
+    plt.xlabel("time (min)")
+    plt.ylabel("Motor power (kilowatts-KW)")
+    plt.title("Time vs Motor power")
     
     # plt.legend(loc="lower left")
-    power_ax.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
+    plt.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
             borderaxespad=0, frameon=False)
 
-    return power_ax
+    return power_figure
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -202,7 +200,7 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
     flight_data = flight_db_conn.get_flight_power_soc_rate(flight_id, activities_filter)
 
     # Set Plot
-    scatter_figure = plt.figure()
+    scatter_figure = plt.figure(figsize=(6, 6))
     scatter_ax = scatter_figure.add_subplot(1, 1, 1)
     scatter_figure.tight_layout()
 
@@ -231,17 +229,17 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
 
         # Plot the scatter points for the current activity
         # motor_power[act_mask] and soc_rate_of_change[act_mask] select the data points that correspond to the current activity
-        scatter_ax.scatter(motor_power[act_mask], soc_rate_of_change[act_mask],
+        plt.scatter(motor_power[act_mask], soc_rate_of_change[act_mask],
                             s=10, color=activity_color_map[act], label=act)
         
         # Calculate and plot line of best fit for each activity
         a, b = np.polyfit(motor_power[act_mask], soc_rate_of_change[act_mask], 1)
-        scatter_ax.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
+        plt.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
                         color=activity_color_map[act], linestyle='--', linewidth=2)
 
-    scatter_ax.set_xlabel("Motor Power")
-    scatter_ax.set_ylabel("SOC Rate of Change")
-    scatter_ax.set_title("Motor Power vs. SOC Rate of Change Scatterplot")
+    plt.xlabel("Motor Power")
+    plt.ylabel("SOC Rate of Change")
+    plt.title("Motor Power vs. SOC Rate of Change Scatterplot")
 
     # Create a legend with unique entries
     # Handles are references to the plot elements, and labels are the text descriptions for these elements
@@ -253,9 +251,9 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
 
     # Create and set the legend for the scatter plot
     # *zip(*unique) unpacks the unique handle-label pairs into separate tuples of handles and labels
-    scatter_ax.legend(*zip(*unique), loc='upper left', fontsize="7", bbox_to_anchor=(1.01, 1.01))
+    plt.legend(*zip(*unique), loc='upper right', fontsize="7")
 
-    return scatter_ax
+    return scatter_figure
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -282,21 +280,20 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
         y_ax_data = query_result[y_variable].to_numpy()
 
     # Set Plot
-    custom_figure = plt.figure()
-    custom_ax = custom_figure.add_subplot(1, 1, 1)
+    custom_figure = plt.figure(figsize=(6, 6))
     custom_figure.tight_layout()
 
     # For each graph type graph different things.
     if graph_type == "Line Plot":
-        custom_ax.plot(x_ax_data, y_ax_data)
+        plt.plot(x_ax_data, y_ax_data)
 
     elif graph_type == "Scatter Plot":
-        custom_ax.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.05, c='blue')
+        plt.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.05, c='blue')
     
     # Add labels and legend to plot
-    custom_ax.set_xlabel(x_label)
-    custom_ax.set_ylabel(y_label)
-    custom_ax.set_title(f"{x_label} vs {y_label}")
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(f"{x_label} vs {y_label}")
 
     # Return the axis
-    return custom_ax
+    return custom_figure
