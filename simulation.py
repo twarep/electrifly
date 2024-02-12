@@ -373,6 +373,7 @@ zones_df_all['final_zone'] = zones_df_all.apply(prioritize_colors, axis=1)
 # new_test["forecast_time_et"] = new_test['forecast_time_et'].dt.strftime('%H:%M')
 # print(new_test["forecast_time_et"])test = {"a": 1}
 
+
 final_zones_color = pd.DataFrame({
     "Forecast Date": forecast_date,
     "Forecast Time": forecast_time_et,
@@ -390,7 +391,7 @@ displayhook(final_zones_color.iloc[96])
 formatted_time_series = forecast_time_et.apply(lambda x: x.strftime('%H:%M'))
 print(type(formatted_time_series))
 # day 1
-df0 = final_zones_color.iloc[0:96, 1]
+df0 = final_zones_color.iloc[0:96, 1].apply(lambda x: x.strftime('%H:%M'))
 # df0_formatted = df0.apply(lambda x: x.strftime('%H:%M'))
 df1 = final_zones_color.iloc[0:96, 2:4]
 

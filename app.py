@@ -21,7 +21,6 @@ import sqlalchemy as sa
 from datetime import datetime, timedelta
 import simulation
 import os
-import faicons as fa
 
 flight_operation_dictionary = {"Activity": [], "Time (minutes)": []}
 
@@ -83,7 +82,7 @@ def connect_to_db(provider: str):
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def uploaded_data():
     engine = connect_to_db("PostgreSQL")
-    query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+    query = "SELECT * FROM flight_weather_data_view WHERE time_min > 0.05 LIMIT 10;"
 
     # Execute the query and fetch the data into a DataFrame
     uploaded_data_df = pd.read_sql(query, con=engine)
@@ -95,7 +94,7 @@ def uploaded_data():
                         'Bat 1 SOH', 'Bat 2 SOH', 'Bat 1 Min Cell Temp', 'Bat 2 Min Cell Temp', 'Bat 1 Max Cell Temp', 'Bat 2 Max Cell Temp', 'Bat 1 Avg Cell Temp', 'Bat 2 Avg Cell Temp', 'Bat 1 Min Cell Volt', 'Bat 2 Min Cell Volt',
                         'Bat 1 Max Cell Volt', 'Bat 2 Max Cell Volt', 'Requested Torque', 'Motor RPM', 'Motor Power', 'Motor Temp', 'Indicated Air Speed', 'Stall Warn Active', 'Inverter Temp', 'Bat 1 Cooling Temp',
                         'Inverter Cooling Temp 1', 'Inverter Cooling Temp 2', 'Remaining Flight Time', 'Pressure Altitude', 'Latitude', 'Longitude', 'Ground Speed', 'Pitch', 'Roll', 'Time Stamp',
-                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature','Dewpoint',
+                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature', 'ISO Leakage Current', 'ID', 'Weather Date', 'Weather Time UTC', 'Temperature','Dewpoint',
                         'Relative Humidity','Wind Direction', 'Wind Speed', 'Pressure Altimeter','Sea Level Pressure', 'Visibility', 'Wind Gust', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
                         'Sky Coverage 4', 'Sky Level 1', 'Sky Level 2','Sky Level 3','Sky Level 4','Weather Codes', 'Metar']
     uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
@@ -127,60 +126,65 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
     
     return flight_data
 
+
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
-    return flights.get_last_scraper_runtime()
+    log_file = 'scraper_run_log.txt'
+    with open(log_file, 'r') as file:
+        log_content = file.read()
+
+    return log_content
+
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-app_ui = ui.page_fluid(
+
+app_ui = ui.page_fillable(
     # {"style": "color: blue"},
     shinyswatch.theme.zephyr(),
     ui.navset_card_pill(  
+
         # ===============================================================================================================================================================
-        # START: UPLOAD SCREEN
+        # START: DATA PREVIEW SCREEN
         # ===============================================================================================================================================================
         ui.nav_panel("ElectriFly", "Homepage content"),
         ui.nav_panel("Data Preview",
             div(HTML("<h2> Data Preview </h2>")),
             div(HTML("<hr>")),
-            ui.card(
-                ui.card_header("Welcome to ElectriFly's Data Preview Interface!"),
-                ui.p("Preview columns and data types swiftly with ease for flight and weather data."), min_height="130px"
-            ), 
+                ui.card(
+                    ui.card_header("Welcome to ElectriFly's Data Preview Interface!"),
+                    ui.p("Preview columns and data types swiftly with ease for flight and weather data."), min_height="130px"
+                ), 
             div(HTML("<hr>")),
             # Column selection panel
             ui.div(
-                # Table header
-                ui.div(
-                    ui.include_css("bootstrap.css"), ui.h3("Most Recent Flight and Weather Data Records"), 
-                    style="margin-top: 2px;"
-                ), 
-                # Dropdown with checkboxes
-                ui.input_selectize(
-                    "selected_cols", 
-                    "Select Columns to Preview", 
-                    choices=list(uploaded_cols().columns), 
-                    multiple=True,
-                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", "Bat 1 Max Cell Temp", "Temperature", "Visibility"],width="50%"
-                ),
-                style="margin-top:20px;"
+            # Table header
+            ui.div(
+                ui.include_css("bootstrap.css"), ui.h3("Most Recent Flight and Weather Data Records"), 
+                style="margin-top: 2px;"
+            ), 
+            # Dropdown with checkboxes
+            ui.input_selectize("selected_cols", "Select Columns to Preview", choices=list(uploaded_cols().columns), multiple=True,selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", 
+                                               "Bat 1 Max Cell Temp", "Temperature", "Visibility"],width="50%"),
+            style="margin-top:20px;"
             ),  
+
             # Table ouptut
             ui.div(
                 ui.output_data_frame("uploaded_data_df"),
                 ui.include_css("bootstrap.css"),
-                style="margin-top: 2px; max-height: 3000px;"
+                style="margin-top: 2px; max-height: 3400px;"
             ),
             # Display the most recent run time
             ui.div(
                 ui.div(ui.output_text("most_recent_run")),
-                style="margin-top: 10px;"
+                style="margin-top: 15px;"
             ),
         # ===============================================================================================================================================================
         # End: UPLOAD SCREEN
         # ===============================================================================================================================================================
         ),
-        ui.nav_menu("Data Analysis",                    
+        ui.nav_menu("Data Analysis",
+                                        
             # ===============================================================================================================================================================
             # START: Recommended Graphs Tab
             # ===============================================================================================================================================================
@@ -189,71 +193,31 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 ui.card(
                     ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
-                    ui.p("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward."),
-                    min_height = "150px"
-                ), 
+                    ui.p("Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward.")
+                    ,min_height = "150px"
+                ),  
                 div(HTML("<hr>")),
                 div(HTML("<h4> Single Date Graphs </h4>")),
                 ui.row(
-                    ui.column(2, ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights())),
-                    ui.column(4,
-                        ui.value_box(
-                            "Number of circuits",
-                            ui.output_text("num_circuits"),
-                            showcase=fa.icon_svg("jet-fighter"),
-                            min_height="150px"
-                        ),
-                        div(HTML("<hr>")),
-                        ui.card(
-                            ui.card_header("Weather Data for Selected Flight"),
-                            ui.output_table("weather_interactive"),
-                            min_height="450px"
-                        ),
-                    ),
-                    ui.column(6,
-                        ui.card(
-                            ui.card_header("Flight Map"),
-                            output_widget("lat_long_map"),
-                            min_height="665px"
-                        )
-                    )
-                ),  
+                    ui.column(6, ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights())),
+                    ui.column(6, ui.output_text("num_circuits"))
+                ),
+                ui.row(
+                    # Put columns within the rows, the column first param is the width, your total widths add up to 12
+                    ui.column(6, div(HTML("<p><b>Weather Data for Selected Flights</b></p>")), div(HTML("<hr>")), ui.panel_main(ui.output_table("weather_interactive"))),
+                    ui.column(6, div(HTML("<p><b>Flight Map</b></p>")), div(HTML("<hr>")), output_widget("lat_long_map")),
+                ),
+                div(HTML("<hr>")),
                 div(HTML("<hr>")),
                 div(HTML("<h4> Multiple Date Graphs </h4>")),
-                ui.layout_columns(
-                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True),
-                    ui.card(
-                        ui.card_header("Muli-Flight SOC vs. Time"),
-                        ui.panel_absolute(
-                            ui.output_plot(
-                                "soc_time_graph",
-                                height='100%',
-                                width='100%'
-                            ), 
-                            left="0px",
-                            top="10%",
-                            width="100%",
-                            height='85%',
-                        ),
-                        min_height="700px"
-                    ),
-                    ui.card(
-                        ui.card_header("Multi-Flight Power Setting vs. Time"),
-                        ui.panel_absolute(
-                            ui.output_plot(
-                                "power_time_graph",
-                                height='100%',
-                                width='100%'
-                            ),
-                            left="0px",
-                            top="10%",
-                            width="100%",
-                            height='85%',
-                        ),
-                        min_height="700px"
-                    ),
-                    col_widths=(2, 5, 5)
-                )
+                ui.row(
+                    ui.column(12, ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True))
+                ),
+                ui.row(
+                    ui.column(6, div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")), div(HTML("<hr>")), ui.output_plot("soc_time_graph")),
+                    ui.column(6, div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")), div(HTML("<hr>")), ui.output_plot("power_time_graph"))
+                ),
+                div(HTML("<hr>"))
             ),
             #  ===============================================================================================================================================================
             # START: CUSTOM GRAPH TAB
@@ -263,44 +227,23 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("""<p>The <b>Custom Graphs</b> feature is a one-of-a-kind feature empowering 
                         you with the ability to visualize flight data the way you want. Here is a simple way to use the custom graph:</p>""")),
+                div(
+                    HTML("""<ol> 
+                        <li> Select the date for which you want to view the data, and </li>
+                        <li> Select the type of graph you want to see, then </li>
+                        <li> Select the X (independent) variable on the graph, </li>
+                        <li> Lastly select the Y (dependent) variable on the graph. </li>
+                        </ol>"""
+                    )
+                ),
                 div(HTML("<hr>")),
-                ui.layout_columns(
-                    ui.card(
-                        ui.tooltip(
-                            ui.input_selectize("select_flights", "Flight Date:", get_flights()), 
-                            "Select the date for which you want to view the data."
-                        ),
-                        ui.tooltip(
-                            ui.input_selectize("select_graph", "Graph Type:", ["Line Plot", "Scatter Plot"]), 
-                            "Select the type of graph you want to see."
-                        )
-                    ),
-                    ui.card(
-                        ui.tooltip(
-                            ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_variables, selected=custom_variables[0]),
-                            "Select the X (independent) variable on the graph."
-                        ),
-                        ui.tooltip(
-                            ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_variables, selected=custom_variables[3]),
-                            "Lastly select the Y (dependent) variable on the graph."
-                        )
-                    ),
-                    ui.card(
-                        ui.panel_absolute(
-                            ui.output_plot(
-                                "custom_graph",
-                                width="100%",
-                                height='100%'
-                            ),
-                            left="2%",
-                            top="2%",
-                            width="95%",
-                            height='100%',
-                        ),
-                        height='600px'
-                    ),
-                    col_widths=(2, 2, 8)
-                )
+                ui.row(
+                    ui.column(3, ui.input_selectize("select_flights", "Flight Date:", get_flights())),
+                    ui.column(3, ui.input_selectize("select_graph", "Graph Type:", ["Line Plot", "Scatter Plot"])),
+                    ui.column(3, ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_variables, selected=custom_variables[0])),
+                    ui.column(3, ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_variables, selected=custom_variables[3])),
+                ),
+                ui.output_plot("custom_graph")
             ),
             # ===============================================================================================================================================================
             # START: Statistical Insights TAB
@@ -308,30 +251,29 @@ app_ui = ui.page_fluid(
             ui.nav_panel("Statistical Insights", 
                 div(HTML("<h2> Statistical Insights </h2>")),
                 div(HTML("<hr>")),
-                ui.layout_columns(
-                    ui.card(
-                        ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
-                        ui.input_selectize("select_activities", "Choose activities:", list_of_activities, selected=list_of_activities, multiple=True),
-                        max_height="350px"
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
+                ui.row( 
+                    # put columns within the rows, the column first param is the width, your total widths add up to 12
+                    ui.column(6, 
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Motor Power vs. SOC Rate of Change</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.layout_sidebar(
+                            ui.panel_sidebar(
+                                ui.input_selectize("select_activities", "Choose activities:", list_of_activities, selected=list_of_activities, multiple=True),
+                                width=3
+                            ),
+                            ui.panel_main(ui.output_plot("power_soc_rate_of_change_scatter_plot")),
+                            position='right'
+                        )
                     ),
-                    ui.card(
-                        ui.panel_absolute(
-                            ui.output_plot(
-                                "power_soc_rate_of_change_scatter_plot",
-                                width="100%",
-                                height='100%'
-                            ), 
-                            width="95%",
-                            height='100%',
-                        ),
-                        height='600px'
-                    ),
-                    ui.card(
-                        ui.output_table("soc_roc_table"), 
-                        max_height="500px"
-                    ),
-                    col_widths=(2, 6, 4)
-                )
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Plane Operations vs. SOC Rate of Change Statistics </b></p>")),
+                        div(HTML("<hr>")),
+                        ui.panel_main(ui.output_table("soc_roc_table"))
+                    ),  
+                ),
             ),
         ),
         ui.nav_menu("Flight Planning",
@@ -353,6 +295,7 @@ app_ui = ui.page_fluid(
                         """))
                 ,min_height = "250px"
             ),
+            
                 ui.row( 
                     ui.column(6,
                         div(HTML("<hr>")),
@@ -378,6 +321,7 @@ app_ui = ui.page_fluid(
             # ===============================================================================================================================================================
             ui.nav_panel("Flight Exercise Planning", 
             div(HTML("<h2> Flight Exercise Planning </h2>")),
+            div(HTML("<hr>")),
                 # Selecting the date
                 ui.row(
                     ui.column(6,
@@ -416,6 +360,222 @@ app_ui = ui.page_fluid(
         id="tab",  
     )  
 )
+
+
+
+
+# app_ui = ui.page_fluid(
+    # # {"style": "color: blue"},
+    # shinyswatch.theme.zephyr(),
+    # ui.navset_tab(    
+        # # ===============================================================================================================================================================
+        # # START: UPLOAD SCREEN
+        # # ===============================================================================================================================================================
+        # ui.nav_panel("Data Preview",
+        #     # Column selection panel
+        #     ui.div(
+        #         # Dropdown with checkboxes
+        #         ui.input_selectize("selected_cols", "Select Columns to Preview", choices=list(uploaded_cols().columns), multiple=True),
+        #         style="margin-top:40px;"
+        #     ),  
+        #     # Table header
+        #     ui.div(
+        #         ui.include_css("bootstrap.css"), ui.h4("Most Recent Flight and Weather Data Records"), 
+        #         style="margin-top: 3px;"
+        #     ), 
+        #     # Table ouptut
+        #     ui.div(
+        #         ui.output_data_frame("uploaded_data_df"),
+        #         ui.include_css("bootstrap.css"),
+        #         style="margin-top: 2px; max-height: 3000px;"
+        #     ),
+        #     # Display the most recent run time
+        #     ui.div(
+        #         ui.div(ui.output_text("most_recent_run")),
+        #         style="margin-top: 10px;"
+        #     ),
+        # ),
+        # # ===============================================================================================================================================================
+        # # End: UPLOAD SCREEN
+        # # ===============================================================================================================================================================
+    #     # ===============================================================================================================================================================
+    #     # START: DATA ANALYSIS SCREEN 
+    #     # ===============================================================================================================================================================
+    #     ui.nav_panel("Data Analysis", 
+            # ui.include_css("bootstrap.css"),
+            # ui.card(
+            #     ui.card_header("Welcome to ElectriFly's Data Analytics Interface!"),
+            #     """Unlock the power of your data with our intuitive and powerful user interface designed specifically for data analytics. 
+            #         Our platform empowers you to transform raw data into actionable insights, enabling you to make informed decisions and drive your business forward."""
+            # ),
+            # This creates the tabs between the recommended graph screen and the insights
+    #     ),
+    #     ui.nav_menu(
+            # # ===============================================================================================================================================================
+            # # START: Recommended Graphs Tab
+            # # ===============================================================================================================================================================
+            # ui.nav_panel("Data Visualization", 
+            #     div(HTML("<hr>")),
+            #     div(HTML("<h3> Single Date Graphs </h3>")),
+            #     ui.row(
+            #         ui.column(6, ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights())),
+            #         ui.column(6, ui.output_text("num_circuits"))
+            #     ),
+            #     ui.row(
+            #         # Put columns within the rows, the column first param is the width, your total widths add up to 12
+            #         ui.column(6, div(HTML("<p><b>Weather Data for Selected Flights</b></p>")), div(HTML("<hr>")), ui.panel_main(ui.output_table("weather_interactive"))),
+            #         ui.column(6, div(HTML("<p><b>Flight Map</b></p>")), div(HTML("<hr>")), output_widget("lat_long_map")),
+            #     ),
+            #     div(HTML("<hr>")),
+            #     div(HTML("<hr>")),
+            #     div(HTML("<h3> Multiple Date Graphs </h3>")),
+            #     ui.row(
+            #         ui.column(12, ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True))
+            #     ),
+            #     ui.row(
+            #         ui.column(6, div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")), div(HTML("<hr>")), ui.output_plot("soc_time_graph")),
+            #         ui.column(6, div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")), div(HTML("<hr>")), ui.output_plot("power_time_graph"))
+            #     ),
+            #     div(HTML("<hr>"))
+            # ),
+            # # ===============================================================================================================================================================
+            # # START: CUSTOM GRAPH TAB
+            # # ===============================================================================================================================================================
+            # ui.nav_panel("Custom Graph",
+            #     div(HTML("<hr>")),
+            #     div(HTML("""<p>The <b>Custom Graphs</b> feature is a one-of-a-kind feature empowering 
+            #             you with the ability to visualize flight data the way you want. Here is a simple way to use the custom graph:</p>""")),
+            #     div(
+            #         HTML("""<ol> 
+            #             <li> Select the date for which you want to view the data, and </li>
+            #             <li> Select the type of graph you want to see, then </li>
+            #             <li> Select the X (independent) variable on the graph, </li>
+            #             <li> Lastly select the Y (dependent) variable on the graph. </li>
+            #             </ol>"""
+            #         )
+            #     ),
+            #     div(HTML("<hr>")),
+            #     ui.row(
+            #         ui.column(3, ui.input_selectize("select_flights", "Flight Date:", get_flights())),
+            #         ui.column(3, ui.input_selectize("select_graph", "Graph Type:", ["Line Plot", "Scatter Plot"])),
+            #         ui.column(3, ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_variables, selected=custom_variables[0])),
+            #         ui.column(3, ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_variables, selected=custom_variables[3])),
+            #     ),
+            #     ui.output_plot("custom_graph")
+            # ),
+            # # ===============================================================================================================================================================
+            # # START: Statistical Insights TAB
+            # # ===============================================================================================================================================================
+            # ui.nav_panel("Statistical Insights", 
+            #     div(HTML("<hr>")),
+            #     ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
+            #     ui.row( 
+            #         # put columns within the rows, the column first param is the width, your total widths add up to 12
+            #         ui.column(6, 
+            #             div(HTML("<hr>")),
+            #             div(HTML("<p><b>Motor Power vs. SOC Rate of Change</b></p>")),
+            #             div(HTML("<hr>")),
+            #             ui.layout_sidebar(
+            #                 ui.panel_sidebar(
+            #                     ui.input_selectize("select_activities", "Choose activities:", list_of_activities, selected=list_of_activities, multiple=True),
+            #                     width=3
+            #                 ),
+            #                 ui.panel_main(ui.output_plot("power_soc_rate_of_change_scatter_plot")),
+            #                 position='right'
+            #             )
+            #         ),
+            #         ui.column(6,
+            #             div(HTML("<hr>")),
+            #             div(HTML("<p><b>Plane Operations vs. SOC Rate of Change Statistics </b></p>")),
+            #             div(HTML("<hr>")),
+            #             ui.panel_main(ui.output_table("soc_roc_table"))
+            #         ),  
+            #     ),
+            # ),
+    #         # ===============================================================================================================================================================
+    #         # END: Statistical Insights TAB
+    #         # ===============================================================================================================================================================
+    #     ),      
+    #     # ===============================================================================================================================================================
+    #     # END: DATA ANALYSIS SCREEN 
+    #     # ===============================================================================================================================================================
+    #     # ===============================================================================================================================================================
+    #     # START: ML RECOMMENDATIONS SCREEN
+    #     # ===============================================================================================================================================================
+    #     ui.nav_menu("Flight Planning", 
+            # ui.card(
+            #     ui.card_header("Welcome to ElectriFly's Simulation Interface!"),
+            #     #ui.p
+            #         div(HTML("""<p>The Three Day Flight Forecast determines the safety of flights for each 15 minute block of time for today, and the next two days after.
+            #             <br>Upcoming Flights for Today provides times today when flights can safely be scheduled.</p>
+                        
+            #             <p>🟩 = Safe for flight<br>
+            #             🟨 = Potentially safe for flight<br>
+            #             🟥 = Not safe for flight</p>
+            #             """))
+            # ),
+            # ui.nav_panel("Flight Scheduling",
+            #     ui.row( 
+            #         ui.column(6,
+            #             div(HTML("<hr>")),
+            #             div(HTML("<p><b>Three Day Flight Forecast</b></p>")),
+            #             div(HTML("<hr>")),
+            #             ui.panel_main(
+            #                 ui.output_table("simulation_table")
+            #             ),
+            #         ),
+            #         ui.column(6,
+            #             div(HTML("<hr>")),
+            #             div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+            #             div(HTML("<hr>")),
+            #             ui.panel_main(
+            #                 ui.output_table("flight_planning_table", style="width: 70%; height: 300px;")
+            #             ),
+            #         ),
+            #     ),
+            # ),
+            # ui.nav_panel("Flight Exercise Planning", 
+            #     # Selecting the date
+            #     ui.row(
+            #         ui.column(6,
+            #             div(HTML("<hr>")),
+            #             ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, width=6, selected=None),
+            #             div(HTML("<hr>"))
+            #         ),
+            #         ui.column(6,
+            #             div(HTML("<hr>")),
+            #             ui.output_ui("time_selector"),
+            #             div(HTML("<hr>"))
+            #         )
+            #     ),
+            #     ui.layout_columns(
+            #         ui.card(
+            #             div(HTML("<hr>")),
+            #             ui.input_selectize("flight_operations", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None),
+            #             div(HTML("<hr>")),
+            #             ui.output_ui("duration_of_activity"),
+            #             div(HTML("<hr>")),
+            #             ui.input_action_button("select_activity", "Add activity"),
+            #             height="100%"
+            #         ),
+            #         ui.card(
+            #             ui.output_data_frame("activity_selection_output"),
+            #             height="100%"
+            #         ),
+            #         ui.card(
+            #             ui.input_action_button("reset_activity", "Reset All Activities"),
+            #             height="100%"
+            #         ),
+            #         col_widths=(3, 6, 3)
+            #     )              
+            # )
+    #     ),
+    #     # ===============================================================================================================================================================
+    #     # END: ML RECOMMENDATIONS SCREEN
+    #     # ===============================================================================================================================================================
+        # title="ElectriFly",
+    # )
+# )
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def server(input: Inputs, output: Outputs, session: Session):
@@ -464,7 +624,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.plot(alt="An interactive plot")
     def soc_time_graph():
         """
-        The function uses the input from the 'state' parameter to get data on soc vs time for all the selected dates.
+        The function uses the input from the 'state' parameter to get data on soc vs. time for all the selected dates.
 
         Returns 
             soc_graph: a matplotlib figure plot with the data plotted already.
@@ -483,7 +643,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.plot(alt="An interactive plot")
     def power_time_graph():
         """
-        The function uses the input from the 'power' parameter to get data on power vs time for all the selected dates.
+        The function uses the input from the 'power' parameter to get data on power vs. time for all the selected dates.
 
         Returns 
             motor_power_graph: a matplotlib figure plot with the data plotted already.
@@ -544,8 +704,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         query_conn = query_flights()
         query_result = query_conn.get_number_of_circuits(flight_id)
 
-        # return the number
-        return query_result
+        # Send number of flights with entire string --> The number of circuits for the chosen flight is: {query_result}
+        return f"The number of circuits for the chosen flight is: {query_result}"
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: DATA ANALYSIS SCREEN 
@@ -597,6 +757,15 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: UPLOAD SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    # Arbitrarly downloads this random doc -> functionality needs to change
+    @session.download(
+        filename=lambda: f"{date.today().isoformat()}-{np.random.randint(100,999)}.csv"
+    )
+    async def downloadData():
+        await asyncio.sleep(0.25)
+        yield "one,two,three\n"
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -606,8 +775,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         selected_columns = input.selected_cols()
         if not selected_columns:
             # Return the entire DataFrame as default when no columns are selected
-            default_columns = uploaded_data_df.loc[:,["Flight ID","Flight Date", "Weather Time UTC", "Time (Min)","Bat 1 SOC", 
-                                               "Bat 2 SOC","Motor Power", "Motor Temp"]]
+            default_columns = uploaded_data_df.loc[:,["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", 
+                                               "Bat 1 Max Cell Temp", "Temperature", "Visibility"]]
             return default_columns
         else:
             # Filter the DataFrame based on the selected columns
@@ -619,7 +788,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.text
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
-        return f"Data was last refreshed at: {most_recent_run_time}"  
+        return f"Last data retrieval: {most_recent_run_time}"  
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
