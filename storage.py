@@ -145,7 +145,7 @@ def push_flight_data(df, flight_id):
       end_time = end_time + time_index
       downsampled_data = df[(df["time_min"] >= initial_time) & (df["time_min"] < end_time)].mean(skipna=True).to_dict()
       downsampled_data["time_min"] = initial_time
-      downsampled_data["flight_id"] = flight_id
+      downsampled_data["flight_id"] = int(flight_id)
       downsampled_df.loc[len(downsampled_df)] = downsampled_data
       initial_time = initial_time + time_index
   # table name
