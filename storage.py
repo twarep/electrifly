@@ -132,6 +132,22 @@ def push_flight_data(df, flight_id):
   df = df.set_axis(modified_columns, axis="columns")
   # add the flight_id column to df
   df.insert(0, "flight_id", int(flight_id))
+  # Get the maximum time of the flight data
+  max_time = df["time_min"].to_numpy().max()
+  # timeindex is every 1.2 seconds calculated on a minute scale from 0 to 1. So 1 = 60 seconds, 0.05 = 3 seconds, 0.02 = 1.2 seconds, 0.0166 ~ 1 second
+  initial_time = 0
+  time_index = 0.02
+  end_time = 0
+  # Collecting downsampled data
+  downsampled_df = pd.DataFrame(columns=df.columns)
+  # Find the variables between the initial and final time and add them to the downsampled 
+  while end_time <= max_time:
+      end_time = end_time + time_index
+      downsampled_data = df[(df["time_min"] >= initial_time) & (df["time_min"] < end_time)].mean(skipna=True).to_dict()
+      downsampled_data["time_min"] = initial_time
+      downsampled_data["flight_id"] = int(flight_id)
+      downsampled_df.loc[len(downsampled_df)] = downsampled_data
+      initial_time = initial_time + time_index
   # table name
   table_name = "flightdata_" + str(flight_id)
   # create sqlalchemy connection
@@ -144,7 +160,7 @@ def push_flight_data(df, flight_id):
                       'heading': Float(), 'stall_diff_pressure': Float(), 'qng': Float(),
                       'oat': Float()}
   # add new table to db
-  df.to_sql(table_name, engine, if_exists="fail", index=False, dtype=explicit_columns)
+  downsampled_df.to_sql(table_name, engine, if_exists="fail", index=False, dtype=explicit_columns)
   engine.dispose()  
 
 # query weather df for all records in between the given times
