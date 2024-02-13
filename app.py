@@ -23,7 +23,7 @@ import simulation
 import os
 import faicons as fa
 
-flight_operation_dictionary = {"Activity": [], "Time (minutes)": []}
+flight_operation_dictionary = {"Activity": [], "Time (minutes)": [], "Motor Power": []}
 
 # Getting initial data
 flights = query_flights()
@@ -398,6 +398,7 @@ app_ui = ui.page_fluid(
                         div(HTML("<hr>")),
                         ui.output_ui("duration_of_activity"),
                         div(HTML("<hr>")),
+                        ui.output_ui("power_setting_activity"),
                         ui.input_action_button("select_activity", "Add activity"),
                         height="100%"
                     ),
@@ -688,6 +689,20 @@ def server(input: Inputs, output: Outputs, session: Session):
             return ui.output_text("Please select a flight activity")
         else:
             return ui.input_numeric("duration_chooser", f"Choose number of minutes for {flight_activity}:", 1, min=1, max=60)
+        
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.flight_operations)
+    def power_setting_activity():
+        flight_activity = input.flight_operations()
+
+        if flight_activity == "":
+            return ui.output_text("Please select power setting")
+        else:
+            return ui.input_numeric("power_setting_chooser", f"Choose power setting (KW) for {flight_activity}:", 0, min=0, max=70)
+
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -704,6 +719,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return that data frame
         return flight_operation_output_table
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @reactive.effect
     @reactive.event(input.reset_activity)
@@ -718,6 +734,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Clear all of the activities and times in the variable
         flight_operation_dictionary["Activity"].clear()
         flight_operation_dictionary["Time (minutes)"].clear()
+        flight_operation_dictionary["Motor Power"].clear()
 
         # Set the data show to 0
         table_data_show.set(reactive_var)
@@ -738,10 +755,12 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Get the inputs from the flight operation and time selection criteria
         operation = input.flight_operations()
         operation_duration = input.duration_chooser()
+        power = input.power_setting_chooser()
 
         # Append all the activities and times in the variable
         flight_operation_dictionary["Activity"].append(operation)
         flight_operation_dictionary["Time (minutes)"].append(operation_duration)
+        flight_operation_dictionary["Motor Power"].append(power)
 
         # Set the data show to 1
         table_data_show.set(reactive_var)
