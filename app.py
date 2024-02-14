@@ -23,7 +23,15 @@ import simulation
 import os
 import faicons as fa
 
-flight_operation_dictionary = {"Activity": [], "Time (minutes)": [], "Motor Power": []}
+# Global variable to hold the flight operations.
+flight_operation_dictionary = {
+    "Activity": [], 
+    "Time (minutes)": [], 
+    "Motor Power": [],
+    "Temperature": [], 
+    "Visibility": [], 
+    "Wind Speed": []
+}
 
 # Getting initial data
 flights = query_flights()
@@ -676,7 +684,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         if flight_dates == "":
             return ui.output_text("Please select a date to fly")
         else:
-            return ui.input_selectize("testing", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
+            return ui.input_selectize("flight_time_select", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -735,6 +743,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_operation_dictionary["Activity"].clear()
         flight_operation_dictionary["Time (minutes)"].clear()
         flight_operation_dictionary["Motor Power"].clear()
+        flight_operation_dictionary["Temperature"].clear()
+        flight_operation_dictionary["Visibility"].clear()
+        flight_operation_dictionary["Wind Speed"].clear()
 
         # Set the data show to 0
         table_data_show.set(reactive_var)
@@ -756,11 +767,22 @@ def server(input: Inputs, output: Outputs, session: Session):
         operation = input.flight_operations()
         operation_duration = input.duration_chooser()
         power = input.power_setting_chooser()
+        date = input.date_operations()
+        time = input.flight_time_select()
+
+        # Get the weather data for this flight
+        # NOTE: the forecasted visibility is in meters, while the weather data visibility is in miles
+        # NOTE: 1 mile (nautical) = 1852 meters
+        temp, visibility, wind_speed = flights.get_forecast_weather_by_date(date, time)
+        visibility_mile = round(visibility/1852, 2)
 
         # Append all the activities and times in the variable
         flight_operation_dictionary["Activity"].append(operation)
         flight_operation_dictionary["Time (minutes)"].append(operation_duration)
         flight_operation_dictionary["Motor Power"].append(power)
+        flight_operation_dictionary["Temperature"].append(temp)
+        flight_operation_dictionary["Visibility"].append(visibility_mile)
+        flight_operation_dictionary["Wind Speed"].append(wind_speed)
 
         # Set the data show to 1
         table_data_show.set(reactive_var)

@@ -41,6 +41,9 @@ class query_flights:
         sql_query = 'SELECT * FROM flightdata_4620 LIMIT 1'
         flights = pd.read_sql_query(sql_query, engine)
 
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
         # Save the column names to an array
         columns = [column for column in flights.columns if column not in ["flight_id"]]
 
@@ -553,4 +556,35 @@ class query_flights:
         return flight_data
     
 
+    # Getting the weather predictions from the forecast table ----------------------------------------------------------------------------
+    # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
+    def get_forecast_weather_by_date(self, date: datetime, time: datetime):
+        """
+        The function uses psycopg2 to get the columns: temperature, wind gust, and visibility from the forecast table
+        """
 
+        # Format the time 
+        compare_time = datetime.strptime(time, "%I:%M %p").strftime("%H:%M:%S")
+
+        # Make database connection
+        engine = self.connect()
+
+        # Make and execute the query
+        sql_query = f"""SELECT 
+            temperature_2m as temperature, 
+            visibility, 
+            windgusts_10m as wind_speed 
+        FROM forecast
+        WHERE forecast_date = \'{date}\' and forecast_time_et = \'{compare_time}\';
+        """
+        flights = pd.read_sql_query(sql_query, engine)
+
+        temp = flights.iloc[0, 0]
+        visibility = flights.iloc[0, 1]
+        wind_speed = flights.iloc[0, 2]
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the data
+        return temp, visibility, wind_speed
