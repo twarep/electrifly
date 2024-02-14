@@ -25,8 +25,27 @@ class query_flights:
         engine = create_engine(engine_string)
 
         return engine
-
     
+    # Getting the activities -------------------------------------------------------------------------------------------------
+    def get_unique_activity(self):
+        """
+        The function uses psycopg2 to get unique columns
+        """
+
+        # Make database connection
+        engine = self.connect()
+
+        query_string = "select distinct(activity) from labeled_activities_view;"
+        df = pd.read_sql_query(query_string, engine)
+        activities = list(df["activity"].to_numpy())
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the activities
+        return activities
+    
+
     # Getting the flight data column names -------------------------------------------------------------------------------------------------
     # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
     def get_flight_columns(self):

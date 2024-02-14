@@ -30,7 +30,8 @@ flight_operation_dictionary = {
     "Motor Power": [],
     "Temperature": [], 
     "Visibility": [], 
-    "Wind Speed": []
+    "Wind Speed": [],
+    "SOC": []
 }
 
 # Getting initial data
@@ -746,6 +747,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_operation_dictionary["Temperature"].clear()
         flight_operation_dictionary["Visibility"].clear()
         flight_operation_dictionary["Wind Speed"].clear()
+        flight_operation_dictionary["SOC"].clear()
 
         # Set the data show to 0
         table_data_show.set(reactive_var)
@@ -783,6 +785,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_operation_dictionary["Temperature"].append(temp)
         flight_operation_dictionary["Visibility"].append(visibility_mile)
         flight_operation_dictionary["Wind Speed"].append(wind_speed)
+        flight_operation_dictionary["SOC"].append("TBD")
 
         # Set the data show to 1
         table_data_show.set(reactive_var)
