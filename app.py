@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 import simulation
 import os
 import faicons as fa
+from model_querying import get_model_prediction
 
 # Global variable to hold the flight operations.
 flight_operation_dictionary = {
@@ -778,6 +779,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         temp, visibility, wind_speed = flights.get_forecast_weather_by_date(date, time)
         visibility_mile = round(visibility/1852, 2)
 
+        # Get soc 
+        predicted_soc = get_model_prediction(operation, operation_duration, power, temp, visibility_mile, wind_speed)
+
         # Append all the activities and times in the variable
         flight_operation_dictionary["Activity"].append(operation)
         flight_operation_dictionary["Time (minutes)"].append(operation_duration)
@@ -785,7 +789,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_operation_dictionary["Temperature"].append(temp)
         flight_operation_dictionary["Visibility"].append(visibility_mile)
         flight_operation_dictionary["Wind Speed"].append(wind_speed)
-        flight_operation_dictionary["SOC"].append("TBD")
+        flight_operation_dictionary["SOC"].append(predicted_soc)
 
         # Set the data show to 1
         table_data_show.set(reactive_var)

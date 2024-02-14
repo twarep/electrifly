@@ -40,7 +40,7 @@ def get_model_prediction(activity, time, power, temperature, visibility, windspe
 
     prediction = model.predict(pred_dict)
 
-    print(prediction)
+    return prediction
 
 
-get_model_prediction("cruise", 5, 30, 34, 3, 8)
+# get_model_prediction("cruise", 5, 30, 34, 3, 8)

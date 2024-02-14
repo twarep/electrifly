@@ -35,7 +35,7 @@ class query_flights:
         # Make database connection
         engine = self.connect()
 
-        query_string = "select distinct(activity) from labeled_activities_view;"
+        query_string = "select distinct(activity) from labeled_activities_view order by activity;"
         df = pd.read_sql_query(query_string, engine)
         activities = list(df["activity"].to_numpy())
 
