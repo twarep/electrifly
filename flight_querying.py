@@ -501,30 +501,23 @@ class query_flights:
         engine = self.connect()
 
         # Make the query
-        query = f"""SELECT tfa.time_min AS Time,
-                        tfa.flight_id AS id, 
-                        tfa.activity AS Exercise,
-                        tfa.temperature AS Environment_Temperature,
-                        tfa.dewpoint AS Dewpoint,
-                        tfa.relative_humidity AS Humidity,
-                        tfa.wind_speed AS Wind_Speed,
-                        tfa.visibility AS Visibility,
-                        ((fl.bat_1_soc + fl.bat_2_soc) / 2) AS SOC,
-                        ((fl.bat_1_avg_cell_temp + fl.bat_2_avg_cell_temp) / 2) AS Cell_Temperature,
-                        fl.motor_rpm AS Motor_RPM, 
-                        fl.motor_power AS Motor_Power,
-                        fl.motor_temp AS Motor_Temperature,
-                        fl.ias AS Indicated_Air_Speed,
-                        fl.pressure_alt AS Pressure_Altitude,
-                        fl.ground_speed AS Ground_Speed,
-                        fl.oat AS Outside_Air_Temperature,
-                        fl.inverter_temp AS Inverter_Temperature,
-                        fl.pitch AS Pitch,
-                        fl.roll AS Roll
-                    FROM labeled_activities_view \"tfa\" 
-                    INNER JOIN flightdata_{flight} \"fl\" 
-                        ON tfa.time_min=fl.time_min AND tfa.flight_id=fl.flight_id
-                    WHERE fl.flight_id={flight}"""
+        query = f"""SELECT flight_id AS id, 
+                        time_min AS time,
+                        ((bat_1_soc + bat_2_soc) / 2) AS soc,
+                        ((bat_1_avg_cell_temp + bat_2_avg_cell_temp) / 2) AS cell_temperature,
+                        motor_rpm AS motor_rpm, 
+                        motor_power AS motor_power,
+                        motor_temp AS motor_temperature,
+                        ias AS indicated_air_speed,
+                        pressure_alt AS pressure_altitude,
+                        ground_speed AS ground_speed,
+                        oat AS outside_air_temperature,
+                        inverter_temp AS inverter_temperature,
+                        pitch AS pitch,
+                        roll AS roll,
+                        activity AS exercise
+                    FROM labeled_activities_view
+                    WHERE flight_id={flight}"""
 
         # Select the data based on the query
         flight_data = pd.read_sql_query(query, engine) 
@@ -542,23 +535,22 @@ class query_flights:
         """
         engine = self.connect()
 
-        query = f"""SELECT 
-                      flight_id AS id, 
-                      time_min AS time,
-                      ((bat_1_soc + bat_2_soc) / 2) AS soc,
-                      ((bat_1_avg_cell_temp + bat_2_avg_cell_temp) / 2) AS cell_temperature,
-                      motor_rpm AS motor_rpm, 
-                      motor_power AS motor_power,
-                      motor_temp AS motor_temperature,
-                      ias AS indicated_air_speed,
-                      pressure_alt AS pressure_altitude,
-                      ground_speed AS ground_speed,
-                      oat AS outside_air_temperature,
-                      inverter_temp AS inverter_temperature,
-                      pitch AS pitch,
-                      roll AS roll
-                    FROM flightdata_{flight}
-                 """
+        query = f"""SELECT flight_id AS id, 
+                        time_min AS time,
+                        ((bat_1_soc + bat_2_soc) / 2) AS soc,
+                        ((bat_1_avg_cell_temp + bat_2_avg_cell_temp) / 2) AS cell_temperature,
+                        motor_rpm AS motor_rpm, 
+                        motor_power AS motor_power,
+                        motor_temp AS motor_temperature,
+                        ias AS indicated_air_speed,
+                        pressure_alt AS pressure_altitude,
+                        ground_speed AS ground_speed,
+                        oat AS outside_air_temperature,
+                        inverter_temp AS inverter_temperature,
+                        pitch AS pitch,
+                        roll AS roll
+                    FROM flightdata_{flight};
+                """
 
         flight_data = pd.read_sql_query(query, engine) 
         engine.dispose()
