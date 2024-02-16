@@ -330,7 +330,25 @@ app_ui = ui.page_fluid(
                         ui.output_table("soc_roc_table"), 
                         max_height="500px"
                     ),
-                    col_widths=(2, 6, 4)
+
+                    ui.card(
+                        ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view"), multiple=True),
+                        max_height="350px"
+                    ),
+
+                    ui.card(
+                        ui.panel_absolute(
+                            ui.output_plot(
+                                "soh_soc_rate_of_change_scatter_plot",
+                                width="100%",
+                                height='100%'
+                            ), 
+                            width="95%",
+                            height='100%',
+                        ),
+                        height='600px'
+                    ),
+                    col_widths=(2, 6, 4, 2, 6)
                 )
             ),
         ),
@@ -573,6 +591,24 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot
+    
+     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def soh_soc_rate_of_change_scatter_plot():
+        """
+        The function uses the input from the 'power_soc_rate_state' parameter to get data on power, soc rate of change, and activities for all the selected dates.
+        Returns 
+            power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+        """
+        # Get all flight data
+        flight_ids = input.statistical_multi_time()
+
+        # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
+        soh_soc_rate_of_change_scatterplot = Graphing.soh_soc_rate_scatterplot(flight_ids)
+
+        # Return the power vs. soc rate of change scatter plot
+        return soh_soc_rate_of_change_scatterplot
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output

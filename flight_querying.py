@@ -159,7 +159,9 @@ class query_flights:
                     ROUND(time_min*2)/2 AS time_min_rounded,
                     AVG(bat_1_soc) AS bat_1_soc,
                     AVG(bat_2_soc) AS bat_2_soc,
-                    AVG(motor_power) AS motor_power
+                    AVG(motor_power) AS motor_power,
+                    AVG(bat_1_soh) AS bat_1_soh,
+                    AVG(bat_2_soh) AS bat_2_soh
                 FROM
                     labeled_activities_view
                 WHERE
@@ -341,6 +343,35 @@ class query_flights:
             activity = activity[filter_mask]
 
         flight_dict[id] = {"time_min_rounded": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
+
+        return flight_dict
+    
+    # Get Flight Id, Motor power, SOC rate, and activities Function -------------------------------------------------------------------------
+    def get_flight_soh_soc_rate(self, id: list):
+        """
+        Function that uses the flight ids to get their respective time, motor power, soc, soc rate of change, and activity columns. 
+        Then, returns a dictionary of 
+        fw_flight_id: {time: [], motor_power: [], soc: [], soc_rate_of_change: [], activity: []}
+        """
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get the flight data
+        flights_df = self.get_flight_data_every_half_min_on_id(id)
+
+        # Change to Numpy
+        times = flights_df["time_min_rounded"].to_numpy()
+        #date = flights_df["date"].to_numpy()
+        soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
+        soh = (flights_df["bat_1_soh"].to_numpy() + flights_df["bat_2_soh"].to_numpy()) / 2 # get soh avg
+
+        # Calculate SOC rate of change
+        # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+        soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+        # Append a 0 to soc_rate_of_change to keep the array sizes consistent
+        soc_rate_of_change = np.append(soc_rate_of_change, 0)
+
+        flight_dict[id] = {"time_min_rounded": times, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "soh": soh}
 
         return flight_dict
     
