@@ -29,9 +29,6 @@ flight_operation_dictionary = {
     "Activity": [], 
     "Time (minutes)": [], 
     "Motor Power": [],
-    "Temperature": [], 
-    "Visibility": [], 
-    "Wind Speed": [],
     "SOC": []
 }
 
@@ -203,10 +200,14 @@ app_ui = ui.page_fluid(
                     min_height = "150px"
                 ), 
                 div(HTML("<hr>")),
-                div(HTML("<h4> Single Date Graphs </h4>")),
+                div(HTML("<h4> Flight Graphs </h4>")),
+                ui.layout_columns(
+                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights()),
+                    col_widths=(3)
+                ),
+                ui.p("          "),
                 ui.row(
-                    ui.column(2, ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights())),
-                    ui.column(4,
+                    ui.column(6,
                         ui.value_box(
                             "Number of circuits",
                             ui.output_text("num_circuits"),
@@ -229,40 +230,44 @@ app_ui = ui.page_fluid(
                     )
                 ),  
                 div(HTML("<hr>")),
-                div(HTML("<h4> Multiple Date Graphs </h4>")),
+                div(HTML("<h4> Time Graphs </h4>")),
                 ui.layout_columns(
                     ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True),
+                    col_widths=(3)
+                ),
+                ui.p("          "),
+                ui.layout_columns(
                     ui.card(
-                        ui.card_header("Muli-Flight SOC vs. Time"),
+                        ui.card_header("Multi-Flight SOC vs. Time"),
                         ui.panel_absolute(
                             ui.output_plot(
                                 "soc_time_graph",
-                                height='100%',
+                                height='90%',
                                 width='100%'
                             ), 
                             left="0px",
                             top="10%",
                             width="100%",
-                            height='85%',
+                            height='100%',
                         ),
-                        min_height="700px"
+                        min_height="600px"
                     ),
                     ui.card(
                         ui.card_header("Multi-Flight Power Setting vs. Time"),
                         ui.panel_absolute(
                             ui.output_plot(
                                 "power_time_graph",
-                                height='100%',
+                                height='90%',
                                 width='100%'
                             ),
                             left="0px",
                             top="10%",
                             width="100%",
-                            height='85%',
+                            height='100%',
                         ),
-                        min_height="700px"
+                        min_height="600px"
                     ),
-                    col_widths=(2, 5, 5)
+                    col_widths=(6, 6)
                 )
             ),
             #  ===============================================================================================================================================================
@@ -318,29 +323,37 @@ app_ui = ui.page_fluid(
             ui.nav_panel("Statistical Insights", 
                 div(HTML("<h2> Statistical Insights </h2>")),
                 div(HTML("<hr>")),
-                ui.layout_columns(
-                    ui.card(
-                        ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
-                        ui.input_selectize("select_activities", "Choose activities:", list_of_activities, selected=list_of_activities, multiple=True),
-                        max_height="350px"
-                    ),
-                    ui.card(
-                        ui.panel_absolute(
-                            ui.output_plot(
-                                "power_soc_rate_of_change_scatter_plot",
-                                width="100%",
-                                height='100%'
-                            ), 
-                            width="95%",
-                            height='100%',
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
+                ui.p("          "),
+                ui.row(
+                    ui.column(6,
+                        ui.input_selectize("select_activities", 
+                            "Choose activities:", 
+                            list_of_activities, 
+                            selected=list_of_activities, 
+                            width="500px",
+                            multiple=True
                         ),
-                        height='600px'
+                        div(HTML("<hr>")),
+                        ui.card(
+                            ui.output_table("soc_roc_table"), 
+                            max_height="450px"
+                        ),
                     ),
-                    ui.card(
-                        ui.output_table("soc_roc_table"), 
-                        max_height="500px"
-                    ),
-                    col_widths=(2, 6, 4)
+                    ui.column(6,
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "power_soc_rate_of_change_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ),
+                    )
                 )
             ),
         ),
@@ -745,9 +758,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_operation_dictionary["Activity"].clear()
         flight_operation_dictionary["Time (minutes)"].clear()
         flight_operation_dictionary["Motor Power"].clear()
-        flight_operation_dictionary["Temperature"].clear()
-        flight_operation_dictionary["Visibility"].clear()
-        flight_operation_dictionary["Wind Speed"].clear()
         flight_operation_dictionary["SOC"].clear()
 
         # Set the data show to 0
@@ -773,6 +783,21 @@ def server(input: Inputs, output: Outputs, session: Session):
         date = input.date_operations()
         time = input.flight_time_select()
 
+        # Change the time to see if the time is incremented every 15 minutes.
+        if len(flight_operation_dictionary["Time (minutes)"]) > 0:
+            # Get each segment of the time string
+            hour_str = time[0:3]
+            period = time[5:8]
+
+            # Change the minutes to every 15 when the time passes that minute
+            current_time = sum(flight_operation_dictionary["Time (minutes)"])
+            if current_time > 15:
+                time = hour_str + "15" + period
+            elif current_time > 30:
+                time = hour_str + "30" + period
+            elif current_time > 45:
+                time = hour_str + "45" + period
+            
         # Get the weather data for this flight
         # NOTE: the forecasted visibility is in meters, while the weather data visibility is in miles
         # NOTE: 1 mile (nautical) = 1852 meters
@@ -786,9 +811,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_operation_dictionary["Activity"].append(operation)
         flight_operation_dictionary["Time (minutes)"].append(operation_duration)
         flight_operation_dictionary["Motor Power"].append(power)
-        flight_operation_dictionary["Temperature"].append(temp)
-        flight_operation_dictionary["Visibility"].append(visibility_mile)
-        flight_operation_dictionary["Wind Speed"].append(wind_speed)
         flight_operation_dictionary["SOC"].append(predicted_soc)
 
         # Set the data show to 1

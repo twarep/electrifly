@@ -98,8 +98,7 @@ def soc_graph(flight_ids: list):
     danger_zone = [0, 15, 15, 0]
 
     # Set Plot
-    soc_figure = plt.figure(figsize=(6, 6))
-    soc_figure.tight_layout()
+    soc_figure = plt.figure(figsize=(5, 5))
 
     # Fill ranges
     plt.fill(x_zone, warning_zone, c="yellow", alpha=0.5)
@@ -129,7 +128,7 @@ def soc_graph(flight_ids: list):
     plt.title("Time vs SOC")
     
     # plt.legend(loc="lower left")
-    plt.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
+    plt.legend(loc='lower left', fontsize="9", bbox_to_anchor= (0, -0.2), ncol=4,
             borderaxespad=0, frameon=False)
 
     return soc_figure
@@ -154,7 +153,6 @@ def power_graph(flight_ids: list):
 
     # Set Plot
     power_figure = plt.figure(figsize=(6, 6))
-    power_figure.tight_layout()
 
     # Plot the graphs
     for i in range(0, len(flight_ids)):
@@ -166,7 +164,7 @@ def power_graph(flight_ids: list):
         motor_power = flight_data[id]['motor_power']
         time = flight_data[id]['time_min']
         date = flight_data[id]["date"]
-        plt.scatter(time, motor_power, s=10, label=date)
+        plt.plot(time, motor_power, label=date)
     
     # Add labels and legend to plot
     plt.xlim([0, 55])
@@ -176,7 +174,7 @@ def power_graph(flight_ids: list):
     plt.title("Time vs Motor power")
     
     # plt.legend(loc="lower left")
-    plt.legend(loc='upper left', fontsize="7", bbox_to_anchor= (1.01, 1.01), ncol=1,
+    plt.legend(loc='lower left', fontsize="9", bbox_to_anchor= (0, -0.2), ncol=4,
             borderaxespad=0, frameon=False)
 
     return power_figure
