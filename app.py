@@ -348,7 +348,20 @@ app_ui = ui.page_fluid(
                         ),
                         height='600px'
                     ),
-                    col_widths=(2, 6, 4, 2, 6)
+
+                    ui.card(
+                        ui.panel_absolute(
+                            ui.output_plot(
+                                "soh_scatter_plot",
+                                width="100%",
+                                height='100%'
+                            ), 
+                            width="95%",
+                            height='100%',
+                        ),
+                        height='600px'
+                    ),
+                    col_widths=(2, 6, 4, 2, 6, 4)
                 )
             ),
         ),
@@ -609,6 +622,21 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Return the soh vs. soc rate of change scatter plot
         return soh_soc_rate_of_change_scatterplot
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def soh_scatter_plot():
+        """
+        Returns 
+            soh_plot: a matplotlib figure line plot with the data plotted already.
+        """
+
+        # Graph the date vs. soh line plot
+        soh_plot = Graphing.soh_plot()
+
+        # Return the date vs. soh line plot
+        return soh_plot
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output

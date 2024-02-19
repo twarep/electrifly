@@ -294,6 +294,32 @@ def soh_soc_rate_scatterplot(flight_ids: list):
 
     return scatter_figure
 
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def soh_plot():
+    """
+    The function takes in dates and soh and creates a single matplotlib figure line plot of date vs. SOH.
+    Returns:
+        line_figure: The matplotlib figure axis with stored line plot data and other supports.
+    """
+    
+    # Set Plot
+    line_figure = plt.figure(figsize=(6, 6))
+    line_figure.tight_layout()
+
+    # Make flight db connection
+    flight_db_conn = query_flights()
+    flight_data = flight_db_conn.get_flight_soh()
+    soh = flight_data['soh']
+    dates = flight_data["dates"]
+
+    # Plot the graph
+    plt.plot(dates, soh, marker='o', linestyle='-')
+    plt.xlabel("Date (Year-Month)")
+    plt.ylabel("SOH")
+    plt.title("Average SOH Per Month")
+
+    return line_figure
+
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
