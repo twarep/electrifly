@@ -258,20 +258,17 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def soh_soc_rate_scatterplot(flight_ids: list):
     """
-    The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of motor_power vs. SOC rate of change.
-    A legend of activities is also included. 
+    The function takes in flight ids and dates and creates a single matplotlib figure scatter plot of SOH vs. SOC rate of change.
+    A legend of dates is also included. 
     Parameters:
         flight_ids: A list of all flight ids form the DB. Index should corresponds with the flight_dates index.
         flight_dates: A list of all flight dates form the DB. Index should corresponds with the flight_ids index.
-        activities_filter: A list of all flight activities the user would like to filter by.
     Returns:
-        scatter_ax: The matplotlib figure axis with stored scatter plot data and other supports.
+        scatter_figure: The matplotlib figure axis with stored scatter plot data and other supports.
     """
     
-
     # Set Plot
     scatter_figure = plt.figure(figsize=(6, 6))
-    # scatter_ax = scatter_figure.add_subplot(1, 1, 1)
     scatter_figure.tight_layout()
 
     # Plot the graphs
@@ -286,16 +283,14 @@ def soh_soc_rate_scatterplot(flight_ids: list):
         # Get the soh and soc and plot it with a legend label
         soh = flight_data[id]['soh']
         soc_rate_of_change = flight_data[id]['soc_rate_of_change']
-        #date = flight_data[id]["date"]
-        plt.scatter(soh, soc_rate_of_change, s=5, alpha = 0.3)
-
-    
-    # date = flight_data[id]["date"]
-    # plt.scatter(soh, soc_rate_of_change, s=10)
+        date = flight_data[id]["dates"]
+        plt.scatter(soh, soc_rate_of_change, s=5, alpha = 0.3, label=date)
 
     plt.xlabel("SOH")
     plt.ylabel("SOC Rate of Change")
     plt.title("SOH vs. SOC Rate of Change Scatterplot")
+    plt.legend(loc='upper right', fontsize="7", ncol=1,
+            borderaxespad=0, frameon=True)
 
     return scatter_figure
 

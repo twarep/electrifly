@@ -146,7 +146,7 @@ class query_flights:
     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
     def get_flight_data_every_half_min_on_id(self, id: int):
         """
-        The function runs a query to get the fw_flight_id, activity, time, soc, and power from labeled activities view in 30 sec intervals.
+        The function runs a query to get the fw_flight_id, activity, time, soc, power, soh, date from labeled activities view in 30 sec intervals.
         """
         # Make database connection
         engine = self.connect()
@@ -161,13 +161,14 @@ class query_flights:
                     AVG(bat_2_soc) AS bat_2_soc,
                     AVG(motor_power) AS motor_power,
                     AVG(bat_1_soh) AS bat_1_soh,
-                    AVG(bat_2_soh) AS bat_2_soh
+                    AVG(bat_2_soh) AS bat_2_soh,
+                    flight_date AS dates
                 FROM
                     labeled_activities_view
                 WHERE
                     fw_flight_id = {str(id)}
                 GROUP BY
-                    fw_flight_id, activity, time_min_rounded
+                    fw_flight_id, activity, time_min_rounded, dates
                 ORDER BY
                     fw_flight_id, activity, time_min_rounded;
 
@@ -349,9 +350,9 @@ class query_flights:
     # Get Flight Id, Motor power, SOC rate, and activities Function -------------------------------------------------------------------------
     def get_flight_soh_soc_rate(self, id: list):
         """
-        Function that uses the flight ids to get their respective time, motor power, soc, soc rate of change, and activity columns. 
+        Function that uses the flight ids to get their respective time, soh, soc, and soc rate of change columns. 
         Then, returns a dictionary of 
-        fw_flight_id: {time: [], motor_power: [], soc: [], soc_rate_of_change: [], activity: []}
+        fw_flight_id: {time: [], soc: [], soc_rate_of_change: [], soh: []}
         """
         # Initialize the dictionary
         flight_dict = {}
@@ -361,7 +362,7 @@ class query_flights:
 
         # Change to Numpy
         times = flights_df["time_min_rounded"].to_numpy()
-        #date = flights_df["date"].to_numpy()
+        dates = flights_df["dates"].iloc[0].strftime("%b %d, %Y")
         soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
         soh = (flights_df["bat_1_soh"].to_numpy() + flights_df["bat_2_soh"].to_numpy()) / 2 # get soh avg
 
@@ -371,7 +372,7 @@ class query_flights:
         # Append a 0 to soc_rate_of_change to keep the array sizes consistent
         soc_rate_of_change = np.append(soc_rate_of_change, 0)
 
-        flight_dict[id] = {"time_min_rounded": times, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "soh": soh}
+        flight_dict[id] = {"time_min_rounded": times, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "soh": soh, "dates": dates}
 
         return flight_dict
     

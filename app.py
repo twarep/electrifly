@@ -597,17 +597,17 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.plot(alt="An interactive plot")
     def soh_soc_rate_of_change_scatter_plot():
         """
-        The function uses the input from the 'power_soc_rate_state' parameter to get data on power, soc rate of change, and activities for all the selected dates.
+        The function uses the input from the 'statistical_multi_time' parameter to get data on soh and soc rate of change for all the selected dates.
         Returns 
-            power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+            soh_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """
         # Get all flight data
         flight_ids = input.statistical_multi_time()
 
-        # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
+        # Graph the soh vs. soc rate of change scatter plot
         soh_soc_rate_of_change_scatterplot = Graphing.soh_soc_rate_scatterplot(flight_ids)
 
-        # Return the power vs. soc rate of change scatter plot
+        # Return the soh vs. soc rate of change scatter plot
         return soh_soc_rate_of_change_scatterplot
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
