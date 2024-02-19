@@ -25,8 +25,27 @@ class query_flights:
         engine = create_engine(engine_string)
 
         return engine
-
     
+    # Getting the activities -------------------------------------------------------------------------------------------------
+    def get_unique_activity(self):
+        """
+        The function uses psycopg2 to get unique columns
+        """
+
+        # Make database connection
+        engine = self.connect()
+
+        query_string = "select distinct(activity) from labeled_activities_view order by activity;"
+        df = pd.read_sql_query(query_string, engine)
+        activities = list(df["activity"].to_numpy())
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the activities
+        return activities
+    
+
     # Getting the flight data column names -------------------------------------------------------------------------------------------------
     # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
     def get_flight_columns(self):
@@ -40,6 +59,9 @@ class query_flights:
         # Make and execute the query
         sql_query = 'SELECT * FROM flightdata_4620 LIMIT 1'
         flights = pd.read_sql_query(sql_query, engine)
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
 
         # Save the column names to an array
         columns = [column for column in flights.columns if column not in ["flight_id"]]
@@ -470,30 +492,23 @@ class query_flights:
         engine = self.connect()
 
         # Make the query
-        query = f"""SELECT tfa.time_min AS Time,
-                        tfa.flight_id AS id, 
-                        tfa.activity AS Exercise,
-                        tfa.temperature AS Environment_Temperature,
-                        tfa.dewpoint AS Dewpoint,
-                        tfa.relative_humidity AS Humidity,
-                        tfa.wind_speed AS Wind_Speed,
-                        tfa.visibility AS Visibility,
-                        ((fl.bat_1_soc + fl.bat_2_soc) / 2) AS SOC,
-                        ((fl.bat_1_avg_cell_temp + fl.bat_2_avg_cell_temp) / 2) AS Cell_Temperature,
-                        fl.motor_rpm AS Motor_RPM, 
-                        fl.motor_power AS Motor_Power,
-                        fl.motor_temp AS Motor_Temperature,
-                        fl.ias AS Indicated_Air_Speed,
-                        fl.pressure_alt AS Pressure_Altitude,
-                        fl.ground_speed AS Ground_Speed,
-                        fl.oat AS Outside_Air_Temperature,
-                        fl.inverter_temp AS Inverter_Temperature,
-                        fl.pitch AS Pitch,
-                        fl.roll AS Roll
-                    FROM labeled_activities_view \"tfa\" 
-                    INNER JOIN flightdata_{flight} \"fl\" 
-                        ON tfa.time_min=fl.time_min AND tfa.flight_id=fl.flight_id
-                    WHERE fl.flight_id={flight}"""
+        query = f"""SELECT flight_id AS id, 
+                        time_min AS time,
+                        ((bat_1_soc + bat_2_soc) / 2) AS soc,
+                        ((bat_1_avg_cell_temp + bat_2_avg_cell_temp) / 2) AS cell_temperature,
+                        motor_rpm AS motor_rpm, 
+                        motor_power AS motor_power,
+                        motor_temp AS motor_temperature,
+                        ias AS indicated_air_speed,
+                        pressure_alt AS pressure_altitude,
+                        ground_speed AS ground_speed,
+                        oat AS outside_air_temperature,
+                        inverter_temp AS inverter_temperature,
+                        pitch AS pitch,
+                        roll AS roll,
+                        activity AS exercise
+                    FROM labeled_activities_view
+                    WHERE flight_id={flight}"""
 
         # Select the data based on the query
         flight_data = pd.read_sql_query(query, engine) 
@@ -511,23 +526,22 @@ class query_flights:
         """
         engine = self.connect()
 
-        query = f"""SELECT 
-                      flight_id AS id, 
-                      time_min AS time,
-                      ((bat_1_soc + bat_2_soc) / 2) AS soc,
-                      ((bat_1_avg_cell_temp + bat_2_avg_cell_temp) / 2) AS cell_temperature,
-                      motor_rpm AS motor_rpm, 
-                      motor_power AS motor_power,
-                      motor_temp AS motor_temperature,
-                      ias AS indicated_air_speed,
-                      pressure_alt AS pressure_altitude,
-                      ground_speed AS ground_speed,
-                      oat AS outside_air_temperature,
-                      inverter_temp AS inverter_temperature,
-                      pitch AS pitch,
-                      roll AS roll
-                    FROM flightdata_{flight}
-                 """
+        query = f"""SELECT flight_id AS id, 
+                        time_min AS time,
+                        ((bat_1_soc + bat_2_soc) / 2) AS soc,
+                        ((bat_1_avg_cell_temp + bat_2_avg_cell_temp) / 2) AS cell_temperature,
+                        motor_rpm AS motor_rpm, 
+                        motor_power AS motor_power,
+                        motor_temp AS motor_temperature,
+                        ias AS indicated_air_speed,
+                        pressure_alt AS pressure_altitude,
+                        ground_speed AS ground_speed,
+                        oat AS outside_air_temperature,
+                        inverter_temp AS inverter_temperature,
+                        pitch AS pitch,
+                        roll AS roll
+                    FROM flightdata_{flight};
+                """
 
         flight_data = pd.read_sql_query(query, engine) 
         engine.dispose()
@@ -561,4 +575,35 @@ class query_flights:
         return flight_data
     
 
+    # Getting the weather predictions from the forecast table ----------------------------------------------------------------------------
+    # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
+    def get_forecast_weather_by_date(self, date: datetime, time: datetime):
+        """
+        The function uses psycopg2 to get the columns: temperature, wind gust, and visibility from the forecast table
+        """
 
+        # Format the time 
+        compare_time = datetime.strptime(time, "%I:%M %p").strftime("%H:%M:%S")
+
+        # Make database connection
+        engine = self.connect()
+
+        # Make and execute the query
+        sql_query = f"""SELECT 
+            temperature_2m as temperature, 
+            visibility, 
+            windgusts_10m as wind_speed 
+        FROM forecast
+        WHERE forecast_date = \'{date}\' and forecast_time_et = \'{compare_time}\';
+        """
+        flights = pd.read_sql_query(sql_query, engine)
+
+        temp = flights.iloc[0, 0]
+        visibility = flights.iloc[0, 1]
+        wind_speed = flights.iloc[0, 2]
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the data
+        return temp, visibility, wind_speed

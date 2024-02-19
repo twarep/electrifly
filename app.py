@@ -21,8 +21,16 @@ import sqlalchemy as sa
 from datetime import datetime, timedelta
 import simulation
 import os
+import faicons as fa
+from model_querying import get_model_prediction
 
-flight_operation_dictionary = {"Activity": [], "Time (minutes)": []}
+# Global variable to hold the flight operations.
+flight_operation_dictionary = {
+    "Activity": [], 
+    "Time (minutes)": [], 
+    "Motor Power": [],
+    "SOC": []
+}
 
 # Getting initial data
 flights = query_flights()
@@ -86,9 +94,9 @@ def uploaded_data():
 
     # Execute the query and fetch the data into a DataFrame
     uploaded_data_df = pd.read_sql(query, con=engine)
-    uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
+    uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%b %d, %Y at %I:%M %p")
     # Convert the 'flight_date' column back to a string
-    uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
+    uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%b %d, %Y")
     # Rename columns to be human readable
     readable_columns = ['Fw Flight ID','Flight Date','Flight ID','Time (Min)','Bat 1 Current','Bat 1 Voltage','Bat 2 Current','Bat 2 Voltage','Bat 1 SOC','Bat 2 SOC',
                         'Bat 1 SOH', 'Bat 2 SOH', 'Bat 1 Min Cell Temp', 'Bat 2 Min Cell Temp', 'Bat 1 Max Cell Temp', 'Bat 2 Max Cell Temp', 'Bat 1 Avg Cell Temp', 'Bat 2 Avg Cell Temp', 'Bat 1 Min Cell Volt', 'Bat 2 Min Cell Volt',
@@ -197,27 +205,75 @@ app_ui = ui.page_fillable(
                     ,min_height = "150px"
                 ),  
                 div(HTML("<hr>")),
-                div(HTML("<h4> Single Date Graphs </h4>")),
-                ui.row(
-                    ui.column(6, ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights())),
-                    ui.column(6, ui.output_text("num_circuits"))
+                div(HTML("<h4> Flight Graphs </h4>")),
+                ui.layout_columns(
+                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights()),
+                    col_widths=(3)
                 ),
+                ui.p("          "),
                 ui.row(
-                    # Put columns within the rows, the column first param is the width, your total widths add up to 12
-                    ui.column(6, div(HTML("<p><b>Weather Data for Selected Flights</b></p>")), div(HTML("<hr>")), ui.panel_main(ui.output_table("weather_interactive"))),
-                    ui.column(6, div(HTML("<p><b>Flight Map</b></p>")), div(HTML("<hr>")), output_widget("lat_long_map")),
-                ),
+                    ui.column(6,
+                        ui.value_box(
+                            "Number of circuits",
+                            ui.output_text("num_circuits"),
+                            showcase=fa.icon_svg("jet-fighter"),
+                            min_height="150px"
+                        ),
+                        div(HTML("<hr>")),
+                        ui.card(
+                            ui.card_header("Weather Data for Selected Flight"),
+                            ui.output_table("weather_interactive"),
+                            min_height="450px"
+                        ),
+                    ),
+                    ui.column(6,
+                        ui.card(
+                            ui.card_header("Flight Map"),
+                            output_widget("lat_long_map"),
+                            min_height="665px"
+                        )
+                    )
+                ),  
                 div(HTML("<hr>")),
-                div(HTML("<hr>")),
-                div(HTML("<h4> Multiple Date Graphs </h4>")),
-                ui.row(
-                    ui.column(12, ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True))
+                div(HTML("<h4> Time Graphs </h4>")),
+                ui.layout_columns(
+                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True),
+                    col_widths=(3)
                 ),
-                ui.row(
-                    ui.column(6, div(HTML("<p><b>SOC vs. Time Across Multiple Flights</b></p>")), div(HTML("<hr>")), ui.output_plot("soc_time_graph")),
-                    ui.column(6, div(HTML("<p><b>Power Setting vs. Time Across Multiple Flights</b></p>")), div(HTML("<hr>")), ui.output_plot("power_time_graph"))
-                ),
-                div(HTML("<hr>"))
+                ui.p("          "),
+                ui.layout_columns(
+                    ui.card(
+                        ui.card_header("Multi-Flight SOC vs. Time"),
+                        ui.panel_absolute(
+                            ui.output_plot(
+                                "soc_time_graph",
+                                height='90%',
+                                width='100%'
+                            ), 
+                            left="0px",
+                            top="10%",
+                            width="100%",
+                            height='100%',
+                        ),
+                        min_height="600px"
+                    ),
+                    ui.card(
+                        ui.card_header("Multi-Flight Power Setting vs. Time"),
+                        ui.panel_absolute(
+                            ui.output_plot(
+                                "power_time_graph",
+                                height='90%',
+                                width='100%'
+                            ),
+                            left="0px",
+                            top="10%",
+                            width="100%",
+                            height='100%',
+                        ),
+                        min_height="600px"
+                    ),
+                    col_widths=(6, 6)
+                )
             ),
             #  ===============================================================================================================================================================
             # START: CUSTOM GRAPH TAB
@@ -227,23 +283,44 @@ app_ui = ui.page_fillable(
                 div(HTML("<hr>")),
                 div(HTML("""<p>The <b>Custom Graphs</b> feature is a one-of-a-kind feature empowering 
                         you with the ability to visualize flight data the way you want. Here is a simple way to use the custom graph:</p>""")),
-                div(
-                    HTML("""<ol> 
-                        <li> Select the date for which you want to view the data, and </li>
-                        <li> Select the type of graph you want to see, then </li>
-                        <li> Select the X (independent) variable on the graph, </li>
-                        <li> Lastly select the Y (dependent) variable on the graph. </li>
-                        </ol>"""
-                    )
-                ),
                 div(HTML("<hr>")),
-                ui.row(
-                    ui.column(3, ui.input_selectize("select_flights", "Flight Date:", get_flights())),
-                    ui.column(3, ui.input_selectize("select_graph", "Graph Type:", ["Line Plot", "Scatter Plot"])),
-                    ui.column(3, ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_variables, selected=custom_variables[0])),
-                    ui.column(3, ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_variables, selected=custom_variables[3])),
-                ),
-                ui.output_plot("custom_graph")
+                ui.layout_columns(
+                    ui.card(
+                        ui.tooltip(
+                            ui.input_selectize("select_flights", "Flight Date:", get_flights()), 
+                            "Select the date for which you want to view the data."
+                        ),
+                        ui.tooltip(
+                            ui.input_selectize("select_graph", "Graph Type:", ["Line Plot", "Scatter Plot"]), 
+                            "Select the type of graph you want to see."
+                        )
+                    ),
+                    ui.card(
+                        ui.tooltip(
+                            ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_variables, selected=custom_variables[0]),
+                            "Select the X (independent) variable on the graph."
+                        ),
+                        ui.tooltip(
+                            ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_variables, selected=custom_variables[3]),
+                            "Lastly select the Y (dependent) variable on the graph."
+                        )
+                    ),
+                    ui.card(
+                        ui.panel_absolute(
+                            ui.output_plot(
+                                "custom_graph",
+                                width="100%",
+                                height='100%'
+                            ),
+                            left="2%",
+                            top="2%",
+                            width="95%",
+                            height='100%',
+                        ),
+                        height='600px'
+                    ),
+                    col_widths=(2, 2, 8)
+                )
             ),
             # ===============================================================================================================================================================
             # START: Statistical Insights TAB
@@ -252,28 +329,37 @@ app_ui = ui.page_fillable(
                 div(HTML("<h2> Statistical Insights </h2>")),
                 div(HTML("<hr>")),
                 ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
-                ui.row( 
-                    # put columns within the rows, the column first param is the width, your total widths add up to 12
-                    ui.column(6, 
+                ui.p("          "),
+                ui.row(
+                    ui.column(6,
+                        ui.input_selectize("select_activities", 
+                            "Choose activities:", 
+                            list_of_activities, 
+                            selected=list_of_activities, 
+                            width="500px",
+                            multiple=True
+                        ),
                         div(HTML("<hr>")),
-                        div(HTML("<p><b>Motor Power vs. SOC Rate of Change</b></p>")),
-                        div(HTML("<hr>")),
-                        ui.layout_sidebar(
-                            ui.panel_sidebar(
-                                ui.input_selectize("select_activities", "Choose activities:", list_of_activities, selected=list_of_activities, multiple=True),
-                                width=3
-                            ),
-                            ui.panel_main(ui.output_plot("power_soc_rate_of_change_scatter_plot")),
-                            position='right'
-                        )
+                        ui.card(
+                            ui.output_table("soc_roc_table"), 
+                            max_height="450px"
+                        ),
                     ),
                     ui.column(6,
-                        div(HTML("<hr>")),
-                        div(HTML("<p><b>Plane Operations vs. SOC Rate of Change Statistics </b></p>")),
-                        div(HTML("<hr>")),
-                        ui.panel_main(ui.output_table("soc_roc_table"))
-                    ),  
-                ),
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "power_soc_rate_of_change_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ),
+                    )
+                )
             ),
         ),
         ui.nav_menu("Flight Planning",
@@ -342,6 +428,7 @@ app_ui = ui.page_fillable(
                         div(HTML("<hr>")),
                         ui.output_ui("duration_of_activity"),
                         div(HTML("<hr>")),
+                        ui.output_ui("power_setting_activity"),
                         ui.input_action_button("select_activity", "Add activity"),
                         height="100%"
                     ),
@@ -844,7 +931,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         if flight_dates == "":
             return ui.output_text("Please select a date to fly")
         else:
-            return ui.input_selectize("testing", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
+            return ui.input_selectize("flight_time_select", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -857,6 +944,20 @@ def server(input: Inputs, output: Outputs, session: Session):
             return ui.output_text("Please select a flight activity")
         else:
             return ui.input_numeric("duration_chooser", f"Choose number of minutes for {flight_activity}:", 1, min=1, max=60)
+        
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.flight_operations)
+    def power_setting_activity():
+        flight_activity = input.flight_operations()
+
+        if flight_activity == "":
+            return ui.output_text("Please select power setting")
+        else:
+            return ui.input_numeric("power_setting_chooser", f"Choose power setting (KW) for {flight_activity}:", 0, min=0, max=70)
+
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -873,6 +974,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return that data frame
         return flight_operation_output_table
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @reactive.effect
     @reactive.event(input.reset_activity)
@@ -887,6 +989,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Clear all of the activities and times in the variable
         flight_operation_dictionary["Activity"].clear()
         flight_operation_dictionary["Time (minutes)"].clear()
+        flight_operation_dictionary["Motor Power"].clear()
+        flight_operation_dictionary["SOC"].clear()
 
         # Set the data show to 0
         table_data_show.set(reactive_var)
@@ -907,10 +1011,39 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Get the inputs from the flight operation and time selection criteria
         operation = input.flight_operations()
         operation_duration = input.duration_chooser()
+        power = input.power_setting_chooser()
+        date = input.date_operations()
+        time = input.flight_time_select()
+
+        # Change the time to see if the time is incremented every 15 minutes.
+        if len(flight_operation_dictionary["Time (minutes)"]) > 0:
+            # Get each segment of the time string
+            hour_str = time[0:3]
+            period = time[5:8]
+
+            # Change the minutes to every 15 when the time passes that minute
+            current_time = sum(flight_operation_dictionary["Time (minutes)"])
+            if current_time > 15:
+                time = hour_str + "15" + period
+            elif current_time > 30:
+                time = hour_str + "30" + period
+            elif current_time > 45:
+                time = hour_str + "45" + period
+            
+        # Get the weather data for this flight
+        # NOTE: the forecasted visibility is in meters, while the weather data visibility is in miles
+        # NOTE: 1 mile (nautical) = 1852 meters
+        temp, visibility, wind_speed = flights.get_forecast_weather_by_date(date, time)
+        visibility_mile = round(visibility/1852, 2)
+
+        # Get soc 
+        predicted_soc = get_model_prediction(operation, operation_duration, power, temp, visibility_mile, wind_speed)
 
         # Append all the activities and times in the variable
         flight_operation_dictionary["Activity"].append(operation)
         flight_operation_dictionary["Time (minutes)"].append(operation_duration)
+        flight_operation_dictionary["Motor Power"].append(power)
+        flight_operation_dictionary["SOC"].append(predicted_soc)
 
         # Set the data show to 1
         table_data_show.set(reactive_var)
