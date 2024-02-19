@@ -102,7 +102,7 @@ def uploaded_data():
                         'Bat 1 SOH', 'Bat 2 SOH', 'Bat 1 Min Cell Temp', 'Bat 2 Min Cell Temp', 'Bat 1 Max Cell Temp', 'Bat 2 Max Cell Temp', 'Bat 1 Avg Cell Temp', 'Bat 2 Avg Cell Temp', 'Bat 1 Min Cell Volt', 'Bat 2 Min Cell Volt',
                         'Bat 1 Max Cell Volt', 'Bat 2 Max Cell Volt', 'Requested Torque', 'Motor RPM', 'Motor Power', 'Motor Temp', 'Indicated Air Speed', 'Stall Warn Active', 'Inverter Temp', 'Bat 1 Cooling Temp',
                         'Inverter Cooling Temp 1', 'Inverter Cooling Temp 2', 'Remaining Flight Time', 'Pressure Altitude', 'Latitude', 'Longitude', 'Ground Speed', 'Pitch', 'Roll', 'Time Stamp',
-                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature','Dewpoint',
+                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint',
                         'Relative Humidity','Wind Direction', 'Wind Speed', 'Pressure Altimeter','Sea Level Pressure', 'Visibility', 'Wind Gust', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
                         'Sky Coverage 4', 'Sky Level 1', 'Sky Level 2','Sky Level 3','Sky Level 4','Weather Codes', 'Metar']
     uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
@@ -169,7 +169,7 @@ app_ui = ui.page_fluid(
                     "Select Columns to Preview", 
                     choices=list(uploaded_cols().columns), 
                     multiple=True,
-                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", "Bat 1 Max Cell Temp", "Temperature", "Visibility"],width="50%"
+                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", "Bat 1 Max Cell Temp", "Temperature (°F)", "Visibility"],width="50%"
                 ),
                 style="margin-top:20px;"
             ),  
