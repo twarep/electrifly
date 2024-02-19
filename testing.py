@@ -15,17 +15,19 @@ total_flight_time = avg_inspection_time_before_flight + avg_flight_time + avg_ch
 # Need to find a period of time for 30 minutes FOR flight but need 1.5 hours total for everything
     #STRIP INTO TIME INTERVALS
 
-# pull in forecasted weather data (right now it's hardcoded)
-forecast_df = get_forecast_by_current_date()
-forecast_date = forecast_df["Forecast Date"]
-forecast_time_et = forecast_df["Forecast Time"]
-# print(forecast_date)
-print(forecast_time_et)
-print(type(forecast_time_et))
+# Getting the dates to be used in the ML UI:
+# Get current date
+current_date = datetime.now().date()
+string_current_date = current_date.strftime("%b %d, %Y")
 
+# Get tomorrow's date
+tomorrow_date = current_date + timedelta(days=1)
+string_tomorrow_date = tomorrow_date.strftime("%b %d, %Y")
 
-# Convert each time object to string and remove seconds
-formatted_time_series = forecast_time_et.apply(lambda x: x.strftime('%H:%M'))
+# Get the day after tomorrow's date
+day_after_tomorrow_date = current_date + timedelta(days=2)
+string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%b %d, %Y")
 
-# Print the formatted time series
-print(formatted_time_series)
+# Create a list and add the dates
+list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
+print(list_of_dates)

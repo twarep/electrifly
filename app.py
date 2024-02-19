@@ -33,15 +33,15 @@ list_of_activities = flights.get_flight_activities()
 # Getting the dates to be used in the ML UI:
 # Get current date
 current_date = datetime.now().date()
-string_current_date = current_date.strftime("%Y-%m-%d")
+string_current_date = current_date.strftime("%b %d, %Y")
 
 # Get tomorrow's date
 tomorrow_date = current_date + timedelta(days=1)
-string_tomorrow_date = tomorrow_date.strftime("%Y-%m-%d")
+string_tomorrow_date = tomorrow_date.strftime("%b %d, %Y")
 
 # Get the day after tomorrow's date
 day_after_tomorrow_date = current_date + timedelta(days=2)
-string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%Y-%m-%d")
+string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%b %d, %Y")
 
 # Create a list and add the dates
 list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
@@ -251,7 +251,7 @@ app_ui = ui.page_fillable(
             ui.nav_panel("Statistical Insights", 
                 div(HTML("<h2> Statistical Insights </h2>")),
                 div(HTML("<hr>")),
-                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
                 ui.row( 
                     # put columns within the rows, the column first param is the width, your total widths add up to 12
                     ui.column(6, 
