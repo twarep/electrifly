@@ -41,15 +41,15 @@ list_of_activities = flights.get_flight_activities()
 # Getting the dates to be used in the ML UI:
 # Get current date
 current_date = datetime.now().date()
-string_current_date = current_date.strftime("%Y-%m-%d")
+string_current_date = current_date.strftime("%b %d, %Y")
 
 # Get tomorrow's date
 tomorrow_date = current_date + timedelta(days=1)
-string_tomorrow_date = tomorrow_date.strftime("%Y-%m-%d")
+string_tomorrow_date = tomorrow_date.strftime("%b %d, %Y")
 
 # Get the day after tomorrow's date
 day_after_tomorrow_date = current_date + timedelta(days=2)
-string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%Y-%m-%d")
+string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%b %d, %Y")
 
 # Create a list and add the dates
 list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
@@ -94,11 +94,11 @@ def uploaded_data():
 
     # Execute the query and fetch the data into a DataFrame
     uploaded_data_df = pd.read_sql(query, con=engine)
-    uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%Y-%m-%d %H:%M:%S")
+    uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%b %d, %Y at %I:%M %p")
     # Convert the 'flight_date' column back to a string
-    uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%Y-%m-%d")
+    uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%b %d, %Y")
     # Rename columns to be human readable
-    readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current','Bat 1 Voltage','Bat 2 Current','Bat 2 Voltage','Bat 1 SOC','Bat 2 SOC',
+    readable_columns = ['Fw Flight ID','Flight Date','Flight ID','Time (Min)','Bat 1 Current','Bat 1 Voltage','Bat 2 Current','Bat 2 Voltage','Bat 1 SOC','Bat 2 SOC',
                         'Bat 1 SOH', 'Bat 2 SOH', 'Bat 1 Min Cell Temp', 'Bat 2 Min Cell Temp', 'Bat 1 Max Cell Temp', 'Bat 2 Max Cell Temp', 'Bat 1 Avg Cell Temp', 'Bat 2 Avg Cell Temp', 'Bat 1 Min Cell Volt', 'Bat 2 Min Cell Volt',
                         'Bat 1 Max Cell Volt', 'Bat 2 Max Cell Volt', 'Requested Torque', 'Motor RPM', 'Motor Power', 'Motor Temp', 'Indicated Air Speed', 'Stall Warn Active', 'Inverter Temp', 'Bat 1 Cooling Temp',
                         'Inverter Cooling Temp 1', 'Inverter Cooling Temp 2', 'Remaining Flight Time', 'Pressure Altitude', 'Latitude', 'Longitude', 'Ground Speed', 'Pitch', 'Roll', 'Time Stamp',
@@ -136,7 +136,8 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
 
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
-    return flights.get_last_scraper_runtime()
+    new_date = flights.get_last_scraper_runtime().strftime("%b %d, %Y at %I:%M %p")
+    return new_date
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_fluid(
@@ -323,7 +324,7 @@ app_ui = ui.page_fluid(
             ui.nav_panel("Statistical Insights", 
                 div(HTML("<h2> Statistical Insights </h2>")),
                 div(HTML("<hr>")),
-                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view")),
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
                 ui.p("          "),
                 ui.row(
                     ui.column(6,

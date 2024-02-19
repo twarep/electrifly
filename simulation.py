@@ -392,6 +392,7 @@ print(type(formatted_time_series))
 # day 1
 df0 = final_zones_color.iloc[0:96, 1]
 # df0_formatted = df0.apply(lambda x: x.strftime('%H:%M'))
+df0 = final_zones_color.iloc[0:96, 1].apply(lambda x: x.strftime('%H:%M'))
 df1 = final_zones_color.iloc[0:96, 2:4]
 
 # day 2
