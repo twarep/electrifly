@@ -535,6 +535,7 @@ class query_flights:
                         flight_id AS id, 
                         activity,
                         ((bat_1_soc + bat_2_soc) / 2) AS SOC,
+                        ((bat_1_soh + bat_2_soh) / 2) AS SOH,
                         motor_power AS Power,
                         temperature,
                         visibility,
