@@ -355,6 +355,41 @@ app_ui = ui.page_fluid(
                             height='600px'
                         ),
                     )
+                ),
+                div(HTML("<h2> SOH Insights </h2>")),
+                div(HTML("<hr>")),
+                ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(), multiple=True),
+                ui.p("          "),
+                ui.row(
+                    ui.column(6,
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "soh_soc_rate_of_change_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ),
+                    ),
+
+                    ui.column(6,
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "soh_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ), 
+                      )
                 )
             ),
         ),
@@ -598,6 +633,39 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot
+    
+     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def soh_soc_rate_of_change_scatter_plot():
+        """
+        The function uses the input from the 'statistical_multi_time' parameter to get data on soh and soc rate of change for all the selected dates.
+        Returns 
+            soh_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+        """
+        # Get all flight data
+        flight_ids = input.statistical_multi_time()
+
+        # Graph the soh vs. soc rate of change scatter plot
+        soh_soc_rate_of_change_scatterplot = Graphing.soh_soc_rate_scatterplot(flight_ids)
+
+        # Return the soh vs. soc rate of change scatter plot
+        return soh_soc_rate_of_change_scatterplot
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def soh_scatter_plot():
+        """
+        Returns 
+            soh_plot: a matplotlib figure line plot with the data plotted already.
+        """
+
+        # Graph the date vs. soh line plot
+        soh_plot = Graphing.soh_plot()
+
+        # Return the date vs. soh line plot
+        return soh_plot
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output

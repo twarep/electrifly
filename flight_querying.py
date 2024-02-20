@@ -168,7 +168,7 @@ class query_flights:
     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
     def get_flight_data_every_half_min_on_id(self, id: int):
         """
-        The function runs a query to get the fw_flight_id, activity, time, soc, and power from labeled activities view in 30 sec intervals.
+        The function runs a query to get the fw_flight_id, activity, time, soc, power, soh, date from labeled activities view in 30 sec intervals.
         """
         # Make database connection
         engine = self.connect()
@@ -181,13 +181,16 @@ class query_flights:
                     ROUND(time_min*2)/2 AS time_min_rounded,
                     AVG(bat_1_soc) AS bat_1_soc,
                     AVG(bat_2_soc) AS bat_2_soc,
-                    AVG(motor_power) AS motor_power
+                    AVG(motor_power) AS motor_power,
+                    AVG(bat_1_soh) AS bat_1_soh,
+                    AVG(bat_2_soh) AS bat_2_soh,
+                    flight_date AS dates
                 FROM
                     labeled_activities_view
                 WHERE
-                    fw_flight_id = {str(id)}
+                    fw_flight_id = {str(id)} and bat_1_soh != 0 and bat_2_soh != 0
                 GROUP BY
-                    fw_flight_id, activity, time_min_rounded
+                    fw_flight_id, activity, time_min_rounded, dates
                 ORDER BY
                     fw_flight_id, activity, time_min_rounded;
 
@@ -235,6 +238,38 @@ class query_flights:
         engine.dispose()
 
         return flight_data
+    
+    # Get AVG SOH per month Function (labeled activities view) ---------------------------------------------------------------------------------
+    def get_avg_soh_per_month_act_view(self):
+
+        # Make database connection
+        engine = self.connect()
+
+        # Make query
+        query = f"""
+                SELECT 
+                    DATE_TRUNC('month', flight_date) as flight_date, 
+                    AVG(bat_1_soh) as bat_1_soh, 
+                    AVG(bat_2_soh) as bat_2_soh
+                FROM 
+                    labeled_activities_view 
+                WHERE  
+                    bat_1_soh != 0 and bat_2_soh != 0
+                GROUP BY 
+                    DATE_TRUNC('month', flight_date)
+                ORDER BY 
+                    DATE_TRUNC('month', flight_date);
+
+                """
+
+        # Select the data based on the query
+        flight_data = pd.read_sql_query(query, engine)
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        return flight_data
+    
 
 
     # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
@@ -363,6 +398,56 @@ class query_flights:
             activity = activity[filter_mask]
 
         flight_dict[id] = {"time_min_rounded": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
+
+        return flight_dict
+    
+    # Get Flight Id, SOH, SOC rate Function -------------------------------------------------------------------------
+    def get_flight_soh_soc_rate(self, id: list):
+        """
+        Function that uses the flight ids to get their respective time, soh, soc, and soc rate of change columns. 
+        Then, returns a dictionary of 
+        fw_flight_id: {time: [], soc: [], soc_rate_of_change: [], soh: []}
+        """
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get the flight data
+        flights_df = self.get_flight_data_every_half_min_on_id(id)
+
+        # Change to Numpy
+        times = flights_df["time_min_rounded"].to_numpy()
+        dates = flights_df["dates"].iloc[0].strftime("%b %d, %Y")
+        soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
+        soh = (flights_df["bat_1_soh"].to_numpy() + flights_df["bat_2_soh"].to_numpy()) / 2 # get soh avg
+
+        # Calculate SOC rate of change
+        # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+        soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+        # Append a 0 to soc_rate_of_change to keep the array sizes consistent
+        soc_rate_of_change = np.append(soc_rate_of_change, 0)
+
+        flight_dict[id] = {"time_min_rounded": times, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "soh": soh, "dates": dates}
+
+        return flight_dict
+    
+    # Get Date, SOH Function -------------------------------------------------------------------------
+    def get_flight_soh(self):
+        """
+        Function that gets dates and soh columns. 
+        Then, returns a dictionary of {dates: [], soh: []}
+        """
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get the flight data
+        flights_df = self.get_avg_soh_per_month_act_view()
+
+        dates = flights_df["flight_date"]
+        # Change to Numpy
+        soh = (flights_df["bat_1_soh"].to_numpy() + flights_df["bat_2_soh"].to_numpy()) / 2 # get soh avg
+
+
+        flight_dict = {"soh": soh, "dates": dates}
 
         return flight_dict
     
