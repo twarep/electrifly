@@ -1,26 +1,20 @@
 from shiny import App, render, ui, Inputs, Outputs, Session, reactive
 from htmltools import HTML, css, div
 from shiny.types import NavSetArg
-from typing import List
+from shiny.types import ImgData
 from flight_querying import query_flights
 from weather_querying import query_weather
 import Graphing as Graphing
-from htmltools import css
 import shinyswatch
 import numpy as np
 import pandas as pd
-import asyncio
-from datetime import date
 import numpy as np
-from os import listdir, getenv
-from os.path import isfile, join
+from os import getenv
 from dotenv import load_dotenv
-import shiny.experimental as x
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
 from datetime import datetime, timedelta
 import simulation
-import os
 import faicons as fa
 from model_querying import get_model_prediction
 
@@ -82,7 +76,7 @@ custom_variables = list(custom_variables_columns.keys())
 def connect_to_db(provider: str):
     load_dotenv()
     provider == "PostgreSQL"
-    db_url = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
+    db_url = "postgresql+psycopg2" + getenv('DATABASE_URL')[8:]
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
 
@@ -149,15 +143,16 @@ app_ui = ui.page_fluid(
         # START: HOMEPAGE
         # ===============================================================================================================================================================
         ui.nav_panel("ElectriFly",
-                     div(HTML(f"""<h1 style="text-align: center; font-weight: bolder; padding-top: 2rem">
-                                    <span style="color: {blue}">Empowering</span>
-                                    <span>Flight,</span>
-                                    <span style="color: {blue};">Electriflying</span>
-                                    <span>Tomorrow!</span>
-                                  </h1>`
-                               """)),
-                    
-          
+          div(HTML(f"""<h1 style="text-align: center; font-weight: bolder; padding-top: 2rem">
+                          <span style="color: {blue}">Empowering</span>
+                          <span>Flight,</span>
+                          <span style="color: {blue};">Electriflying</span>
+                          <span>Tomorrow!</span>
+                        </h1>`
+                    """)),
+          div(ui.output_image("velis_img"), 
+            style="text-align: center;",   
+          ),
         ),
 
         # ===============================================================================================================================================================
@@ -464,6 +459,17 @@ app_ui = ui.page_fluid(
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def server(input: Inputs, output: Outputs, session: Session):
   
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # START: HOMEPAGE 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    @render.image
+    def velis_img(): return {"src": "app_images/velis.webp", "width": "65%", "style": "border-radius: 22px;"}
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # END: HOMEPAGE 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # START: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
