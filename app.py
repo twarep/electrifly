@@ -15,6 +15,7 @@ from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
 from datetime import datetime, timedelta
 import simulation
+import shiny.experimental as x
 import faicons as fa
 from model_querying import get_model_prediction
 
@@ -143,15 +144,54 @@ app_ui = ui.page_fluid(
         # START: HOMEPAGE
         # ===============================================================================================================================================================
         ui.nav_panel("ElectriFly",
-          div(HTML(f"""<h1 style="text-align: center; font-weight: bolder; padding-top: 2rem">
+          div(HTML(f"""<h1 style="text-align: center; font-weight: bolder; padding: 2rem 0">
                           <span style="color: {blue}">Empowering</span>
                           <span>Flight,</span>
                           <span style="color: {blue};">Electriflying</span>
                           <span>Tomorrow!</span>
-                        </h1>`
-                    """)),
-          div(ui.output_image("velis_img"), 
-            style="text-align: center;",   
+                        </h1>
+                    """)
+          ),
+          # ui.card(
+          #     x.ui.card_image("app_images/velis.webp", {"width": "65%"}, border_radius="all", width="65%", fill=True, container=None),
+          #     width="60%"
+          # ),
+          ui.div(ui.output_image("velis_img", width="100%", height="100%"), 
+            style="text-align: center; padding-bottom: 3rem;",   
+          ),
+          ui.div(
+            ui.row(
+              ui.column(4, 
+                        div(HTML(f"""
+                                  <div style="display: flex; align-items: center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" style="width: 30px; height: auto; margin-right: 10px;">
+                                      <!-- Your SVG path here -->
+                                      <path d="M381 114.9L186.1 41.8c-16.7-6.2-35.2-5.3-51.1 2.7L89.1 67.4C78 73 77.2 88.5 87.6 95.2l146.9 94.5L136 240 77.8 214.1c-8.7-3.9-18.8-3.7-27.3 .6L18.3 230.8c-9.3 4.7-11.8 16.8-5 24.7l73.1 85.3c6.1 7.1 15 11.2 24.3 11.2H248.4c5 0 9.9-1.2 14.3-3.4L535.6 212.2c46.5-23.3 82.5-63.3 100.8-112C645.9 75 627.2 48 600.2 48H542.8c-20.2 0-40.2 4.8-58.2 14L381 114.9zM0 480c0 17.7 14.3 32 32 32H608c17.7 0 32-14.3 32-32s-14.3-32-32-32H32c-17.7 0-32 14.3-32 32z"/>
+                                    </svg>
+                                    <h2 style="font-weight: bolder;">What is <span style="color: {blue};">ElectriFly?</span></h2>
+                                  </div>
+                                  """))                      
+                        ),
+              ui.column(8, 
+                        div(HTML("""
+                                <p>
+                                  Electric planes offer a promising alternative to traditional gas-powered aircraft. 
+                                  However, e-planes bring on new challenges including limited battery capacity and scarce 
+                                  knowledge of their performance in Canadian weather. 
+                                </p> 
+                                <br>
+                                <p>
+                                  Our team is working with Pipistrel Velis Electro, the world’s first fully operational 
+                                  electric plane. Our platform enables researchers to analyze flight data and create a battery 
+                                  management system for the optimal operation of the electric plane. Leveraging machine learning,
+                                  ElectriFly optimizes flight schedules based on weather forecasts and improves flight planning by
+                                  predicting battery consumption.
+                                </p>
+
+                                """))
+                        
+                    )
+            ),
           ),
         ),
 
