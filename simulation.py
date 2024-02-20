@@ -490,8 +490,8 @@ for i in range(numRows):
                     FinishTime = dayOne.iloc[j, 0]
                     format = '%H:%M'
                     number += 1
-                    StartTime = StartTime.strftime(format)
-                    FinishTime = FinishTime.strftime(format)
+                    # StartTime = StartTime.strftime(format)
+                    # FinishTime = FinishTime.strftime(format)
 
                     start_times.append(StartTime)
                     finish_times.append(FinishTime)
