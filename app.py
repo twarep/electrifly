@@ -358,7 +358,7 @@ app_ui = ui.page_fluid(
                 ),
                 div(HTML("<h2> SOH Insights </h2>")),
                 div(HTML("<hr>")),
-                ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view"), multiple=True),
+                ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(), multiple=True),
                 ui.p("          "),
                 ui.row(
                     ui.column(6,
