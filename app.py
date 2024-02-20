@@ -354,6 +354,41 @@ app_ui = ui.page_fluid(
                             height='600px'
                         ),
                     )
+                ),
+                div(HTML("<h2> SOH Insights </h2>")),
+                div(HTML("<hr>")),
+                ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(["fw_flight_id", "flight_date"], "labeled_activities_view"), multiple=True),
+                ui.p("          "),
+                ui.row(
+                    ui.column(6,
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "soh_soc_rate_of_change_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ),
+                    ),
+
+                    ui.column(6,
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "soh_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ), 
+                      )
                 )
             ),
         ),
