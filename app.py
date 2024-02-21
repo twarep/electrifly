@@ -202,8 +202,8 @@ app_ui = ui.page_fluid(
                 div(HTML(f"""<h4 style="font-weight: bolder; color: {grey}; text-align: center;">Our Supporters</h4>"""))
               ),
               ui.column(3, ui.output_image("uw_logo", width="70%", height="70%"), style="display: flex; flex-direction: column; align-items: center; padding: 1rem 0;"),
-              ui.column(3, ui.output_image("wisa_logo", width="90%", height="90%"), style="display: flex; flex-direction: column; align-items: center; padding: 1rem 0;"),   
-              ui.column(3, ui.output_image("wwfc_logo", width="60%", height="60%"), style="display: flex; flex-direction: column; align-items: center; padding: 1rem 0;"),
+              ui.column(3, ui.output_image("wisa_logo", width="90%", height="90%"), style="display: flex; flex-direction: column; align-items: center; padding: 1rem 0; margin-bottom: 1rem;"),   
+              ui.column(3, ui.output_image("wwfc_logo", width="53%", height="53%"), style="display: flex; flex-direction: column; align-items: center; padding: 1rem 0; margin-bottom: 2rem;"),
               style="align-items: center; padding: 2rem 0;"                       
             ),
           ),
