@@ -25,8 +25,27 @@ class query_flights:
         engine = create_engine(engine_string)
 
         return engine
-
     
+    # Getting the activities -------------------------------------------------------------------------------------------------
+    def get_unique_activity(self):
+        """
+        The function uses psycopg2 to get unique columns
+        """
+
+        # Make database connection
+        engine = self.connect()
+
+        query_string = "select distinct(activity) from labeled_activities_view order by activity;"
+        df = pd.read_sql_query(query_string, engine)
+        activities = list(df["activity"].to_numpy())
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the activities
+        return activities
+    
+
     # Getting the flight data column names -------------------------------------------------------------------------------------------------
     # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
     def get_flight_columns(self):
@@ -40,6 +59,9 @@ class query_flights:
         # Make and execute the query
         sql_query = 'SELECT * FROM flightdata_4620 LIMIT 1'
         flights = pd.read_sql_query(sql_query, engine)
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
 
         # Save the column names to an array
         columns = [column for column in flights.columns if column not in ["flight_id"]]
@@ -146,7 +168,7 @@ class query_flights:
     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
     def get_flight_data_every_half_min_on_id(self, id: int):
         """
-        The function runs a query to get the fw_flight_id, activity, time, soc, and power from labeled activities view in 30 sec intervals.
+        The function runs a query to get the fw_flight_id, activity, time, soc, power, soh, date from labeled activities view in 30 sec intervals.
         """
         # Make database connection
         engine = self.connect()
@@ -159,13 +181,16 @@ class query_flights:
                     ROUND(time_min*2)/2 AS time_min_rounded,
                     AVG(bat_1_soc) AS bat_1_soc,
                     AVG(bat_2_soc) AS bat_2_soc,
-                    AVG(motor_power) AS motor_power
+                    AVG(motor_power) AS motor_power,
+                    AVG(bat_1_soh) AS bat_1_soh,
+                    AVG(bat_2_soh) AS bat_2_soh,
+                    flight_date AS dates
                 FROM
                     labeled_activities_view
                 WHERE
-                    fw_flight_id = {str(id)}
+                    fw_flight_id = {str(id)} and bat_1_soh != 0 and bat_2_soh != 0
                 GROUP BY
-                    fw_flight_id, activity, time_min_rounded
+                    fw_flight_id, activity, time_min_rounded, dates
                 ORDER BY
                     fw_flight_id, activity, time_min_rounded;
 
@@ -213,6 +238,38 @@ class query_flights:
         engine.dispose()
 
         return flight_data
+    
+    # Get AVG SOH per month Function (labeled activities view) ---------------------------------------------------------------------------------
+    def get_avg_soh_per_month_act_view(self):
+
+        # Make database connection
+        engine = self.connect()
+
+        # Make query
+        query = f"""
+                SELECT 
+                    DATE_TRUNC('month', flight_date) as flight_date, 
+                    AVG(bat_1_soh) as bat_1_soh, 
+                    AVG(bat_2_soh) as bat_2_soh
+                FROM 
+                    labeled_activities_view 
+                WHERE  
+                    bat_1_soh != 0 and bat_2_soh != 0
+                GROUP BY 
+                    DATE_TRUNC('month', flight_date)
+                ORDER BY 
+                    DATE_TRUNC('month', flight_date);
+
+                """
+
+        # Select the data based on the query
+        flight_data = pd.read_sql_query(query, engine)
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        return flight_data
+    
 
 
     # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
@@ -341,6 +398,56 @@ class query_flights:
             activity = activity[filter_mask]
 
         flight_dict[id] = {"time_min_rounded": times, "motor_power": motor_power, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "activity": activity}
+
+        return flight_dict
+    
+    # Get Flight Id, SOH, SOC rate Function -------------------------------------------------------------------------
+    def get_flight_soh_soc_rate(self, id: list):
+        """
+        Function that uses the flight ids to get their respective time, soh, soc, and soc rate of change columns. 
+        Then, returns a dictionary of 
+        fw_flight_id: {time: [], soc: [], soc_rate_of_change: [], soh: []}
+        """
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get the flight data
+        flights_df = self.get_flight_data_every_half_min_on_id(id)
+
+        # Change to Numpy
+        times = flights_df["time_min_rounded"].to_numpy()
+        dates = flights_df["dates"].iloc[0].strftime("%b %d, %Y")
+        soc = (flights_df["bat_1_soc"].to_numpy() + flights_df["bat_2_soc"].to_numpy()) / 2 # get soc avg
+        soh = (flights_df["bat_1_soh"].to_numpy() + flights_df["bat_2_soh"].to_numpy()) / 2 # get soh avg
+
+        # Calculate SOC rate of change
+        # The rate of change for the last entry will be set to 0 since there is no next entry to compare with
+        soc_rate_of_change = (soc[1:] - soc[:-1]) / (times[1:] - times[:-1])
+        # Append a 0 to soc_rate_of_change to keep the array sizes consistent
+        soc_rate_of_change = np.append(soc_rate_of_change, 0)
+
+        flight_dict[id] = {"time_min_rounded": times, "soc": soc, "soc_rate_of_change": soc_rate_of_change, "soh": soh, "dates": dates}
+
+        return flight_dict
+    
+    # Get Date, SOH Function -------------------------------------------------------------------------
+    def get_flight_soh(self):
+        """
+        Function that gets dates and soh columns. 
+        Then, returns a dictionary of {dates: [], soh: []}
+        """
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get the flight data
+        flights_df = self.get_avg_soh_per_month_act_view()
+
+        dates = flights_df["flight_date"]
+        # Change to Numpy
+        soh = (flights_df["bat_1_soh"].to_numpy() + flights_df["bat_2_soh"].to_numpy()) / 2 # get soh avg
+
+
+        flight_dict = {"soh": soh, "dates": dates}
 
         return flight_dict
     
@@ -554,4 +661,35 @@ class query_flights:
         return flight_data
     
 
+    # Getting the weather predictions from the forecast table ----------------------------------------------------------------------------
+    # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
+    def get_forecast_weather_by_date(self, date: datetime, time: datetime):
+        """
+        The function uses psycopg2 to get the columns: temperature, wind gust, and visibility from the forecast table
+        """
 
+        # Format the time 
+        compare_time = datetime.strptime(time, "%I:%M %p").strftime("%H:%M:%S")
+
+        # Make database connection
+        engine = self.connect()
+
+        # Make and execute the query
+        sql_query = f"""SELECT 
+            temperature_2m as temperature, 
+            visibility, 
+            windgusts_10m as wind_speed 
+        FROM forecast
+        WHERE forecast_date = \'{date}\' and forecast_time_et = \'{compare_time}\';
+        """
+        flights = pd.read_sql_query(sql_query, engine)
+
+        temp = flights.iloc[0, 0]
+        visibility = flights.iloc[0, 1]
+        wind_speed = flights.iloc[0, 2]
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        # Return the data
+        return temp, visibility, wind_speed
