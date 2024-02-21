@@ -161,7 +161,7 @@ app_ui = ui.page_fluid(
             ui.row(
               ui.column(4, 
                         div(HTML(f"""
-                                  <div style="display: flex; align-items: center;">&nbsp;&nbsp;&nbsp;
+                                  <div style="display: flex; align-items: center; padding-bottom: 2rem;">&nbsp;&nbsp;&nbsp;
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" style="width: 40px; height: auto; margin-right: 15px;">
                                       <path d="M381 114.9L186.1 41.8c-16.7-6.2-35.2-5.3-51.1 2.7L89.1 67.4C78 73 77.2 88.5 87.6 95.2l146.9 94.5L136 240 77.8 214.1c-8.7-3.9-18.8-3.7-27.3 .6L18.3 230.8c-9.3 4.7-11.8 16.8-5 24.7l73.1 85.3c6.1 7.1 15 11.2 24.3 11.2H248.4c5 0 9.9-1.2 14.3-3.4L535.6 212.2c46.5-23.3 82.5-63.3 100.8-112C645.9 75 627.2 48 600.2 48H542.8c-20.2 0-40.2 4.8-58.2 14L381 114.9zM0 480c0 17.7 14.3 32 32 32H608c17.7 0 32-14.3 32-32s-14.3-32-32-32H32c-17.7 0-32 14.3-32 32z"/>
                                     </svg>
@@ -304,10 +304,28 @@ app_ui = ui.page_fluid(
                     </div>
                     """)
           ),
-          ui.output_image("uw_logo", width="70%", height="70%"),
-
-
-
+          ui.div(ui.output_image("team_img", width="100%", height="100%"), 
+            style="margin: 0 -2rem;",   
+          ),
+          ui.div(HTML(f"""<i style="display: flex; align-items: center; justify-content: center; padding-top: 1rem;">Left to Right: Nayeema Nonta, Vikram Bhatt, Meenakshi Andoorveedu, Peter Twarecki, Joanna Yang</i>""")
+          ),
+          div(HTML("""
+                    <p>
+                      ElectriFly emerges from the visionary collaboration of five driven Management Engineering Students,
+                      whose shared passion for aviation fuels their pursuit of excellence in electric flight. With a profound 
+                      belief in the transformative potential of electric aviation within Canadian airspace, this dynamic team 
+                      combines their diverse expertise and unwavering dedication to shape the future of flight.
+                    </p> 
+                    <br>
+                    <p>
+                      Their journey is marked by meticulous validation, as ElectriFly undergoes rigorous testing through pilot
+                      programs and consultation with esteemed subject matter experts. This commitment to thorough validation 
+                      ensures that ElectriFly stands at the forefront of innovation, ready to propel electric aviation to new 
+                      heights with confidence and precision.
+                    </p>
+                    """), 
+                style="display: flex; flex-direction: column; align-items: center; padding: 3rem 2rem;"
+          ),
         ),
 
         # ===============================================================================================================================================================
@@ -647,6 +665,9 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @render.image
     def planning_img(): return {"src": "app_images/planning.png", "width": "100%", "height": "100%", "style": "border-radius: 22px; border: 1px solid #D0CFCF; box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);"}
+
+    @render.image
+    def team_img(): return {"src": "app_images/team.png", "width": "100%", "height": "100%"}
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: HOMEPAGE 
