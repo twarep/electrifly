@@ -18,6 +18,7 @@ import simulation
 import shiny.experimental as x
 import faicons as fa
 from model_querying import get_model_prediction
+from pathlib import Path
 
 # Global variable to hold the flight operations.
 flight_operation_dictionary = {
@@ -141,6 +142,7 @@ light_grey = "#F0F0F0"
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_fluid(
     shinyswatch.theme.zephyr(),
+    ui.tags.head(ui.tags.link(rel="icon", type="image/x-icon", href="/favicon.ico?")),
     ui.navset_card_pill(  
         # ===============================================================================================================================================================
         # START: HOMEPAGE
@@ -1052,4 +1054,5 @@ def server(input: Inputs, output: Outputs, session: Session):
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Get the App Ready and Host
-app = App(app_ui, server, debug=True)
+www_dir = Path(__file__).parent / "www"
+app = App(app_ui, server, static_assets=www_dir, debug=True)
