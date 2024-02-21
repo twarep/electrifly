@@ -136,6 +136,7 @@ def get_most_recent_run_time():
 # blue theme color
 blue = "#3459e6"
 grey = "#878787"
+light_grey = "#F0F0F0"
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_fluid(
@@ -153,10 +154,6 @@ app_ui = ui.page_fluid(
                         </h1>
                     """)
           ),
-          # ui.card(
-          #     x.ui.card_image("app_images/velis.webp", {"width": "65%"}, border_radius="all", width="65%", fill=True, container=None),
-          #     width="60%"
-          # ),
           ui.div(ui.output_image("velis_img", width="100%", height="100%"), 
             style="text-align: center; padding-bottom: 3rem;",   
           ),
@@ -165,8 +162,7 @@ app_ui = ui.page_fluid(
               ui.column(4, 
                         div(HTML(f"""
                                   <div style="display: flex; align-items: center;">&nbsp;&nbsp;&nbsp;
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" style="width: 30px; height: auto; margin-right: 10px;">
-                                      <!-- Your SVG path here -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" style="width: 40px; height: auto; margin-right: 15px;">
                                       <path d="M381 114.9L186.1 41.8c-16.7-6.2-35.2-5.3-51.1 2.7L89.1 67.4C78 73 77.2 88.5 87.6 95.2l146.9 94.5L136 240 77.8 214.1c-8.7-3.9-18.8-3.7-27.3 .6L18.3 230.8c-9.3 4.7-11.8 16.8-5 24.7l73.1 85.3c6.1 7.1 15 11.2 24.3 11.2H248.4c5 0 9.9-1.2 14.3-3.4L535.6 212.2c46.5-23.3 82.5-63.3 100.8-112C645.9 75 627.2 48 600.2 48H542.8c-20.2 0-40.2 4.8-58.2 14L381 114.9zM0 480c0 17.7 14.3 32 32 32H608c17.7 0 32-14.3 32-32s-14.3-32-32-32H32c-17.7 0-32 14.3-32 32z"/>
                                     </svg>
                                     <h2 style="font-weight: bolder;">What is <span style="color: {blue};">ElectriFly?</span></h2>
@@ -191,7 +187,7 @@ app_ui = ui.page_fluid(
 
                                 """))
                         
-                    ),
+                        ),
               ui.column(1),
             ),
           ),
@@ -203,9 +199,115 @@ app_ui = ui.page_fluid(
               ui.column(3, ui.output_image("uw_logo", width="70%", height="70%"), style="display: flex; flex-direction: column; align-items: center; padding: 1rem 0;"),
               ui.column(3, ui.output_image("wisa_logo", width="90%", height="90%"), style="display: flex; flex-direction: column; align-items: center; padding: 1rem 0;"),   
               ui.column(3, ui.output_image("wwfc_logo", width="60%", height="60%"), style="display: flex; flex-direction: column; align-items: center; padding: 1rem 0;"),
-              style="align-items: center; padding: 3rem 0;"                       
-            )
-          )
+              style="align-items: center; padding: 2rem 0;"                       
+            ),
+          ),
+          div(HTML(f"""
+                    <div style="display: flex; align-items: center; justify-content: center; padding-bottom: 1rem">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" style="width: 50px; height: auto; margin-right: 15px;">
+                        <!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
+                        <path d="M308.5 135.3c7.1-6.3 9.9-16.2 6.2-25c-2.3-5.3-4.8-10.5-7.6-15.5L304 89.4c-3-5-6.3-9.9-9.8-14.6c-5.7-7.6-15.7-10.1-24.7-7.1l-28.2 9.3c-10.7-8.8-23-16-36.2-20.9L199 27.1c-1.9-9.3-9.1-16.7-18.5-17.8C173.9 8.4 167.2 8 160.4 8h-.7c-6.8 0-13.5 .4-20.1 1.2c-9.4 1.1-16.6 8.6-18.5 17.8L115 56.1c-13.3 5-25.5 12.1-36.2 20.9L50.5 67.8c-9-3-19-.5-24.7 7.1c-3.5 4.7-6.8 9.6-9.9 14.6l-3 5.3c-2.8 5-5.3 10.2-7.6 15.6c-3.7 8.7-.9 18.6 6.2 25l22.2 19.8C32.6 161.9 32 168.9 32 176s.6 14.1 1.7 20.9L11.5 216.7c-7.1 6.3-9.9 16.2-6.2 25c2.3 5.3 4.8 10.5 7.6 15.6l3 5.2c3 5.1 6.3 9.9 9.9 14.6c5.7 7.6 15.7 10.1 24.7 7.1l28.2-9.3c10.7 8.8 23 16 36.2 20.9l6.1 29.1c1.9 9.3 9.1 16.7 18.5 17.8c6.7 .8 13.5 1.2 20.4 1.2s13.7-.4 20.4-1.2c9.4-1.1 16.6-8.6 18.5-17.8l6.1-29.1c13.3-5 25.5-12.1 36.2-20.9l28.2 9.3c9 3 19 .5 24.7-7.1c3.5-4.7 6.8-9.5 9.8-14.6l3.1-5.4c2.8-5 5.3-10.2 7.6-15.5c3.7-8.7 .9-18.6-6.2-25l-22.2-19.8c1.1-6.8 1.7-13.8 1.7-20.9s-.6-14.1-1.7-20.9l22.2-19.8zM112 176a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zM504.7 500.5c6.3 7.1 16.2 9.9 25 6.2c5.3-2.3 10.5-4.8 15.5-7.6l5.4-3.1c5-3 9.9-6.3 14.6-9.8c7.6-5.7 10.1-15.7 7.1-24.7l-9.3-28.2c8.8-10.7 16-23 20.9-36.2l29.1-6.1c9.3-1.9 16.7-9.1 17.8-18.5c.8-6.7 1.2-13.5 1.2-20.4s-.4-13.7-1.2-20.4c-1.1-9.4-8.6-16.6-17.8-18.5L583.9 307c-5-13.3-12.1-25.5-20.9-36.2l9.3-28.2c3-9 .5-19-7.1-24.7c-4.7-3.5-9.6-6.8-14.6-9.9l-5.3-3c-5-2.8-10.2-5.3-15.6-7.6c-8.7-3.7-18.6-.9-25 6.2l-19.8 22.2c-6.8-1.1-13.8-1.7-20.9-1.7s-14.1 .6-20.9 1.7l-19.8-22.2c-6.3-7.1-16.2-9.9-25-6.2c-5.3 2.3-10.5 4.8-15.6 7.6l-5.2 3c-5.1 3-9.9 6.3-14.6 9.9c-7.6 5.7-10.1 15.7-7.1 24.7l9.3 28.2c-8.8 10.7-16 23-20.9 36.2L315.1 313c-9.3 1.9-16.7 9.1-17.8 18.5c-.8 6.7-1.2 13.5-1.2 20.4s.4 13.7 1.2 20.4c1.1 9.4 8.6 16.6 17.8 18.5l29.1 6.1c5 13.3 12.1 25.5 20.9 36.2l-9.3 28.2c-3 9-.5 19 7.1 24.7c4.7 3.5 9.5 6.8 14.6 9.8l5.4 3.1c5 2.8 10.2 5.3 15.5 7.6c8.7 3.7 18.6 .9 25-6.2l19.8-22.2c6.8 1.1 13.8 1.7 20.9 1.7s14.1-.6 20.9-1.7l19.8 22.2zM464 304a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"/>
+                      </svg>
+                      <h2 style="font-weight: bolder;">How does it <span style="color: {blue};">work?</span></h2>
+                    </div>
+                    """)
+          ),
+          div(HTML(f"""
+                    <div style="display: flex; align-items: center; justify-content: center; padding: 0.5rem 0; background-color: {light_grey}; margin: 0 -2rem;">
+                      <h2 style="font-weight: bolder; color: {blue};">Researchers</h2>
+                    </div>
+                    """)
+          ),
+          ui.div(
+            ui.row(
+              ui.column(6, 
+                        ui.output_image("visualization_img", width="100%", height="100%"), 
+                        ui.div(HTML(f"""
+                                      <br>
+                                      <p style="font-weight: bold">Data Visualizations</p>
+                                      <p>Gain comprehensive insights into plane and battery behaviours</p>
+                                    """)),
+                        style="display: flex; flex-direction: column; align-items: center; text-align: center;"
+                        ),
+              ui.column(6, 
+                        ui.output_image("custom_graph_img", width="100%", height="100%"), 
+                        ui.div(HTML(f"""
+                                      <br>
+                                      <p style="font-weight: bold">Custom Graphs</p>
+                                      <p>Develop your own graphs and plot any variable including flight and weather data</p>
+                                    """)),
+                        style="display: flex; flex-direction: column; align-items: center; text-align: center;"
+                        ),
+              style="align-items: center; padding: 2rem 0;"                       
+            ),
+          ),
+          ui.div(
+            ui.row(
+              ui.column(6, 
+                        ui.output_image("data_preview_img", width="100%", height="100%"), 
+                        ui.div(HTML(f"""
+                                      <br>
+                                      <p style="font-weight: bold">Data Preview</p>
+                                      <p>Preview data at a glance of the most recent flight to ensure all data was uploaded correctly</p>
+                                    """)),
+                        style="display: flex; flex-direction: column; align-items: center; text-align: center;"
+                        ),
+              ui.column(6, 
+                        ui.output_image("stat_insights_img", width="100%", height="100%"), 
+                        ui.div(HTML(f"""
+                                      <br>
+                                      <p style="font-weight: bold">Statistical Insights</p>
+                                      <p>Unlock valuable statistical insights to enhance flight operations efficiency</p>
+                                    """)),
+                        style="display: flex; flex-direction: column; align-items: center; text-align: center;"
+                        ),
+              style="align-items: center; padding: 2rem 0;"                       
+            ),
+          ),
+          div(HTML("<br><br>")),
+          div(HTML(f"""
+                    <div style="display: flex; align-items: center; justify-content: center; padding: 0.5rem 0; background-color: {light_grey}; margin: 0 -2rem;">
+                      <h2 style="font-weight: bolder; color: {blue};">Pilots</h2>
+                    </div>
+                    """)
+          ),
+          ui.div(
+            ui.row(
+              ui.column(6, 
+                        ui.output_image("scheduling_img", width="100%", height="100%"), 
+                        ui.div(HTML(f"""
+                                      <br>
+                                      <p style="font-weight: bold">Flight Schedule</p>
+                                      <p>Determine the optimal flight times based on a simulation model derived from local weather forecasts</p>
+                                    """)),
+                        style="display: flex; flex-direction: column; align-items: center; text-align: center;"
+                        ),
+              ui.column(6, 
+                        ui.output_image("planning_img", width="100%", height="100%"), 
+                        ui.div(HTML(f"""
+                                      <br>
+                                      <p style="font-weight: bold">Flight Exercise Planning</p>
+                                      <p>Empower pilots’ confidence during flight by planning what exercises can be performed in the air</p>
+                                    """)),
+                        style="display: flex; flex-direction: column; align-items: center; text-align: center;"
+                        ),
+              style="align-items: center; padding: 2rem 0;"                       
+            ),
+          ),
+          div(HTML(f"""
+                    <div style="display: flex; align-items: center; justify-content: center; padding-bottom: 1rem">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" style="width: 50px; height: auto; margin-right: 15px;">
+                        <!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
+                          <path d="M72 88a56 56 0 1 1 112 0A56 56 0 1 1 72 88zM64 245.7C54 256.9 48 271.8 48 288s6 31.1 16 42.3V245.7zm144.4-49.3C178.7 222.7 160 261.2 160 304c0 34.3 12 65.8 32 90.5V416c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V389.2C26.2 371.2 0 332.7 0 288c0-61.9 50.1-112 112-112h32c24 0 46.2 7.5 64.4 20.3zM448 416V394.5c20-24.7 32-56.2 32-90.5c0-42.8-18.7-81.3-48.4-107.7C449.8 183.5 472 176 496 176h32c61.9 0 112 50.1 112 112c0 44.7-26.2 83.2-64 101.2V416c0 17.7-14.3 32-32 32H480c-17.7 0-32-14.3-32-32zm8-328a56 56 0 1 1 112 0A56 56 0 1 1 456 88zM576 245.7v84.7c10-11.3 16-26.1 16-42.3s-6-31.1-16-42.3zM320 32a64 64 0 1 1 0 128 64 64 0 1 1 0-128zM240 304c0 16.2 6 31 16 42.3V261.7c-10 11.3-16 26.1-16 42.3zm144-42.3v84.7c10-11.3 16-26.1 16-42.3s-6-31.1-16-42.3zM448 304c0 44.7-26.2 83.2-64 101.2V448c0 17.7-14.3 32-32 32H288c-17.7 0-32-14.3-32-32V405.2c-37.8-18-64-56.5-64-101.2c0-61.9 50.1-112 112-112h32c61.9 0 112 50.1 112 112z"/>
+                      </svg>
+                      <h2 style="font-weight: bolder;">Meet the <span style="color: {blue};">team</span></h2>
+                    </div>
+                    """)
+          ),
+          ui.output_image("uw_logo", width="70%", height="70%"),
+
+
+
         ),
 
         # ===============================================================================================================================================================
@@ -527,6 +629,25 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @render.image
     def wwfc_logo(): return {"src": "app_images/wwfc.png", "width": "100%", "height": "100%"}
+
+    @render.image
+    def visualization_img(): return {"src": "app_images/visualization.png", "width": "100%", "height": "100%", "style": "border-radius: 22px; border: 1px solid #D0CFCF; box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);"}
+
+    @render.image
+    def custom_graph_img(): return {"src": "app_images/custom-graph.png", "width": "100%", "height": "100%", "style": "border-radius: 22px; border: 1px solid #D0CFCF; box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);"}
+
+    @render.image
+    def data_preview_img(): return {"src": "app_images/preview.png", "width": "100%", "height": "100%", "style": "border-radius: 22px; border: 1px solid #D0CFCF; box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);"}
+
+    @render.image
+    def stat_insights_img(): return {"src": "app_images/stats.png", "width": "100%", "height": "100%", "style": "border-radius: 22px; border: 1px solid #D0CFCF; box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);"}
+
+    @render.image
+    def scheduling_img(): return {"src": "app_images/scheduling.png", "width": "100%", "height": "100%", "style": "border-radius: 22px; border: 1px solid #D0CFCF; box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);"}
+
+    @render.image
+    def planning_img(): return {"src": "app_images/planning.png", "width": "100%", "height": "100%", "style": "border-radius: 22px; border: 1px solid #D0CFCF; box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);"}
+
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: HOMEPAGE 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
