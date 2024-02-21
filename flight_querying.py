@@ -638,17 +638,20 @@ class query_flights:
         # Make database connection
         engine = self.connect()
 
-        query = f"""SELECT time_min AS Time,
-                        flight_id AS id, 
+        query = f"""SELECT time_min,
+                        flight_id, 
                         activity,
                         ((bat_1_soc + bat_2_soc) / 2) AS SOC,
-                        motor_power AS Power,
+                        ((bat_1_soh + bat_2_soh) / 2) AS SOH,
+                        pressure_alt,
+                        ground_speed,
+                        motor_power,
                         temperature,
                         visibility,
                         wind_speed
                     FROM labeled_activities_view  
                     WHERE labeled_activities_view.flight_id={flight}
-                    ORDER BY Time"""
+                    ORDER BY time_min"""
 
         # Select the data based on the query
         flight_data = pd.read_sql_query(query, engine) 
