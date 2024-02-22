@@ -86,7 +86,7 @@ def connect_to_db(provider: str):
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def uploaded_data():
     engine = connect_to_db("PostgreSQL")
-    query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+    query = "SELECT * FROM flight_weather_data_view WHERE time_min > 0.04 LIMIT 10;"
 
     # Execute the query and fetch the data into a DataFrame
     uploaded_data_df = pd.read_sql(query, con=engine)
@@ -94,13 +94,13 @@ def uploaded_data():
     # Convert the 'flight_date' column back to a string
     uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%b %d, %Y")
     # Rename columns to be human readable
-    readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current','Bat 1 Voltage','Bat 2 Current','Bat 2 Voltage','Bat 1 SOC','Bat 2 SOC',
-                        'Bat 1 SOH', 'Bat 2 SOH', 'Bat 1 Min Cell Temp', 'Bat 2 Min Cell Temp', 'Bat 1 Max Cell Temp', 'Bat 2 Max Cell Temp', 'Bat 1 Avg Cell Temp', 'Bat 2 Avg Cell Temp', 'Bat 1 Min Cell Volt', 'Bat 2 Min Cell Volt',
-                        'Bat 1 Max Cell Volt', 'Bat 2 Max Cell Volt', 'Requested Torque', 'Motor RPM', 'Motor Power', 'Motor Temp', 'Indicated Air Speed', 'Stall Warn Active', 'Inverter Temp', 'Bat 1 Cooling Temp',
-                        'Inverter Cooling Temp 1', 'Inverter Cooling Temp 2', 'Remaining Flight Time', 'Pressure Altitude', 'Latitude', 'Longitude', 'Ground Speed', 'Pitch', 'Roll', 'Time Stamp',
-                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint',
-                        'Relative Humidity','Wind Direction', 'Wind Speed', 'Pressure Altimeter','Sea Level Pressure', 'Visibility', 'Wind Gust', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
-                        'Sky Coverage 4', 'Sky Level 1', 'Sky Level 2','Sky Level 3','Sky Level 4','Weather Codes', 'Metar']
+    readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current (amp)','Bat 1 Voltage (volts)','Bat 2 Current (amp)','Bat 2 Voltage (volts)','Bat 1 SOC (%)','Bat 2 SOC (%)',
+                        'Bat 1 SOH (%)', 'Bat 2 SOH (%)', 'Bat 1 Min Cell Temp (°C)', 'Bat 2 Min Cell Temp (°C)', 'Bat 1 Max Cell Temp (°C)', 'Bat 2 Max Cell Temp (°C)', 'Bat 1 Avg Cell Temp (°C)', 'Bat 2 Avg Cell Temp (°C)', 'Bat 1 Min Cell Volt (volts)', 'Bat 2 Min Cell Volt (volts)',
+                        'Bat 1 Max Cell Volt (volts)', 'Bat 2 Max Cell Volt (volts)', 'Requested Torque (Nm)', 'Motor RPM (rpm)', 'Motor Power (KW)', 'Motor Temp (°C)', 'Indicated Air Speed (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)',
+                        'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)', 'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp (Seconds)',
+                        'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint (°F)',
+                        'Relative Humidity (%)','Wind Direction (Degrees)', 'Wind Speed (knots)', 'Pressure Altimeter (in)','Sea Level Pressure (mbar)', 'Visibility (mi)', 'Wind Gust (knots)', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
+                        'Sky Coverage 4', 'Sky Level 1 (ft)', 'Sky Level 2 (ft)','Sky Level 3 (ft)','Sky Level 4 (ft)','Weather Codes', 'Metar']
     uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
     engine.dispose()
     return uploaded_data_df
@@ -362,7 +362,7 @@ app_ui = ui.page_fluid(
                     "Select Columns to Preview", 
                     choices=list(uploaded_cols().columns), 
                     multiple=True,
-                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", "Bat 1 Max Cell Temp", "Temperature (°F)", "Visibility"],width="50%"
+                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC (%)","Bat 1 SOH (%)", "Bat 1 Max Cell Temp (°C)", "Temperature (°F)", "Visibility (mi)"],width="50%"
                 ),
                 style="margin-top:20px;"
             ),  
@@ -955,7 +955,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.text
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
-        return f"Data was last refreshed at: {most_recent_run_time}"  
+        return f"Data was last refreshed: {most_recent_run_time}"  
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
