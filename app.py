@@ -995,19 +995,36 @@ def server(input: Inputs, output: Outputs, session: Session):
             return "background-color: #43a047; color: #43a047;"
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    def colour_word(word):
+        # make these words red
+        if (word =='no' or word == 'flights' or word == 'available'):
+            return 'color: red'
+        else:
+            return 'color: black'
     @output
     @render.table
     def flight_planning_table(): 
-        
-        flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+        # if the feasible_flights dataframe is empty
+        if simulation.feasible_flights.empty:
+            # Return a DataFrame with the message
+            message_df = pd.DataFrame({"Message": ["There are no flights available to be scheduled today due to weather conditions."]})
+            message_df['Message'] = message_df['Message'].apply(lambda x: ' '.join(['<span style="{}">{}</span>'.format(colour_word(word), word) for word in x.split()])) # formats "no flights available" as red
+
+            message_style = message_df.style.hide(axis="index").hide(axis="columns").set_table_styles([
                             {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
-                              {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
-                              {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
-                              {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
-                              {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
-                              ])
-        # new = styled_data.set_table_styles()
-        return flight_plan
+                            {'selector': 'td', 'props': [('width', '700px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'left')]}, # left align text in cells
+                        ]) 
+            return message_style
+        else:
+            flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+                            {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+                            {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+                            {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                            {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                        ])
+            return flight_plan
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
