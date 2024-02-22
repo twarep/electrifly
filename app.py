@@ -598,19 +598,19 @@ app_ui = ui.page_fluid(
             # START: Flight Scheduling TAB
             # ===============================================================================================================================================================
             ui.nav_panel("Flight Scheduling",
-            div(HTML("<h2> Flight Scheduling </h2>")),
-            div(HTML("<hr>")),
-            ui.card(
-                ui.card_header("Welcome to ElectriFly's Flight Scheduling Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
-                #ui.p
-                    div(HTML("""<p>Discover the best flying times for the next 72 hours with our flight scheduling tool. Using Waterloo's forecasted weather data, our tool categorizes each time slot into green, yellow, and red zones, indicating safety levels for flight. Hover over times for detailed safety explanations to inform your flight planning decisions. Happy flying!</p>
-                        
-                        <p>🟩 = Safe for flight<br>
-                        🟨 = Potentially safe for flight<br>
-                        🟥 = Not safe for flight</p>
-                        """))
-                ,min_height = "250px"
-            ),
+                div(HTML("<h2> Flight Scheduling </h2>")),
+                div(HTML("<hr>")),
+                ui.card(
+                    ui.card_header("Welcome to ElectriFly's Flight Scheduling Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
+                    #ui.p
+                        div(HTML("""<p>Discover the best flying times for the next 72 hours with our flight scheduling tool. Using Waterloo's forecasted weather data, our tool categorizes each time slot into green, yellow, and red zones, indicating safety levels for flight. Hover over times for detailed safety explanations to inform your flight planning decisions. Happy flying!</p>
+                            
+                            <p>🟩 = Safe for flight<br>
+                            🟨 = Potentially safe for flight<br>
+                            🟥 = Not safe for flight</p>
+                            """))
+                    ,min_height = "250px"
+                ),
                 ui.row( 
                     ui.column(6,
                         div(HTML("<hr>")),
@@ -626,52 +626,62 @@ app_ui = ui.page_fluid(
                     ),
                 ),
             ),
-            
             # ===============================================================================================================================================================
             # START: Flight Exercise Planning TAB
             # ===============================================================================================================================================================
             ui.nav_panel("Flight Exercise Planning", 
-            div(HTML("<h2> Flight Exercise Planning </h2>")),
-            div(HTML("<hr>")),
-            ui.card(
-                ui.card_header("Welcome to ElectriFly's Flight Exercise Planning Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
-                ui.p("Prepare your flight exercises with precision by customizing duration and power setting beforehand. Our innovative tool leverages machine learning models to predict your estimated battery level throughout each exercise, as well as the total battery consumption by the end of your flight. Empower yourself with this data to make well-informed decisions for your flight planning."), min_height="130px"
-            ), 
-            div(HTML("<hr>")),           
+                div(HTML("<h2> Flight Exercise Planning </h2>")),
+                div(HTML("<hr>")),
+                ui.card(
+                    ui.card_header("Welcome to ElectriFly's Flight Exercise Planning Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
+                    ui.p("Prepare your flight exercises with precision by customizing duration and power setting beforehand. Our innovative tool leverages machine learning models to predict your estimated battery level throughout each exercise, as well as the total battery consumption by the end of your flight. Empower yourself with this data to make well-informed decisions for your flight planning."), min_height="130px"
+                ), 
+                div(HTML("<hr>")),           
                 # Selecting the date
-                ui.row(
-                    ui.column(6,
-                        div(HTML("<hr>")),
-                        ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, width=6, selected=None),
-                        div(HTML("<hr>"))
-                    ),
-                    ui.column(6,
-                        div(HTML("<hr>")),
-                        ui.output_ui("time_selector"),
-                        div(HTML("<hr>"))
-                    )
-                ),
                 ui.layout_columns(
-                    ui.card(
-                        div(HTML("<hr>")),
-                        ui.input_selectize("flight_operations", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None),
-                        div(HTML("<hr>")),
-                        ui.output_ui("duration_of_activity"),
-                        div(HTML("<hr>")),
-                        ui.output_ui("power_setting_activity"),
-                        ui.input_action_button("select_activity", "Add activity"),
-                        height="100%"
+                    ui.accordion(
+                        ui.accordion_panel(
+                            "Flight Date & Time",
+                            ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, selected=list_of_dates[0]),
+                            ui.p("          "),
+                            ui.input_selectize(
+                                "flight_time_select", 
+                                "Choose start time of flight:", 
+                                ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", 
+                                    "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", 
+                                    "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", 
+                                    "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", 
+                                    "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", 
+                                    "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", 
+                                    "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", 
+                                    "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", 
+                                    "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", 
+                                    "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", 
+                                    "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"]
+                            )
+                        ),
+                        ui.accordion_panel(
+                            "Flight Activity Selection",
+                            ui.input_switch("manual_model_input_switch", label="Select model inputs by hand", value=False),
+                            ui.input_selectize("flight_activities", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None),
+                            ui.p("          "),
+                            ui.output_ui("duration_of_activity"),
+                            ui.p("          "),
+                            ui.output_ui("power_setting_activity"),
+                            ui.layout_columns(
+                                ui.input_action_button("add_activity", "Add activity"),
+                                ui.input_action_button("reset_activity", "Reset Activities")
+                            ),
+                        ),
+                        id="prediction_model",  
+                        open="Flight Date & Time", 
                     ),
                     ui.card(
                         ui.output_data_frame("activity_selection_output"),
-                        height="100%"
+                        height="700px"
                     ),
-                    ui.card(
-                        ui.input_action_button("reset_activity", "Reset All Activities"),
-                        height="100%"
-                    ),
-                    col_widths=(3, 6, 3)
-                )              
+                    col_widths=(3, 9)
+                )            
             )
         ),
         id="tab",  
@@ -1009,43 +1019,45 @@ def server(input: Inputs, output: Outputs, session: Session):
                               ])
         # new = styled_data.set_table_styles()
         return flight_plan
-    
-    # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    @output
-    @render.ui
-    @reactive.event(input.date_operations)
-    def time_selector():
-        flight_dates = input.date_operations()
-
-        if flight_dates == "":
-            return ui.output_text("Please select a date to fly")
-        else:
-            return ui.input_selectize("flight_time_select", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.flight_operations)
+    @reactive.event(input.manual_model_input_switch)
     def duration_of_activity():
-        flight_activity = input.flight_operations()
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
 
-        if flight_activity == "":
-            return ui.output_text("Please select a flight activity")
-        else:
+        if manual_input == True:
             return ui.input_numeric("duration_chooser", f"Choose number of minutes for {flight_activity}:", 1, min=1, max=60)
+        else:
+            return ui.output_text("check_manual_switch_text")
+        
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @render.text
+    def check_manual_switch_text():
+        return "Please check the switch above to manually add variables to the prediction."
         
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.flight_operations)
+    @reactive.event(input.manual_model_input_switch)
     def power_setting_activity():
-        flight_activity = input.flight_operations()
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
 
-        if flight_activity == "":
-            return ui.output_text("Please select power setting")
-        else:
+        if manual_input == True:
             return ui.input_numeric("power_setting_chooser", f"Choose power setting (KW) for {flight_activity}:", 0, min=0, max=70)
+        else:
+            return ui.output_text("get_blank")
+
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @render.text
+    def get_blank():
+        return "   "
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1088,14 +1100,14 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @reactive.effect
-    @reactive.event(input.select_activity)
+    @reactive.event(input.add_activity)
     def _():
 
         # Get the global flight holder variable
         global flight_operation_dictionary
 
         # Get the inputs from the flight operation and time selection criteria
-        operation = input.flight_operations()
+        operation = input.flight_activities()
         date = input.date_operations()
         time = input.flight_time_select()
 
