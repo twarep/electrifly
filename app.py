@@ -609,17 +609,13 @@ app_ui = ui.page_fluid(
                         div(HTML("<hr>")),
                         div(HTML("<p><b>Three Day Flight Forecast</b></p>")),
                         div(HTML("<hr>")),
-                        ui.card(
-                            ui.output_table("simulation_table")
-                        ),
+                        ui.output_table("simulation_table")
                     ),
                     ui.column(6,
                         div(HTML("<hr>")),
                         div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
                         div(HTML("<hr>")),
-                        ui.card(
-                            ui.output_table("flight_planning_table")
-                        ),
+                        ui.output_table("flight_planning_table", width="100%"),
                     ),
                 ),
             ),
@@ -969,7 +965,10 @@ def server(input: Inputs, output: Outputs, session: Session):
         styled_data = zones.style.set_tooltips(explanations, props='visibility: hidden; position: absolute; z-index: 1; border: 1px solid #000066;'
                          'background-color: white; color: #000066; font-size: 0.8em;'
                          'transform: translate(0px, -24px); padding: 0.6em; border-radius: 0.5em;').applymap(style_cell).set_table_styles(
-                             [{'selector': 'td', 'props': 'border: 5px solid white;'}])
+                             [{'selector': 'td', 'props': [('width', '450px'), ('border', '5px solid white')]},
+                              {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                              {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                              ]).hide(axis="index")
         return styled_data
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
@@ -986,9 +985,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     @output
     @render.table
     def flight_planning_table(): 
-        # Apply conditional formatting
-        #cell_style = lambda val: f"background-color: {'red' if val == 'red' else 'green'};"
-        flight_plan = simulation.feasible_flights
+        
+        flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+                            {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+                              {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+                              {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+                              {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                              {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                              ])
         # new = styled_data.set_table_styles()
         return flight_plan
     
