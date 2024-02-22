@@ -12,7 +12,7 @@ from storage import execute, select
 class query_flights:
 
     # Database Connection Function ---------------------------------------------------------------------------------------------------------
-    def connect(self):
+    def __connect(self):
         """
         The function initiates a connection with the PostgreSQL database using the DATABASE_URL.
         """
@@ -33,7 +33,7 @@ class query_flights:
         """
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         query_string = "select distinct(activity) from labeled_activities_view order by activity;"
         df = pd.read_sql_query(query_string, engine)
@@ -54,7 +54,7 @@ class query_flights:
         """
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Make and execute the query
         sql_query = 'SELECT * FROM flightdata_4620 LIMIT 1'
@@ -84,7 +84,7 @@ class query_flights:
             query = f"SELECT {str_column} FROM {table}"
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Select the data based on the query
         flights = pd.read_sql_query(query, engine)
@@ -100,7 +100,7 @@ class query_flights:
         The function runs the following query: SELECT id FROM flights. This gets all the flight IDs in the database.
         """
         query = "SELECT id FROM flights"
-        engine = self.connect()
+        engine = self.__connect()
         flight_ids = pd.read_sql_query(query, engine)
         engine.dispose()
         return flight_ids
@@ -133,7 +133,7 @@ class query_flights:
         query = f"SELECT * FROM flights WHERE id = {str(id)}"
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Select the data based on the query
         flights = pd.read_sql_query(query, engine)
@@ -148,7 +148,7 @@ class query_flights:
     def get_flight_data_on_id(self, columns: list, id: int):
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Unravel list of columns to be a string to input
         str_column = "".join([f"{column}, " for column in columns])[:-2]
@@ -171,7 +171,7 @@ class query_flights:
         The function runs a query to get the fw_flight_id, activity, time, soc, power, soh, date from labeled activities view in 30 sec intervals.
         """
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Make query
         query = f"""
@@ -211,7 +211,7 @@ class query_flights:
         The function runs a query to get the fw_flight_id, time, soc, and temp from flight_weather_data_view in 30 sec intervals.
         """
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Make query
         query = f"""
@@ -243,7 +243,7 @@ class query_flights:
     def get_avg_soh_per_month_act_view(self):
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Make query
         query = f"""
@@ -458,7 +458,7 @@ class query_flights:
         Function that uses a flight id to get the number of circuits. Then, returns the number of circuits.
         """
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # query for the number of circuits (explanation below), note that cycle = circuit
 
@@ -513,7 +513,7 @@ class query_flights:
             Function that gets a list of all possible unique flight activities from the labeled_activities_view
             Query: select distinct activity from labeled_activities_view;
         """
-        engine = self.connect()
+        engine = self.__connect()
         query = f"""select distinct activity from labeled_activities_view;"""
 
         # Put the result of the query in a list
@@ -539,7 +539,7 @@ class query_flights:
         Function that uses a flight id to get the soc rate of change and calculates its stats (min, max, mean, standard deviation, variance). 
         Then, returns the statistics in a dataframe.
         """
-        engine = self.connect()
+        engine = self.__connect()
 
         # Get the flight data
         result_df = self.get_flight_data_every_half_min_on_id(flight_id)
@@ -574,7 +574,7 @@ class query_flights:
     def connect_flight_for_ml_data_label(self, flight: int):
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Make the query
         query = f"""SELECT flight_id AS id, 
@@ -609,7 +609,7 @@ class query_flights:
         """
         Function that given a flight id returns the data needed to label exercises for that flight.
         """
-        engine = self.connect()
+        engine = self.__connect()
 
         query = f"""SELECT flight_id AS id, 
                         time_min AS time,
@@ -636,7 +636,7 @@ class query_flights:
     def connect_flight_for_ml_data_prescription(self, flight: int):
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         query = f"""SELECT time_min,
                         flight_id, 
@@ -674,7 +674,7 @@ class query_flights:
         compare_time = datetime.strptime(time, "%I:%M %p").strftime("%H:%M:%S")
 
         # Make database connection
-        engine = self.connect()
+        engine = self.__connect()
 
         # Make and execute the query
         sql_query = f"""SELECT 

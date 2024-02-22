@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 import simulation
 import shiny.experimental as x
 import faicons as fa
-from model_querying import get_model_prediction
+from model_querying import Model
 from pathlib import Path
 
 # Global variable to hold the flight operations.
@@ -967,6 +967,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # For the selection of the flight operations.
     table_data_show = reactive.Value(-1)
+    new_model = Model()
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -1093,45 +1094,41 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Get the global flight holder variable
         global flight_operation_dictionary
 
-        # Get the reactive variable:
-        reactive_var = table_data_show.get() + 1
-
         # Get the inputs from the flight operation and time selection criteria
         operation = input.flight_operations()
-        operation_duration = input.duration_chooser()
-        power = input.power_setting_chooser()
         date = input.date_operations()
         time = input.flight_time_select()
 
-        # Change the time to see if the time is incremented every 15 minutes.
-        if len(flight_operation_dictionary["Time (minutes)"]) > 0:
-            # Get each segment of the time string
-            hour_str = time[0:3]
-            period = time[5:8]
+        with ui.Progress(min=1, max=15) as p:
+            p.set(message="Calculation in progress", detail="This may take a while...")
 
-            # Change the minutes to every 15 when the time passes that minute
-            current_time = sum(flight_operation_dictionary["Time (minutes)"])
-            if current_time > 15:
-                time = hour_str + "15" + period
-            elif current_time > 30:
-                time = hour_str + "30" + period
-            elif current_time > 45:
-                time = hour_str + "45" + period
-            
-        # Get the weather data for this flight
-        # NOTE: the forecasted visibility is in meters, while the weather data visibility is in miles
-        # NOTE: 1 mile (nautical) = 1852 meters
-        temp, visibility, wind_speed = flights.get_forecast_weather_by_date(date, time)
-        visibility_mile = round(visibility/1852, 2)
+            # Change the time to see if the time is incremented every 15 minutes.
+            if len(flight_operation_dictionary["Time (minutes)"]) > 0:
+                
+                # Get each segment of the time string
+                hour_str = time[0:3]
+                period = time[5:8]
 
-        # Get soc 
-        predicted_soc = get_model_prediction(operation, operation_duration, power, temp, visibility_mile, wind_speed)
+                # Change the minutes to every 15 when the time passes that minute
+                current_time = sum(flight_operation_dictionary["Time (minutes)"])
+                if current_time > 15:
+                    time = hour_str + "15" + period
+                elif current_time > 30:
+                    time = hour_str + "30" + period
+                elif current_time > 45:
+                    time = hour_str + "45" + period
 
-        # Append all the activities and times in the variable
-        flight_operation_dictionary["Activity"].append(operation)
-        flight_operation_dictionary["Time (minutes)"].append(operation_duration)
-        flight_operation_dictionary["Motor Power"].append(power)
-        flight_operation_dictionary["SOC"].append(predicted_soc)
+            # Get soc 
+            predicted_soc, activity_time, activity_power = new_model.get_model_prediction(operation, date, time)
+
+            # Append all the activities and times in the variable
+            flight_operation_dictionary["Activity"].append(operation)
+            flight_operation_dictionary["Time (minutes)"].append(activity_time)
+            flight_operation_dictionary["Motor Power"].append(activity_power)
+            flight_operation_dictionary["SOC"].append(predicted_soc)
+
+        # Get the reactive variable:
+        reactive_var = table_data_show.get() + 1
 
         # Set the data show to 1
         table_data_show.set(reactive_var)
