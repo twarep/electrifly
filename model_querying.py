@@ -126,6 +126,29 @@ class Model():
 
 
     # Function ------------------------------------------------------------------------------------
+    def get_attribute_max_min(self, attribute: str, operation: str):
+        
+        # Get the connection
+        connection = self.__connection()
+
+        # create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        # Get the attribute columns
+        cursor.execute(f"SELECT {attribute} FROM model WHERE activity = \'{operation}\';")
+
+        # Get all the data and columns names and make a pandas dataframe.
+        data = cursor.fetchall()
+        attribute_array = pd.DataFrame(data, columns=[attribute]).to_numpy()
+
+        # close the cursor and the connection
+        cursor.close()
+        self.__disconnect(connection)
+
+        return round(attribute_array.max(), 2), round(attribute_array.min(), 2)
+
+
+    # Function ------------------------------------------------------------------------------------
     # Check if specific table exists if not, make it and add saved data in `ML_model_outputs/all_data.csv`
     def get_model_prediction(self, maneuver, forecast_date, forecast_time):
 
@@ -162,4 +185,4 @@ class Model():
 
         prediction = self.model.predict(pred_df)
 
-        return prediction, attributes["time_delta"], attributes["average_power"]
+        return prediction, attributes_dict["time_delta"], attributes_dict["average_power"], attributes_dict["soh"], attributes_dict["average_altitude"], attributes_dict["ground_speed"]

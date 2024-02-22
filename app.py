@@ -23,9 +23,12 @@ from pathlib import Path
 # Global variable to hold the flight operations.
 flight_operation_dictionary = {
     "Activity": [], 
-    "Time (minutes)": [], 
-    "Motor Power": [],
-    "SOC": []
+    "Time (mins)": [], 
+    "SOH (%)": [],
+    "Incrementing Altitude (m)": [],
+    "Ground Speed (knots)": [],
+    "Motor Power (KW)": [],
+    "SOC (%)": [],
 }
 
 # Getting initial data
@@ -81,6 +84,11 @@ def connect_to_db(provider: str):
     db_url = "postgresql+psycopg2" + getenv('DATABASE_URL')[8:]
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
+
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def delete_style(val):
+    return "font-weight: bold; text-decoration: underline;"
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -636,7 +644,39 @@ app_ui = ui.page_fluid(
                     ui.card_header("Welcome to ElectriFly's Flight Exercise Planning Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
                     ui.p("Prepare your flight exercises with precision by customizing duration and power setting beforehand. Our innovative tool leverages machine learning models to predict your estimated battery level throughout each exercise, as well as the total battery consumption by the end of your flight. Empower yourself with this data to make well-informed decisions for your flight planning."), min_height="130px"
                 ), 
-                div(HTML("<hr>")),           
+                div(HTML("<hr>")),  
+                ui.p("          "),
+                ui.card(
+                    ui.layout_columns(
+                        ui.p("          "), 
+                        ui.tooltip(
+                            ui.input_action_button(
+                                "add_activity", 
+                                "Add activity", 
+                                style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer;"
+                            ),
+                            "Add selected activity under the \'Flight Activity Selection\' setting"
+                        ),
+                        ui.tooltip(
+                            ui.input_action_button(
+                                "delete_selected_activity", 
+                                "Delete Selected Rows", 
+                                style="background-color: white; color: black; border: 1px solid #000000; cursor: pointer;"
+                            ),
+                            "Delete the selected rows in the table below."
+                        ),
+                        ui.tooltip(
+                            ui.input_action_button(
+                                "reset_activity", 
+                                "Reset Activities", 
+                                style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer;"
+                            ),
+                            "Delete all rows in the table below."
+                        ),
+                    col_widths=(6, 2, 2, 2)),
+                    style="background-color: #FFFFFF; border: 1px solid #000000;"  
+                ),
+                ui.p("          "), 
                 # Selecting the date
                 ui.layout_columns(
                     ui.accordion(
@@ -662,23 +702,24 @@ app_ui = ui.page_fluid(
                         ),
                         ui.accordion_panel(
                             "Flight Activity Selection",
-                            ui.input_switch("manual_model_input_switch", label="Select model inputs by hand", value=False),
+                            ui.input_switch("manual_model_input_switch", label="Manually Select Model Parameters", value=False),
                             ui.input_selectize("flight_activities", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None),
                             ui.p("          "),
                             ui.output_ui("duration_of_activity"),
                             ui.p("          "),
                             ui.output_ui("power_setting_activity"),
-                            ui.layout_columns(
-                                ui.input_action_button("add_activity", "Add activity"),
-                                ui.input_action_button("reset_activity", "Reset Activities")
-                            ),
+                            ui.p("          "),
+                            ui.output_ui("altitude_activity"),
+                            ui.p("          "),
+                            ui.output_ui("ground_speed_activity")
                         ),
                         id="prediction_model",  
                         open="Flight Date & Time", 
                     ),
                     ui.card(
-                        ui.output_data_frame("activity_selection_output"),
-                        height="700px"
+                        ui.output_data_frame("model_predict_output"), 
+                        height="700px",
+                        style="background-color: #FFFFFF; border: 1px solid #000000;"  
                     ),
                     col_widths=(3, 9)
                 )            
@@ -1023,48 +1064,68 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch)
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
     def duration_of_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
 
         if manual_input == True:
-            return ui.input_numeric("duration_chooser", f"Choose number of minutes for {flight_activity}:", 1, min=1, max=60)
+            return ui.input_numeric("duration_chooser", f"Time (mins) for {flight_activity}:", 1, min=1, max=60)
         else:
-            return ui.output_text("check_manual_switch_text")
-        
-
-    # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    @render.text
-    def check_manual_switch_text():
-        return "Please check the switch above to manually add variables to the prediction."
+            act_max, act_min = new_model.get_attribute_max_min("time_delta", flight_activity)
+            return ui.input_slider("time_delta_slider", "Time (mins)", min=act_min, max=act_max, value=[act_min, round(act_min+act_max/2)])
         
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch)
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
     def power_setting_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
 
         if manual_input == True:
-            return ui.input_numeric("power_setting_chooser", f"Choose power setting (KW) for {flight_activity}:", 0, min=0, max=70)
+            return ui.input_numeric("power_setting_chooser", f"Motor power (KW) for {flight_activity}:", 1, min=0, max=70)
         else:
-            return ui.output_text("get_blank")
+            act_max, act_min = new_model.get_attribute_max_min("average_power", flight_activity)
+            return ui.input_slider("power_setting_slider", "Motor power (KW)", min=act_min, max=act_max, value=[act_min, round(act_min+act_max/2)])
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    @render.text
-    def get_blank():
-        return "   "
+    @output
+    @render.ui
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    def altitude_activity():
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
+
+        if manual_input == True:
+            return ui.input_numeric("altitude_chooser", f"Altitude (m) for {flight_activity}:", 1, min=0, max=5000)
+        else:
+            act_max, act_min = new_model.get_attribute_max_min("average_altitude", flight_activity)
+            return ui.input_slider("altitude_slider", "Altitude (m)", min=act_min, max=act_max, value=[act_min, round(act_min+act_max/2)])
+        
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    def ground_speed_activity():
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
+
+        if manual_input == True:
+            return ui.input_numeric("ground_speed_chooser", f"Ground speed (knots) for {flight_activity}:", 1, min=0, max=20)
+        else:
+            act_max, act_min = new_model.get_attribute_max_min("ground_speed", flight_activity)
+            return ui.input_slider("ground_speed_slider", "Ground speed (knots)", min=act_min, max=act_max, value=[act_min, round(act_min+act_max/2)])
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.data_frame 
     @reactive.event(table_data_show)
-    def activity_selection_output():
+    def model_predict_output():
 
         # Get the global flight holder variable
         global flight_operation_dictionary
@@ -1073,7 +1134,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
 
         # Return that data frame
-        return flight_operation_output_table
+        return render.DataGrid(flight_operation_output_table, row_selection_mode="single")
     
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1084,19 +1145,18 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Get the global flight holder variable
         global flight_operation_dictionary
 
-        # Get the reactive variable:
-        reactive_var = table_data_show.get() - 1
-
         # Clear all of the activities and times in the variable
         flight_operation_dictionary["Activity"].clear()
-        flight_operation_dictionary["Time (minutes)"].clear()
-        flight_operation_dictionary["Motor Power"].clear()
-        flight_operation_dictionary["SOC"].clear()
+        flight_operation_dictionary["Time (mins)"].clear()
+        flight_operation_dictionary["SOH (%)"].clear()
+        flight_operation_dictionary["Incrementing Altitude (m)"].clear()
+        flight_operation_dictionary["Ground Speed (knots)"].clear()
+        flight_operation_dictionary["Motor Power (KW)"].clear()
+        flight_operation_dictionary["SOC (%)"].clear()
 
         # Set the data show to 0
-        table_data_show.set(reactive_var)
+        table_data_show.set(0)
 
-        
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @reactive.effect
@@ -1105,6 +1165,9 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Get the global flight holder variable
         global flight_operation_dictionary
+
+        # Get the reactive variable:
+        reactive_var = table_data_show.get() + 1
 
         # Get the inputs from the flight operation and time selection criteria
         operation = input.flight_activities()
@@ -1115,14 +1178,14 @@ def server(input: Inputs, output: Outputs, session: Session):
             p.set(message="Calculation in progress", detail="This may take a while...")
 
             # Change the time to see if the time is incremented every 15 minutes.
-            if len(flight_operation_dictionary["Time (minutes)"]) > 0:
+            if len(flight_operation_dictionary["Time (mins)"]) > 0:
                 
                 # Get each segment of the time string
                 hour_str = time[0:3]
                 period = time[5:8]
 
                 # Change the minutes to every 15 when the time passes that minute
-                current_time = sum(flight_operation_dictionary["Time (minutes)"])
+                current_time = sum(flight_operation_dictionary["Time (mins)"])
                 if current_time > 15:
                     time = hour_str + "15" + period
                 elif current_time > 30:
@@ -1131,20 +1194,50 @@ def server(input: Inputs, output: Outputs, session: Session):
                     time = hour_str + "45" + period
 
             # Get soc 
-            predicted_soc, activity_time, activity_power = new_model.get_model_prediction(operation, date, time)
+            predicted_soc, act_time, act_power, act_soh, act_alt, act_groundspeed = new_model.get_model_prediction(operation, date, time)
 
             # Append all the activities and times in the variable
             flight_operation_dictionary["Activity"].append(operation)
-            flight_operation_dictionary["Time (minutes)"].append(activity_time)
-            flight_operation_dictionary["Motor Power"].append(activity_power)
-            flight_operation_dictionary["SOC"].append(predicted_soc)
-
-        # Get the reactive variable:
-        reactive_var = table_data_show.get() + 1
+            flight_operation_dictionary["Time (mins)"].append(act_time)
+            flight_operation_dictionary["SOH (%)"].append(act_soh)
+            flight_operation_dictionary["Incrementing Altitude (m)"].append(act_alt)
+            flight_operation_dictionary["Ground Speed (knots)"].append(act_groundspeed)
+            flight_operation_dictionary["Motor Power (KW)"].append(act_power)
+            flight_operation_dictionary["SOC (%)"].append(predicted_soc)
 
         # Set the data show to 1
         table_data_show.set(reactive_var)
 
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(input.delete_selected_activity)
+    def _():
+
+        # Get the global flight holder variable
+        global flight_operation_dictionary
+
+        # Get the specific row from the table
+        delete_row_indexes = input.model_predict_output_selected_rows()
+
+        if len(delete_row_indexes) != 0:
+
+            # Get the reactive variable:
+            reactive_var = table_data_show.get() - 1
+
+            # remove the specific index
+            for row_id in delete_row_indexes:
+                del flight_operation_dictionary["Activity"][row_id]
+                del flight_operation_dictionary["Time (mins)"][row_id]
+                del flight_operation_dictionary["SOH (%)"][row_id]
+                del flight_operation_dictionary["Incrementing Altitude (m)"][row_id]
+                del flight_operation_dictionary["Ground Speed (knots)"][row_id]
+                del flight_operation_dictionary["Motor Power (KW)"][row_id]
+                del flight_operation_dictionary["SOC (%)"][row_id]
+
+
+            # Set the data show to 1
+            table_data_show.set(reactive_var)
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: SIMULATION SCREEN 
