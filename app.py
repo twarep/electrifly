@@ -998,16 +998,25 @@ def server(input: Inputs, output: Outputs, session: Session):
     @output
     @render.table
     def flight_planning_table(): 
-        
-        flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+        # if the feasible_flights dataframe is empty
+        if simulation.feasible_flights.empty:
+            # Return a DataFrame with the message
+            message_df = pd.DataFrame({"Message": ["There are no flights available today due to weather conditions."]})
+            message_style = message_df.style.hide(axis="index").hide(axis="columns").set_table_styles([
                             {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
-                              {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
-                              {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
-                              {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
-                              {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
-                              ])
-        # new = styled_data.set_table_styles()
-        return flight_plan
+                            {'selector': 'td', 'props': [('width', '700px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'left')]}, # left align text in cells
+                        ]).set_properties(**{'color': 'red'}) # make text red
+            return message_style
+        else:
+            flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+                            {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+                            {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+                            {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                            {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                        ])
+            return flight_plan
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
