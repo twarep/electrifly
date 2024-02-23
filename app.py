@@ -1124,7 +1124,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch)
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
     def duration_of_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
@@ -1138,7 +1138,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch)
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
     def power_setting_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
@@ -1152,7 +1152,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch)
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
     def altitude_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
@@ -1166,7 +1166,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch)
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
     def soh_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
@@ -1181,7 +1181,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch)
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
     def ground_speed_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
