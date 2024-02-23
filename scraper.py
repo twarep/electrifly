@@ -202,7 +202,9 @@ def flight_activity_tables_views():
                 queries.LABEL_4620, queries.LABEL_4929,
                 queries.LABEL_4940, queries.LABEL_5019,
                 queries.LABEL_5021, queries.LABEL_5034,
-                queries.LABELED_ACTIVITIES_VIEW]
+                queries.LABELED_ACTIVITIES_VIEW,
+                queries.PILOT_WEIGHTS # add pilot weights to db
+                ]
   for query in query_list:
     execute(query)
 
