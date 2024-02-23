@@ -6,7 +6,8 @@ CREATE TABLE flights (
   id INTEGER PRIMARY KEY, 
   flight_date DATE NOT NULL, 
   flight_time_utc TIME NOT NULL,
-  flight_notes VARCHAR(1000)
+  flight_notes VARCHAR(1000),
+  total_weight REAL
 );
 """
 
@@ -321,4 +322,44 @@ SCRAPER_RUNTIME = """
 CREATE TABLE scraper_last_run (
     runtime TIMESTAMP
 );
+"""
+
+PILOT_WEIGHTS = """
+UPDATE flights SET total_weight=1296.42 WHERE id=4620;
+UPDATE flights SET total_weight=1237.22 WHERE id=4622;
+UPDATE flights SET total_weight=1264.62 WHERE id=4633;
+UPDATE flights SET total_weight=1205.42 WHERE id=4636;
+UPDATE flights SET total_weight=1185.62 WHERE id=4669;
+UPDATE flights SET total_weight=1199.22 WHERE id=4766;
+UPDATE flights SET total_weight=1242.62 WHERE id=4783;
+UPDATE flights SET total_weight=1205.42 WHERE id=4802;
+UPDATE flights SET total_weight=1253.42 WHERE id=4850;
+UPDATE flights SET total_weight=1253.42 WHERE id=4853;
+UPDATE flights SET total_weight=1194.22 WHERE id=4857;
+UPDATE flights SET total_weight=1253.42 WHERE id=4860;
+UPDATE flights SET total_weight=1253.42 WHERE id=4862;
+UPDATE flights SET total_weight=1075.42 WHERE id=4871;
+UPDATE flights SET total_weight=1164.22 WHERE id=4901;
+UPDATE flights SET total_weight=1075.42 WHERE id=4904;
+UPDATE flights SET total_weight=1248.42 WHERE id=4906;
+UPDATE flights SET total_weight=1164.22 WHERE id=4909;
+UPDATE flights SET total_weight=1164.22 WHERE id=4915;
+UPDATE flights SET total_weight=1075.42 WHERE id=4919;
+UPDATE flights SET total_weight=1075.42 WHERE id=4921;
+UPDATE flights SET total_weight=1075.42 WHERE id=4923;
+UPDATE flights SET total_weight=1045.42 WHERE id=4925;
+UPDATE flights SET total_weight=1045.42 WHERE id=4927;
+UPDATE flights SET total_weight=1045.42 WHERE id=4929;
+UPDATE flights SET total_weight=1075.42 WHERE id=4936;
+UPDATE flights SET total_weight=1075.42 WHERE id=4938;
+UPDATE flights SET total_weight=1225.42 WHERE id=4940;
+UPDATE flights SET total_weight=1075.42 WHERE id=4975;
+UPDATE flights SET total_weight=1231.62 WHERE id=4976;
+UPDATE flights SET total_weight=1231.62 WHERE id=4978;
+UPDATE flights SET total_weight=1231.62 WHERE id=4981;
+UPDATE flights SET total_weight=1045.42 WHERE id=4990;
+UPDATE flights SET total_weight=1201.62 WHERE id=4992;
+UPDATE flights SET total_weight=1231.62 WHERE id=5037;
+UPDATE flights SET total_weight=1231.62 WHERE id=5039;
+UPDATE flights SET total_weight=1195.42 WHERE id=5064;
 """
