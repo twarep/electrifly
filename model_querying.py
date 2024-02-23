@@ -156,7 +156,10 @@ class Model():
         # Make the pandas df for 
         pred_df = pd.DataFrame(attributes_dict)
 
+        # Make prediction if prediction is below 0 change it to zero
         prediction = self.model.predict(pred_df)
+        if prediction < 0:
+            prediction = 0
 
         return prediction, attributes_dict["time_delta"][0], attributes_dict["average_power"][0], attributes_dict["soh"][0], attributes_dict["average_altitude"][0], attributes_dict["ground_speed"][0]
 
@@ -201,6 +204,9 @@ class Model():
         # Make the pandas df for 
         pred_df = pd.DataFrame(attributes_dict)
 
+        # Make prediction if prediction is below 0 change it to zero
         prediction = self.model.predict(pred_df)
+        if prediction < 0:
+            prediction = 0
 
         return prediction, attributes_dict["time_delta"], attributes_dict["average_power"], attributes_dict["soh"], attributes_dict["average_altitude"], attributes_dict["ground_speed"]

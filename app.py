@@ -76,6 +76,14 @@ custom_variables_columns = {
 }
 custom_variables = list(custom_variables_columns.keys())
 
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def change_order():
+    order_activities = ["takeoff", "climb", "cruise", "descent", "landing"]
+    for activity in list_of_activities:
+        if activity not in order_activities and activity not in ["NA", "TBD"]:
+            order_activities.append(activity)
+    return order_activities
+
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
@@ -147,6 +155,7 @@ def get_most_recent_run_time():
 # blue theme color
 blue = "#3459e6"
 grey = "#878787"
+red = "#FF0000"
 light_grey = "#F0F0F0"
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -643,7 +652,19 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 ui.card(
                     ui.card_header("Welcome to ElectriFly's Flight Exercise Planning Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
-                    ui.p("Prepare your flight exercises with precision by customizing duration and power setting beforehand. Our innovative tool leverages machine learning models to predict your estimated battery level throughout each exercise, as well as the total battery consumption by the end of your flight. Empower yourself with this data to make well-informed decisions for your flight planning."), min_height="130px"
+                    div(HTML(f"""<p>Prepare your flight exercises with precision by customizing key attributes. Our innovative tool leverages machine 
+                                    learning prediction engine to estimated battery level (SOC) throughout each exercise, as well as the total battery consumption by the end of your 
+                                    flight. Empower yourself with this data to make well-informed decisions for your flight planning.
+                                </p>
+                                <p>The tool enables pilots to choose <span style="color: {blue}; font-weight: bold">two input methods</span>. Changing the method is controlled 
+                                    by the switch under the \'Flight Activity Selection\' section to the left. Additionally, the date and time enable the tool to query forecasted weather data.
+                                </p>
+                                <ol>
+                                <li><span style="color: {blue}; font-weight: bold">Method 1:</span> Range attribute selection. Through the specified range, a random value is chosen as the prediction value for the prediction engine</li>
+                                <li><span style="color: {blue}; font-weight: bold">Method 2:</span> Single attribute selection. For each attribute, a value is input. Which will be used as the prediction value for the prediction engine</li>
+                                </ol>
+                    """)),
+                    min_height="130px"
                 ), 
                 div(HTML("<hr>")),  
                 ui.p("          "), 
@@ -673,11 +694,11 @@ app_ui = ui.page_fluid(
                             ),
                             ui.accordion_panel(
                                 "Flight Activity Selection",
-                                ui.input_switch("manual_model_input_switch", label="Manually Select Model Parameters", value=False),
+                                ui.input_switch("manual_model_input_switch", label="Single attribute selection", value=False),
                                 ui.input_selectize(
                                     "flight_activities", 
                                     "Choose Flight Activity:", 
-                                    [activity for activity in list_of_activities if activity not in ["NA", "TBD"]], 
+                                    change_order(), 
                                     multiple=False, 
                                     width=6),
                                 ui.p("          "),
@@ -715,7 +736,7 @@ app_ui = ui.page_fluid(
                                                 "Delete Row", 
                                                 style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
                                             ),
-                                            "Delete the selected rows in the table below."
+                                            "Delete any single selected row in the table below."
                                         ),
                                         col_widths=(6, 6)
                                     ), 
@@ -1137,9 +1158,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         manual_input = input.manual_model_input_switch()
 
         if manual_input == True:
-            return ui.input_numeric("altitude_chooser", f"Altitude (m) for {flight_activity}:", 1, min=0, max=5000)
+            return ui.input_numeric("altitude_chooser", f"Altitude (m) for {flight_activity}:", 0, min=-1000, max=1000)
         else:
-            return ui.input_slider("altitude_slider", "Altitude (m)", min=-1000, max=1000, step=10, value=[400, 500])
+            return ui.input_slider("altitude_slider", "Change in Altitude (m)", min=-1000, max=1000, step=10, value=[400, 500])
         
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1184,10 +1205,10 @@ def server(input: Inputs, output: Outputs, session: Session):
         total_soc = sum(flight_operation_dictionary["SOC (%)"]) if len(flight_operation_dictionary["SOC (%)"]) != 0 else 0
         soc = round(float(100 - total_soc), 2)
         if total_soc >= 70:
-            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.
-                 You are below <span style="color: {blue};">30 % SOC</span>, please <span style="color: {blue};">don't</span> add more activities.</p>"""))
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {red};">SOC: {soc}</span>.
+                 You are below <span style="color: {red};">30 % threshold</span>. Adding additional activities <span style="color: {red};">impacts pilot safety</span>.</p>"""))
         else:
-            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.
                  You are <span style="color: {blue};">free to add</span> more activities in this flight.</p>"""))
 
 
