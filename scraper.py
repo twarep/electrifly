@@ -317,7 +317,7 @@ def scrape(driver, cur, download_dir):
   # check if flight_activities table exists and the manually labelled flightdata exists
   if not table_exists('flight_activities', conn) and select(queries.MANUAL_FLIGHTS_TO_LABEL)[0]:
     flight_activity_tables_views()
-    print("Flight activity table and view added, with six manually labelled flights")
+    print("Flight activity table and view added, with six manually labelled flights, and pilot weights added")
 
 if __name__ == '__main__':
   log_last_run_time()
