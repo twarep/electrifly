@@ -6,7 +6,8 @@ CREATE TABLE flights (
   id INTEGER PRIMARY KEY, 
   flight_date DATE NOT NULL, 
   flight_time_utc TIME NOT NULL,
-  flight_notes VARCHAR(1000)
+  flight_notes VARCHAR(1000),
+  flight_type VARCHAR(100)
 );
 """
 
