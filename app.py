@@ -652,8 +652,8 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 ui.card(
                     ui.card_header("Welcome to ElectriFly's Flight Exercise Planning Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
-                    div(HTML(f"""<p>Prepare your flight exercises with precision by customizing key attributes. Our innovative tool leverages machine 
-                                    learning prediction engine to estimated battery level (SOC) throughout each exercise, as well as the total battery consumption by the end of your 
+                    div(HTML(f"""<p>Prepare your flight exercises with precision by customizing key attributes. Our innovative tool leverages a machine 
+                                    learning prediction engine to estimate battery level (SOC) throughout each exercise, as well as the total battery consumption by the end of your 
                                     flight. Empower yourself with this data to make well-informed decisions for your flight planning.
                                 </p>
                                 <p>The tool enables pilots to choose <span style="color: {blue}; font-weight: bold">two input methods</span>. Changing the method is controlled 
