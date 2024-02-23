@@ -236,7 +236,7 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
                         color=activity_color_map[act], linestyle='--', linewidth=2)
 
     plt.xlabel("Motor Power")
-    plt.ylabel("SOC Rate of Change")
+    plt.ylabel("SOC Rate of Change (% change every 0.5 min)")
     plt.title("Motor Power vs. SOC Rate of Change Scatterplot")
 
     # Create a legend with unique entries
@@ -284,8 +284,8 @@ def soh_soc_rate_scatterplot(flight_ids: list):
         date = flight_data[id]["dates"]
         plt.scatter(soh, soc_rate_of_change, s=5, alpha = 0.3, label=date)
 
-    plt.xlabel("SOH")
-    plt.ylabel("SOC Rate of Change")
+    plt.xlabel("SOH (%)")
+    plt.ylabel("SOC Rate of Change (% change every 0.5 min)")
     plt.title("SOH vs. SOC Rate of Change Scatterplot")
     plt.legend(loc='upper right', fontsize="7", ncol=1,
             borderaxespad=0, frameon=True)
@@ -313,7 +313,7 @@ def soh_plot():
     # Plot the graph
     plt.plot(dates, soh, marker='o', linestyle='-')
     plt.xlabel("Date (Year-Month)")
-    plt.ylabel("SOH")
+    plt.ylabel("SOH (%)")
     plt.title("Average SOH Per Month")
 
     return line_figure

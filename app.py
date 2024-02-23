@@ -95,7 +95,7 @@ def delete_style(val):
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def uploaded_data():
     engine = connect_to_db("PostgreSQL")
-    query = "SELECT * FROM flight_weather_data_view LIMIT 10;"
+    query = "SELECT * FROM flight_weather_data_view WHERE time_min > 0.04 LIMIT 10;"
 
     # Execute the query and fetch the data into a DataFrame
     uploaded_data_df = pd.read_sql(query, con=engine)
@@ -103,13 +103,13 @@ def uploaded_data():
     # Convert the 'flight_date' column back to a string
     uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%b %d, %Y")
     # Rename columns to be human readable
-    readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current','Bat 1 Voltage','Bat 2 Current','Bat 2 Voltage','Bat 1 SOC','Bat 2 SOC',
-                        'Bat 1 SOH', 'Bat 2 SOH', 'Bat 1 Min Cell Temp', 'Bat 2 Min Cell Temp', 'Bat 1 Max Cell Temp', 'Bat 2 Max Cell Temp', 'Bat 1 Avg Cell Temp', 'Bat 2 Avg Cell Temp', 'Bat 1 Min Cell Volt', 'Bat 2 Min Cell Volt',
-                        'Bat 1 Max Cell Volt', 'Bat 2 Max Cell Volt', 'Requested Torque', 'Motor RPM', 'Motor Power', 'Motor Temp', 'Indicated Air Speed', 'Stall Warn Active', 'Inverter Temp', 'Bat 1 Cooling Temp',
-                        'Inverter Cooling Temp 1', 'Inverter Cooling Temp 2', 'Remaining Flight Time', 'Pressure Altitude', 'Latitude', 'Longitude', 'Ground Speed', 'Pitch', 'Roll', 'Time Stamp',
-                        'Heading', 'Stall Diff Pressure', 'QNG', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint',
-                        'Relative Humidity','Wind Direction', 'Wind Speed', 'Pressure Altimeter','Sea Level Pressure', 'Visibility', 'Wind Gust', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
-                        'Sky Coverage 4', 'Sky Level 1', 'Sky Level 2','Sky Level 3','Sky Level 4','Weather Codes', 'Metar']
+    readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current (amp)','Bat 1 Voltage (volts)','Bat 2 Current (amp)','Bat 2 Voltage (volts)','Bat 1 SOC (%)','Bat 2 SOC (%)',
+                        'Bat 1 SOH (%)', 'Bat 2 SOH (%)', 'Bat 1 Min Cell Temp (°C)', 'Bat 2 Min Cell Temp (°C)', 'Bat 1 Max Cell Temp (°C)', 'Bat 2 Max Cell Temp (°C)', 'Bat 1 Avg Cell Temp (°C)', 'Bat 2 Avg Cell Temp (°C)', 'Bat 1 Min Cell Volt (volts)', 'Bat 2 Min Cell Volt (volts)',
+                        'Bat 1 Max Cell Volt (volts)', 'Bat 2 Max Cell Volt (volts)', 'Requested Torque (Nm)', 'Motor RPM (rpm)', 'Motor Power (KW)', 'Motor Temp (°C)', 'Indicated Air Speed (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)',
+                        'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)', 'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp (Seconds)',
+                        'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint (°F)',
+                        'Relative Humidity (%)','Wind Direction (Degrees)', 'Wind Speed (knots)', 'Pressure Altimeter (in)','Sea Level Pressure (mbar)', 'Visibility (mi)', 'Wind Gust (knots)', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
+                        'Sky Coverage 4', 'Sky Level 1 (ft)', 'Sky Level 2 (ft)','Sky Level 3 (ft)','Sky Level 4 (ft)','Weather Codes', 'Metar']
     uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
     engine.dispose()
     return uploaded_data_df
@@ -371,7 +371,7 @@ app_ui = ui.page_fluid(
                     "Select Columns to Preview", 
                     choices=list(uploaded_cols().columns), 
                     multiple=True,
-                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC","Bat 1 SOH", "Bat 1 Max Cell Temp", "Temperature (°F)", "Visibility"],width="50%"
+                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC (%)","Bat 1 SOH (%)", "Bat 1 Max Cell Temp (°C)", "Temperature (°F)", "Visibility (mi)"],width="50%"
                 ),
                 style="margin-top:20px;"
             ),  
@@ -1016,7 +1016,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.text
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
-        return f"Data was last refreshed at: {most_recent_run_time}"  
+        return f"Data was last refreshed: {most_recent_run_time}"  
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
@@ -1057,19 +1057,48 @@ def server(input: Inputs, output: Outputs, session: Session):
             return "background-color: #43a047; color: #43a047;"
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    def colour_word(word):
+        # make these words red
+        if (word =='no' or word == 'flights' or word == 'available'):
+            return 'color: red'
+        else:
+            return 'color: black'
     @output
     @render.table
     def flight_planning_table(): 
-        
-        flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+        # if the feasible_flights dataframe is empty
+        if simulation.feasible_flights.empty:
+            # Return a DataFrame with the message
+            message_df = pd.DataFrame({"Message": ["There are no flights available to be scheduled today due to weather conditions."]})
+            message_df['Message'] = message_df['Message'].apply(lambda x: ' '.join(['<span style="{}">{}</span>'.format(colour_word(word), word) for word in x.split()])) # formats "no flights available" as red
+
+            message_style = message_df.style.hide(axis="index").hide(axis="columns").set_table_styles([
                             {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
-                              {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
-                              {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
-                              {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
-                              {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
-                              ])
-        # new = styled_data.set_table_styles()
-        return flight_plan
+                            {'selector': 'td', 'props': [('width', '700px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'left')]}, # left align text in cells
+                        ]) 
+            return message_style
+        else:
+            flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+                            {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+                            {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+                            {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                            {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                        ])
+            return flight_plan
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.date_operations)
+    def time_selector():
+        flight_dates = input.date_operations()
+
+        if flight_dates == "":
+            return ui.output_text("Please select a date to fly")
+        else:
+            return ui.input_selectize("flight_time_select", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
