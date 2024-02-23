@@ -665,7 +665,7 @@ class query_flights:
 
     # Getting the weather predictions from the forecast table ----------------------------------------------------------------------------
     # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
-    def get_forecast_weather_by_date(self, date: datetime, time: datetime):
+    def get_forecast_weather_by_date(self, date: str, time: datetime):
         """
         The function uses psycopg2 to get the columns: temperature, wind gust, and visibility from the forecast table
         """

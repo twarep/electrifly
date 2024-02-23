@@ -14,7 +14,7 @@ class Model():
     def __init__(self):
 
         # Get the trained model
-        model_filename = 'ML_model_outputs/prescription_randomforest_model.joblib'
+        model_filename = 'ML_model_outputs/prescription_linreg_model.joblib'
         self.model = joblib.load(model_filename)
 
         # Initializae the engine string and make sure that the model table is in the db
@@ -94,38 +94,6 @@ class Model():
 
 
     # Function ------------------------------------------------------------------------------------
-    # Get the specific columns from the model table and 
-    def model_attributes(self, activity, column_names: list):
-
-        # Get the connection
-        connection = self.__connection()
-
-        # create a cursor object to interact with the database
-        cursor = connection.cursor()
-
-        # Get the attribute columns
-        str_column = "".join([f"{column}, " for column in column_names])[:-2]
-        cursor.execute(f"SELECT {str_column} FROM model WHERE activity = \'{activity}\' and time_delta > 0.1;")
-
-        # Get all the data and columns names and make a pandas dataframe.
-        data = cursor.fetchall()
-        df = pd.DataFrame(data, columns=column_names)
-
-        # Loop through all columns and get the a random value
-        attribute_values = {}
-        rand_index = random.randint(0, len(df) -1)
-        for column in column_names:
-            attribute_values[column] = df[column].to_numpy()[rand_index]
-
-        # close the cursor and the connection
-        cursor.close()
-        self.__disconnect(connection)
-
-        # return those attributes
-        return attribute_values
-
-
-    # Function ------------------------------------------------------------------------------------
     def get_attribute_max_min(self, attribute: str, operation: str):
         
         # Get the connection
@@ -149,8 +117,53 @@ class Model():
 
 
     # Function ------------------------------------------------------------------------------------
-    # Check if specific table exists if not, make it and add saved data in `ML_model_outputs/all_data.csv`
-    def get_model_prediction(self, maneuver, forecast_date, forecast_time):
+    # Get prediction based off manual input of all datatypes
+    def get_manual_model_prediction(self, maneuver, forecast_date, forecast_time, time_delta, altitude, ground_speed, motor_power, soh):
+
+        # Get the connection and 
+        all_activities = self.fights.get_unique_activity()
+
+        # Get the weather data for this flight
+        # NOTE: the forecasted visibility is in meters, while the weather data visibility is in miles
+        # NOTE: 1 mile (nautical) = 1852 meters
+        temperature, visibility, windspeed = self.fights.get_forecast_weather_by_date(forecast_date, forecast_time)
+        visibility_mile = round(visibility/1852, 2)
+
+        # get and fill attributes
+        attributes_dict = {
+            "time_delta": [time_delta],
+            "soh": [soh],
+            "average_altitude": [altitude],
+            "ground_speed": [ground_speed],
+            "average_power": [motor_power]
+        }
+
+        # add weather
+        attributes_dict["temperature"] = [temperature]
+        attributes_dict["visibility"] = [visibility_mile]
+        attributes_dict["wind_speed"] = [windspeed]
+
+        # Prefix the activities with is_
+        for operation in all_activities:
+            if operation not in ("NA", "TBD"):
+                operation_column = "activity_is_" + operation
+                
+                if maneuver in operation_column:
+                    attributes_dict[operation_column] = [True]
+                else:
+                    attributes_dict[operation_column] = [False]
+
+        # Make the pandas df for 
+        pred_df = pd.DataFrame(attributes_dict)
+
+        prediction = self.model.predict(pred_df)
+
+        return prediction, attributes_dict["time_delta"][0], attributes_dict["average_power"][0], attributes_dict["soh"][0], attributes_dict["average_altitude"][0], attributes_dict["ground_speed"][0]
+
+
+    # Function ------------------------------------------------------------------------------------
+    # Gets prediction based on sliders
+    def get_model_prediction(self, maneuver, forecast_date, forecast_time, time_tuple, altitude_tuple, ground_speed_tuple, motor_power_tuple):
 
         # Get the connection and 
         all_activities = self.fights.get_unique_activity()
@@ -162,8 +175,13 @@ class Model():
         visibility_mile = round(visibility/1852, 2)
 
         # get the attribute values
-        attributes = ["time_delta", "soh", "average_altitude", "ground_speed", "average_power"]
-        attributes_dict = self.model_attributes(maneuver, attributes)
+        attributes_dict = {}
+        max_soh, min_soh = self.get_attribute_max_min("soh", maneuver)
+        attributes_dict["time_delta"] = round(np.random.uniform(time_tuple[0], time_tuple[1]), 2)
+        attributes_dict["soh"] = min_soh
+        attributes_dict["average_altitude"] = np.random.randint(altitude_tuple[0], altitude_tuple[1])
+        attributes_dict["ground_speed"] = np.random.randint(ground_speed_tuple[0], ground_speed_tuple[1])
+        attributes_dict["average_power"] = np.random.randint(motor_power_tuple[0], motor_power_tuple[1])
 
         # add weather
         attributes_dict["temperature"] = [temperature]

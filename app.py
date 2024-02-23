@@ -19,6 +19,7 @@ import shiny.experimental as x
 import faicons as fa
 from model_querying import Model
 from pathlib import Path
+from math import ceil, floor
 
 # Global variable to hold the flight operations.
 flight_operation_dictionary = {
@@ -645,83 +646,92 @@ app_ui = ui.page_fluid(
                     ui.p("Prepare your flight exercises with precision by customizing duration and power setting beforehand. Our innovative tool leverages machine learning models to predict your estimated battery level throughout each exercise, as well as the total battery consumption by the end of your flight. Empower yourself with this data to make well-informed decisions for your flight planning."), min_height="130px"
                 ), 
                 div(HTML("<hr>")),  
-                ui.p("          "),
-                ui.card(
-                    ui.layout_columns(
-                        ui.p("          "), 
-                        ui.tooltip(
-                            ui.input_action_button(
-                                "add_activity", 
-                                "Add activity", 
-                                style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer;"
-                            ),
-                            "Add selected activity under the \'Flight Activity Selection\' setting"
-                        ),
-                        ui.tooltip(
-                            ui.input_action_button(
-                                "delete_selected_activity", 
-                                "Delete Selected Rows", 
-                                style="background-color: white; color: black; border: 1px solid #000000; cursor: pointer;"
-                            ),
-                            "Delete the selected rows in the table below."
-                        ),
-                        ui.tooltip(
-                            ui.input_action_button(
-                                "reset_activity", 
-                                "Reset Activities", 
-                                style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer;"
-                            ),
-                            "Delete all rows in the table below."
-                        ),
-                    col_widths=(6, 2, 2, 2)),
-                    style="background-color: #FFFFFF; border: 1px solid #000000;"  
-                ),
                 ui.p("          "), 
                 # Selecting the date
-                ui.layout_columns(
-                    ui.accordion(
-                        ui.accordion_panel(
-                            "Flight Date & Time",
-                            ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, selected=list_of_dates[0]),
-                            ui.p("          "),
-                            ui.input_selectize(
-                                "flight_time_select", 
-                                "Choose start time of flight:", 
-                                ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", 
-                                    "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", 
-                                    "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", 
-                                    "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", 
-                                    "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", 
-                                    "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", 
-                                    "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", 
-                                    "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", 
-                                    "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", 
-                                    "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", 
-                                    "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"]
+                ui.row(
+                    ui.column(3,
+                        ui.accordion(
+                            ui.accordion_panel(
+                                "Flight Date & Time",
+                                ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, selected=list_of_dates[0]),
+                                ui.p("          "),
+                                ui.input_selectize(
+                                    "flight_time_select", 
+                                    "Choose start time of flight:", 
+                                    ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", 
+                                        "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", 
+                                        "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", 
+                                        "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", 
+                                        "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", 
+                                        "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", 
+                                        "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", 
+                                        "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", 
+                                        "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", 
+                                        "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", 
+                                        "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"]
+                                )
+                            ),
+                            ui.accordion_panel(
+                                "Flight Activity Selection",
+                                ui.input_switch("manual_model_input_switch", label="Manually Select Model Parameters", value=False),
+                                ui.input_selectize(
+                                    "flight_activities", 
+                                    "Choose Flight Activity:", 
+                                    [activity for activity in list_of_activities if activity not in ["NA", "TBD"]], 
+                                    multiple=False, 
+                                    width=6),
+                                ui.p("          "),
+                                ui.output_ui("duration_of_activity"),
+                                ui.p("          "),
+                                ui.output_ui("power_setting_activity"),
+                                ui.p("          "),
+                                ui.output_ui("altitude_activity"),
+                                ui.p("          "),
+                                ui.output_ui("ground_speed_activity"),
+                                ui.p("          "),
+                                ui.output_ui("soh_activity"),
+                            ),
+                            id="prediction_model",  
+                            open="Flight Date & Time", 
+                        ),
+                    ),
+                    ui.column(9,
+                        ui.row(
+                            ui.column(8, ui.card(ui.output_ui("remaining_soc"), height="60px", style="background-color: #FFFFFF; border: 1px solid #000000; padding: 0px;")), 
+                            ui.column(4,
+                                ui.row( 
+                                    ui.layout_columns(
+                                        ui.tooltip(
+                                            ui.input_action_button(
+                                                "add_activity", 
+                                                "Add activity", 
+                                                style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px",
+                                            ),
+                                            "Add selected activity under the \'Flight Activity Selection\' setting"
+                                        ),
+                                        ui.tooltip(
+                                            ui.input_action_button(
+                                                "delete_selected_activity", 
+                                                "Delete Row", 
+                                                style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
+                                            ),
+                                            "Delete the selected rows in the table below."
+                                        ),
+                                        col_widths=(6, 6)
+                                    ), 
+                                ) 
                             )
                         ),
-                        ui.accordion_panel(
-                            "Flight Activity Selection",
-                            ui.input_switch("manual_model_input_switch", label="Manually Select Model Parameters", value=False),
-                            ui.input_selectize("flight_activities", "Choose Flight Operation:", list_of_activities, multiple=False, width=6, selected=None),
-                            ui.p("          "),
-                            ui.output_ui("duration_of_activity"),
-                            ui.p("          "),
-                            ui.output_ui("power_setting_activity"),
-                            ui.p("          "),
-                            ui.output_ui("altitude_activity"),
-                            ui.p("          "),
-                            ui.output_ui("ground_speed_activity")
-                        ),
-                        id="prediction_model",  
-                        open="Flight Date & Time", 
+                        ui.p("          "),
+                        ui.row(
+                            ui.card(
+                                ui.output_data_frame("model_predict_output"), 
+                                height="660px",
+                                style="background-color: #FFFFFF; border: 1px solid #000000;"  
+                            )
+                        )
                     ),
-                    ui.card(
-                        ui.output_data_frame("model_predict_output"), 
-                        height="700px",
-                        style="background-color: #FFFFFF; border: 1px solid #000000;"  
-                    ),
-                    col_widths=(3, 9)
+                    height="700px"
                 )            
             )
         ),
@@ -1064,7 +1074,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    @reactive.event(input.manual_model_input_switch)
     def duration_of_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
@@ -1072,14 +1082,13 @@ def server(input: Inputs, output: Outputs, session: Session):
         if manual_input == True:
             return ui.input_numeric("duration_chooser", f"Time (mins) for {flight_activity}:", 1, min=1, max=60)
         else:
-            act_max, act_min = new_model.get_attribute_max_min("time_delta", flight_activity)
-            return ui.input_slider("time_delta_slider", "Time (mins)", min=act_min, max=act_max, value=[act_min, round(act_min+act_max/2)])
+            return ui.input_slider("time_delta_slider", "Time (mins)", min=0, max=60, step=0.5, value=[5, 8])
         
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    @reactive.event(input.manual_model_input_switch)
     def power_setting_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
@@ -1087,14 +1096,13 @@ def server(input: Inputs, output: Outputs, session: Session):
         if manual_input == True:
             return ui.input_numeric("power_setting_chooser", f"Motor power (KW) for {flight_activity}:", 1, min=0, max=70)
         else:
-            act_max, act_min = new_model.get_attribute_max_min("average_power", flight_activity)
-            return ui.input_slider("power_setting_slider", "Motor power (KW)", min=act_min, max=act_max, value=[act_min, round(act_min+act_max/2)])
+            return ui.input_slider("power_setting_slider", "Motor power (KW)", min=0, max=65, step=2, value=[4, 20])
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    @reactive.event(input.manual_model_input_switch)
     def altitude_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
@@ -1102,14 +1110,28 @@ def server(input: Inputs, output: Outputs, session: Session):
         if manual_input == True:
             return ui.input_numeric("altitude_chooser", f"Altitude (m) for {flight_activity}:", 1, min=0, max=5000)
         else:
-            act_max, act_min = new_model.get_attribute_max_min("average_altitude", flight_activity)
-            return ui.input_slider("altitude_slider", "Altitude (m)", min=act_min, max=act_max, value=[act_min, round(act_min+act_max/2)])
+            return ui.input_slider("altitude_slider", "Altitude (m)", min=-1000, max=1000, step=10, value=[400, 500])
         
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
-    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    @reactive.event(input.manual_model_input_switch)
+    def soh_activity():
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
+
+        if manual_input == True:
+            return ui.input_numeric("soh_chooser", f"State-of-health (%) for {flight_activity}:", 100, min=0, max=100)
+        else:
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 18px;">
+                            State-of-health (%) from the <span style="color: {blue};">latest flight</span> will be used.</p>"""))
+    
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.manual_model_input_switch)
     def ground_speed_activity():
         flight_activity = input.flight_activities()
         manual_input = input.manual_model_input_switch()
@@ -1117,8 +1139,27 @@ def server(input: Inputs, output: Outputs, session: Session):
         if manual_input == True:
             return ui.input_numeric("ground_speed_chooser", f"Ground speed (knots) for {flight_activity}:", 1, min=0, max=20)
         else:
-            act_max, act_min = new_model.get_attribute_max_min("ground_speed", flight_activity)
-            return ui.input_slider("ground_speed_slider", "Ground speed (knots)", min=act_min, max=act_max, value=[act_min, round(act_min+act_max/2)])
+            return ui.input_slider("ground_speed_slider", "Ground speed (knots)", min=0, max=100, step=5, value=[45, 50])
+        
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(table_data_show)
+    def remaining_soc():
+
+        # Get the global flight holder variable
+        global flight_operation_dictionary
+
+        # Get the total soc and return it
+        total_soc = sum(flight_operation_dictionary["SOC (%)"]) if len(flight_operation_dictionary["SOC (%)"]) != 0 else 0
+        soc = round(float(100 - total_soc), 2)
+        if total_soc >= 70:
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.
+                 You are below <span style="color: {blue};">30 % SOC</span>, please <span style="color: {blue};">don't</span> add more activities.</p>"""))
+        else:
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.
+                 You are <span style="color: {blue};">free to add</span> more activities in this flight.</p>"""))
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1135,27 +1176,6 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Return that data frame
         return render.DataGrid(flight_operation_output_table, row_selection_mode="single")
-    
-
-    # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    @reactive.effect
-    @reactive.event(input.reset_activity)
-    def _():
-        
-        # Get the global flight holder variable
-        global flight_operation_dictionary
-
-        # Clear all of the activities and times in the variable
-        flight_operation_dictionary["Activity"].clear()
-        flight_operation_dictionary["Time (mins)"].clear()
-        flight_operation_dictionary["SOH (%)"].clear()
-        flight_operation_dictionary["Incrementing Altitude (m)"].clear()
-        flight_operation_dictionary["Ground Speed (knots)"].clear()
-        flight_operation_dictionary["Motor Power (KW)"].clear()
-        flight_operation_dictionary["SOC (%)"].clear()
-
-        # Set the data show to 0
-        table_data_show.set(0)
 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1171,6 +1191,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Get the inputs from the flight operation and time selection criteria
         operation = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
         date = input.date_operations()
         time = input.flight_time_select()
 
@@ -1185,7 +1206,10 @@ def server(input: Inputs, output: Outputs, session: Session):
                 period = time[5:8]
 
                 # Change the minutes to every 15 when the time passes that minute
-                current_time = sum(flight_operation_dictionary["Time (mins)"])
+                if len(flight_operation_dictionary["Time (mins)"]) == 1:
+                    current_time = flight_operation_dictionary["Time (mins)"][0]
+                else:
+                    current_time = sum(flight_operation_dictionary["Time (mins)"])
                 if current_time > 15:
                     time = hour_str + "15" + period
                 elif current_time > 30:
@@ -1193,8 +1217,20 @@ def server(input: Inputs, output: Outputs, session: Session):
                 elif current_time > 45:
                     time = hour_str + "45" + period
 
-            # Get soc 
-            predicted_soc, act_time, act_power, act_soh, act_alt, act_groundspeed = new_model.get_model_prediction(operation, date, time)
+            # Get soc based on inputs
+            if manual_input: 
+                model_time = input.duration_chooser()
+                model_power = input.power_setting_chooser()
+                model_altitude = input.altitude_chooser()
+                model_soh = input.soh_chooser()
+                model_speed = input.ground_speed_chooser()
+                predicted_soc, act_time, act_power, act_soh, act_alt, act_groundspeed = new_model.get_manual_model_prediction(operation, date, time, model_time, model_altitude, model_speed, model_power, model_soh)
+            else:
+                tuple_time = input.time_delta_slider()
+                tuple_power = input.power_setting_slider()
+                tuple_altitude = input.altitude_slider()
+                tuple_speed = input.ground_speed_slider()
+                predicted_soc, act_time, act_power, act_soh, act_alt, act_groundspeed = new_model.get_model_prediction(operation, date, time, tuple_time, tuple_altitude, tuple_speed, tuple_power)
 
             # Append all the activities and times in the variable
             flight_operation_dictionary["Activity"].append(operation)
@@ -1238,6 +1274,8 @@ def server(input: Inputs, output: Outputs, session: Session):
 
             # Set the data show to 1
             table_data_show.set(reactive_var)
+
+    
 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: SIMULATION SCREEN 
