@@ -237,10 +237,6 @@ def scrape(driver, cur, download_dir):
       current_flight_type = row_data[2]
       current_flight_notes = row_data[4]
 
-      # skip all rows except for flight tests and ground tests
-      if current_flight_type not in ["Flight test", "Ground test"]:
-        continue
-
       # query database for this flight ID
       cur.execute('SELECT 1 FROM flights WHERE id = %s', (int(current_flight_id), ))
       flight_id = cur.fetchone()
