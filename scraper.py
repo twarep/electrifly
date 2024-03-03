@@ -264,7 +264,7 @@ def scrape(driver, cur, download_dir):
         if str(current_flight_id) not in str(current_download_link):
           driver.back()
           continue
-        push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes)
+        push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes, current_flight_type)
         ids_list.append(current_flight_id)
         date_list.append(current_flight_datetime)   
         current_file_name = os.path.basename(current_download_link)

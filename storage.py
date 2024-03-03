@@ -105,12 +105,12 @@ def select(query, params=None):
   return result
 
 # takes in flight metadata and pushes it to the flights table
-def push_flight_metadata(id, datetime, notes):
+def push_flight_metadata(id, datetime, notes, flight_type):
   # separate date and time
   date = datetime.date()
   time = datetime.time()
-  insert_query = "INSERT INTO flights (id, flight_date, flight_time_utc, flight_notes) VALUES (%s, %s, %s, %s)"
-  values = (id, date, time, notes)
+  insert_query = "INSERT INTO flights (id, flight_date, flight_time_utc, flight_notes, flight_type) VALUES (%s, %s, %s, %s, %s)"
+  values = (id, date, time, notes, flight_type)
   execute(insert_query, values)
 
 # push the scraper runtime to the database
