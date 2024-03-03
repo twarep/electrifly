@@ -78,7 +78,7 @@ custom_variables = list(custom_variables_columns.keys())
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def change_order():
-    order_activities = ["takeoff", "climb", "cruise", "descent", "landing"]
+    order_activities = ["pre-flight", "takeoff", "climb", "cruise", "descent", "landing"]
     for activity in list_of_activities:
         if activity not in order_activities and activity not in ["NA", "TBD"]:
             order_activities.append(activity)
