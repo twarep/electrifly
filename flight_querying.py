@@ -616,17 +616,19 @@ class query_flights:
         query = f"""SELECT flight_id AS id, 
                         time_min AS time,
                         ((bat_1_soc + bat_2_soc) / 2) AS soc,
-                        ((bat_1_avg_cell_temp + bat_2_avg_cell_temp) / 2) AS cell_temperature,
                         motor_rpm AS motor_rpm, 
+                        ((bat_1_voltage + bat_2_voltage) / 2) AS voltage,
                         motor_power AS motor_power,
-                        motor_temp AS motor_temperature,
-                        ias AS indicated_air_speed,
                         pressure_alt AS pressure_altitude,
                         ground_speed AS ground_speed,
-                        oat AS outside_air_temperature,
-                        inverter_temp AS inverter_temperature,
                         pitch AS pitch,
-                        roll AS roll
+                        roll AS roll,
+                        ias AS ias, 
+                        ((bat_1_soh + bat_2_soh) / 2) AS soh, 
+                        stall_warn_active AS stall_warn_active,
+                        requested_torque AS torque,
+                        heading AS heading, 
+                        qng AS qng
                     FROM flightdata_{flight};
                 """
 
