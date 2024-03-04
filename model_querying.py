@@ -3,6 +3,7 @@ import psycopg2
 import random
 import numpy as np
 import os
+import pickle
 import joblib
 from flight_querying import query_flights
 from dotenv import load_dotenv
@@ -14,7 +15,7 @@ class Model():
     def __init__(self):
 
         # Get the trained model
-        model_filename = 'ML_model_outputs/prescription_linreg_model.joblib'
+        model_filename = 'ML_model_outputs/prescription_xgboost_model.joblib'
         self.model = joblib.load(model_filename)
 
         # Initializae the engine string and make sure that the model table is in the db
@@ -120,8 +121,10 @@ class Model():
     # Get prediction based off manual input of all datatypes
     def get_manual_model_prediction(self, maneuver, forecast_date, forecast_time, time_delta, altitude, ground_speed, motor_power, soh):
 
-        # Get the connection and 
-        all_activities = self.fights.get_unique_activity()
+        # Get the activities
+        with open("ML_model_outputs/columns.pkl", "rb") as file:
+            model_cols = pickle.load(file)
+        all_activities = [col for col in model_cols if "activity" in col]
 
         # Get the weather data for this flight
         # NOTE: the forecasted visibility is in meters, while the weather data visibility is in miles
@@ -143,15 +146,13 @@ class Model():
         attributes_dict["visibility"] = [visibility_mile]
         attributes_dict["wind_speed"] = [windspeed]
 
-        # Prefix the activities with is_
+        # make the addition of the activity
         for operation in all_activities:
-            if operation not in ("NA", "TBD"):
-                operation_column = "activity_is_" + operation
-                
-                if maneuver in operation_column:
-                    attributes_dict[operation_column] = [True]
+            if "NA" not in operation or "TBD" not in operation:
+                if maneuver in operation:
+                    attributes_dict[operation] = [True]
                 else:
-                    attributes_dict[operation_column] = [False]
+                    attributes_dict[operation] = [False]
 
         # Make the pandas df for 
         pred_df = pd.DataFrame(attributes_dict)
@@ -168,8 +169,10 @@ class Model():
     # Gets prediction based on sliders
     def get_model_prediction(self, maneuver, forecast_date, forecast_time, time_tuple, altitude_tuple, ground_speed_tuple, motor_power_tuple):
 
-        # Get the connection and 
-        all_activities = self.fights.get_unique_activity()
+        # Get the activities
+        with open("ML_model_outputs/columns.pkl", "rb") as file:
+            model_cols = pickle.load(file)
+        all_activities = [col for col in model_cols if "activity" in col]
 
         # Get the weather data for this flight
         # NOTE: the forecasted visibility is in meters, while the weather data visibility is in miles
@@ -191,15 +194,13 @@ class Model():
         attributes_dict["visibility"] = [visibility_mile]
         attributes_dict["wind_speed"] = [windspeed]
 
-        # Prefix the activities with is_
+        # make the addition of the activity
         for operation in all_activities:
-            if operation not in ("NA", "TBD"):
-                operation_column = "activity_is_" + operation
-                
-                if maneuver in operation_column:
-                    attributes_dict[operation_column] = [True]
+            if "NA" not in operation or "TBD" not in operation:
+                if maneuver in operation:
+                    attributes_dict[operation] = [True]
                 else:
-                    attributes_dict[operation_column] = [False]
+                    attributes_dict[operation] = [False]
 
         # Make the pandas df for 
         pred_df = pd.DataFrame(attributes_dict)

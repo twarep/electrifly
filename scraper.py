@@ -100,7 +100,7 @@ def weather_data(date_list, ids_list, driver, download_dir):
   driver.find_element(By.XPATH, "/html/body/main/div/div[3]/div[2]/input[4]").click()
   time.sleep(5)
   # read the new data into pandas df
-  weather_data_path = os.getcwd() + "/temp/CYKF.csv"
+  weather_data_path = os.path.join(os.getcwd(),'temp','CYKF.csv')
   df = pd.read_csv(weather_data_path)
   # transform the weather_data into DB format
   df = weather_transformation(df)
@@ -108,18 +108,18 @@ def weather_data(date_list, ids_list, driver, download_dir):
   relevant_weather(df, ids_list)
 
   # delete the temp files from disk
-  shutil.rmtree(download_dir)
+  shutil.rmtree(download_dir,ignore_errors=True)
 
 def environment_setup():
   # Load .env file
   load_dotenv()
 
   # delete the temp directory if it exists
-  temp_dir = os.getcwd() + "/temp/"
+  temp_dir = os.path.join(os.getcwd(),'temp')
   if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
-    shutil.rmtree(temp_dir)
+    shutil.rmtree(temp_dir, ignore_errors=True)
   # set download directory to working directory
-  download_dir = os.getcwd() + "/temp/"
+  download_dir = os.path.join(os.getcwd(),'temp')
 
   chrome_options = webdriver.ChromeOptions()
 
@@ -237,18 +237,13 @@ def scrape(driver, cur, download_dir):
       current_flight_type = row_data[2]
       current_flight_notes = row_data[4]
 
-      # skip all rows except for flight tests
-      if current_flight_type not in ["Flight test"]:
-        continue
-
       # query database for this flight ID
       cur.execute('SELECT 1 FROM flights WHERE id = %s', (int(current_flight_id), ))
       flight_id = cur.fetchone()
 
-      # if the flight id is in the database, stop checking for new data
+      # if the flight id is in the database, skip this row
       if flight_id is not None:
-          is_next_page = False
-          break
+          continue
       # otherwise click on flight details
       else:
           # click this row
@@ -265,7 +260,7 @@ def scrape(driver, cur, download_dir):
         if str(current_flight_id) not in str(current_download_link):
           driver.back()
           continue
-        push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes)
+        push_flight_metadata(current_flight_id, current_flight_datetime, current_flight_notes, current_flight_type)
         ids_list.append(current_flight_id)
         date_list.append(current_flight_datetime)   
         current_file_name = os.path.basename(current_download_link)
@@ -291,7 +286,7 @@ def scrape(driver, cur, download_dir):
         # push the flight data into the database
         push_flight_data(df, current_flight_id)
         # delete the temp files from disk
-        shutil.rmtree(download_dir)
+        shutil.rmtree(download_dir, ignore_errors=True)
         driver.back()
         
       # locate the row after page refresh

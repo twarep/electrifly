@@ -7,6 +7,7 @@ CREATE TABLE flights (
   flight_date DATE NOT NULL, 
   flight_time_utc TIME NOT NULL,
   flight_notes VARCHAR(1000),
+  flight_type VARCHAR(100),
   total_weight REAL
 );
 """

@@ -640,7 +640,7 @@ class query_flights:
         # Make database connection
         engine = self.__connect()
 
-        query = f"""SELECT time_min,
+        query = f"""SELECT DISTINCT(time_min) as time_min,
                         flight_id, 
                         activity,
                         ((bat_1_soc + bat_2_soc) / 2) AS SOC,
@@ -652,8 +652,8 @@ class query_flights:
                         visibility,
                         wind_speed
                     FROM labeled_activities_view  
-                    WHERE labeled_activities_view.flight_id={flight}
-                    ORDER BY time_min"""
+                    WHERE labeled_activities_view.flight_id={flight} and labeled_activities_view.time_min >= 0.02
+                    ORDER BY time_min;"""
 
         # Select the data based on the query
         flight_data = pd.read_sql_query(query, engine) 
