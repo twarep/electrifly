@@ -949,6 +949,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         Returns 
             power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """
+        
         # Get all flight data
         flight_id = input.statistical_time()
         activities_filter = input.select_activities()

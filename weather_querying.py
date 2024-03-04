@@ -36,7 +36,7 @@ class query_weather:
                           weather.temperature AS "Temperature (°C)", 
                           weather.wind_speed AS "Wind Speed (knots)", 
                           weather.wind_direction AS "Wind Direction (Degrees)", 
-                          weather.visibility AS "Visibility (m)"
+                          weather.visibility AS "Visibility (Mi)"
                     FROM flight_weather 
                     JOIN weather
                         ON flight_weather.weather_id = weather.id
