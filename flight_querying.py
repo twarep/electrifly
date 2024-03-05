@@ -3,8 +3,6 @@ from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
 import os
-import psycopg2
-from time import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from storage import execute, select
@@ -78,10 +76,10 @@ class query_flights:
 
         # Make query
         if len(columns) == 0:
-            query = f"SELECT * FROM {table}"
+            query = f"SELECT * FROM {table} WHERE flight_type = \'Flight test\' ORDER BY flight_date DESC;"
         else:
             str_column = "".join([f"{column}, " for column in columns])[:-2]
-            query = f"SELECT {str_column} FROM {table}"
+            query = f"SELECT {str_column} FROM {table} WHERE flight_type = \'Flight test\' ORDER BY flight_date DESC;"
 
         # Make database connection
         engine = self.__connect()

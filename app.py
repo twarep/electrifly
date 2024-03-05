@@ -4,6 +4,8 @@ from shiny.types import NavSetArg
 from shiny.types import ImgData
 from flight_querying import query_flights
 from weather_querying import query_weather
+from charge_querying import Charge
+from ground_querying import Ground
 import Graphing as Graphing
 import shinyswatch
 import numpy as np
@@ -19,6 +21,7 @@ import shiny.experimental as x
 import faicons as fa
 from model_querying import Model
 from pathlib import Path
+import asyncio
 from math import ceil, floor
 
 # Global variable to hold the flight operations.
@@ -32,27 +35,11 @@ flight_operation_dictionary = {
     "SOC (%)": [],
 }
 
-# Getting initial data
+# initialize the different type of stuff done on plane testing.
 flights = query_flights()
 
 # Get the list of activities from labeled_activities_view
 list_of_activities = flights.get_flight_activities()
-
-# Getting the dates to be used in the ML UI:
-# Get current date
-current_date = datetime.now().date()
-string_current_date = current_date.strftime("%b %d, %Y")
-
-# Get tomorrow's date
-tomorrow_date = current_date + timedelta(days=1)
-string_tomorrow_date = tomorrow_date.strftime("%b %d, %Y")
-
-# Get the day after tomorrow's date
-day_after_tomorrow_date = current_date + timedelta(days=2)
-string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%b %d, %Y")
-
-# Create a list and add the dates
-list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
 
 # List of variables
 custom_variables_columns = {
@@ -76,6 +63,27 @@ custom_variables_columns = {
 }
 custom_variables = list(custom_variables_columns.keys())
 
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+# Getting the dates to be used in the ML UI:
+def get_dates():
+    
+    # Get dates from datetime
+    current_date = datetime.now().date()
+    tomorrow_date = current_date + timedelta(days=1)
+    day_after_tomorrow_date = current_date + timedelta(days=2)
+
+    # Turn them into strings
+    string_current_date = current_date.strftime("%b %d, %Y")
+    string_tomorrow_date = tomorrow_date.strftime("%b %d, %Y")
+    string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%b %d, %Y")
+
+    # Create a list and add the dates
+    list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
+
+    return list_of_dates
+
+
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def change_order():
     order_activities = ["pre-flight", "takeoff", "climb", "cruise", "descent", "landing"]
@@ -87,9 +95,8 @@ def change_order():
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 #database connection 
-def connect_to_db(provider: str):
+def connect_to_db():
     load_dotenv()
-    provider == "PostgreSQL"
     db_url = "postgresql+psycopg2" + getenv('DATABASE_URL')[8:]
     engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
     return engine
@@ -101,9 +108,10 @@ def delete_style(val):
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def uploaded_data():
-    engine = connect_to_db("PostgreSQL")
-    query = "SELECT * FROM flight_weather_data_view WHERE time_min > 0.04 LIMIT 10;"
+# flight_type: str, data_type: str, 
+def preview_data_retreiver(limit = 10):
+    engine = connect_to_db()
+    query = f"SELECT * FROM flight_weather_data_view WHERE time_min >= 0.04 LIMIT {limit};"
 
     # Execute the query and fetch the data into a DataFrame
     uploaded_data_df = pd.read_sql(query, con=engine)
@@ -125,7 +133,7 @@ def uploaded_data():
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def uploaded_cols(): 
-    uploaded_data_df = uploaded_data()
+    uploaded_data_df = preview_data_retreiver()
     all_uploaded_cols = uploaded_data_df.iloc[:, 1:]
     return all_uploaded_cols
 
@@ -147,16 +155,55 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
     
     return flight_data
 
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_charging_data(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+    """
+    The function uses the Charge class to get all the charging data ids and dates in a dictionary of key: value --> charge_date: charge_id. 
+
+    Parameters:
+        date: Boolean value to specify if you only want to return a list of charge dates from the DB.
+
+    Returns:
+        if date is FALSE --> charge_date: dictionary of charge_date: charge_id pairs
+    """
+    charge_var = Charge()
+
+    charge_data = charge_var.get_charge_data_id_and_dates(columns, table)
+    
+    return charge_data
+
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_ground_test_data(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+    """
+    The function uses the Ground class to get all the ground test data ids and dates in a dictionary of key: value --> ground_test_date: ground_test_id. 
+
+    Parameters:
+        date: Boolean value to specify if you only want to return a list of charge dates from the DB.
+
+    Returns:
+        if date is FALSE --> ground_test_date: dictionary of ground_test_date: ground_test_id pairs
+    """
+    ground_test_var = Ground()
+
+    ground_test_data = ground_test_var.get_ground_test_data_id_and_dates(columns, table)
+    
+    return ground_test_data
+
+
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
     new_date = flights.get_last_scraper_runtime().strftime("%b %d, %Y at %I:%M %p")
     return new_date
+
 
 # blue theme color
 blue = "#3459e6"
 grey = "#878787"
 red = "#FF0000"
 light_grey = "#F0F0F0"
+
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_fluid(
@@ -369,32 +416,41 @@ app_ui = ui.page_fluid(
             div(HTML("<hr>")),
             # Column selection panel
             ui.div(
-                # Table header
-                ui.div(
-                    ui.include_css("bootstrap.css"), ui.h3("Most Recent Flight and Weather Data Records"), 
-                    style="margin-top: 2px;"
-                ), 
-                # Dropdown with checkboxes
-                ui.input_selectize(
-                    "selected_cols", 
-                    "Select Columns to Preview", 
-                    choices=list(uploaded_cols().columns), 
-                    multiple=True,
-                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC (%)","Bat 1 SOH (%)", "Bat 1 Max Cell Temp (°C)", "Temperature (°F)", "Visibility (mi)"],width="50%"
-                ),
+                ui.include_css("bootstrap.css"), ui.h3("Most Recent Flight and Weather Data Records"), 
                 style="margin-top:20px;"
-            ),  
-            # Table ouptut
-            ui.div(
-                ui.output_data_frame("uploaded_data_df"),
-                ui.include_css("bootstrap.css"),
-                style="margin-top: 2px; max-height: 3000px;"
-            ),
-            # Display the most recent run time
-            ui.div(
-                ui.div(ui.output_text("most_recent_run")),
-                style="margin-top: 10px;"
-            ),
+            ), 
+            ui.p("          "), 
+            ui.output_text("most_recent_run"),
+            ui.p("          "), 
+            ui.layout_columns(
+                ui.accordion(
+                    ui.accordion_panel(
+                        "Table Column Filters",
+                        ui.output_ui("test_columns")
+                    ),
+                ),
+                ui.div(ui.download_button("downloadData", "Download", width="100%", style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px")),
+                col_widths=(9, 3)
+            ), 
+            ui.p("          "),   
+            ui.layout_columns(
+                ui.accordion(
+                    ui.accordion_panel(
+                        "Table View Filter",
+                        ui.input_selectize("data_granularity", "Select Granularity of Data to View", choices=["Granular", "Aggregate"], selected="Granular"),
+                        ui.input_selectize("data_type_selection", "Select Type of Data to View", choices=["Flight test", "Charging", "Ground test"], multiple=False, selected="Flight test"),
+                        ui.output_ui("data_type_dates"),
+                        ui.input_selectize("total_data_show", "Select Amount of Preview Data", choices=[10, 15, 20], multiple=False, selected=10),
+                        ui.input_action_button("filter_data", "Apply Filters", style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px")
+                    )
+                ),
+                ui.div(
+                    ui.output_data_frame("uploaded_data_df"),
+                    ui.include_css("bootstrap.css"),
+                    style="margin-top: 2px; max-height: 3000px;"
+                ),
+                col_widths=(3, 9)
+            )
         # ===============================================================================================================================================================
         # End: DATA PREVIEW SCREEN
         # ===============================================================================================================================================================
@@ -674,7 +730,7 @@ app_ui = ui.page_fluid(
                         ui.accordion(
                             ui.accordion_panel(
                                 "Flight Date & Time",
-                                ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, selected=list_of_dates[0]),
+                                ui.input_selectize("date_operations", "Choose Flight Date:", get_dates(), multiple=False, selected=get_dates()[0]),
                                 ui.p("          "),
                                 ui.input_selectize(
                                     "flight_time_select", 
@@ -1020,7 +1076,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @output
     @render.data_frame
     def uploaded_data_df():
-        uploaded_data_df = uploaded_data()
+        uploaded_data_df = preview_data_retreiver()
         selected_columns = input.selected_cols()
         if not selected_columns:
             # Return the entire DataFrame as default when no columns are selected
@@ -1038,7 +1094,38 @@ def server(input: Inputs, output: Outputs, session: Session):
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
         return f"Data was last refreshed: {most_recent_run_time}"  
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    # Found yield answer here: https://github.com/posit-dev/py-shiny/issues/476
+    @render.download(filename=lambda: f"test.csv")
+    async def downloadData():
+        await asyncio.sleep(0.25)
+        yield preview_data_retreiver().to_csv()
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.data_type_selection)
+    def data_type_dates():
+        data_type = input.data_type_selection()
+
+        if data_type == "Flight test":
+            return ui.input_selectize("flight_test_date", "Select the Date:", get_flights())
+        elif data_type == "Ground test":
+            return ui.input_selectize("ground_test_date", "Select the Date:", get_ground_test_data())
+        else:
+            return ui.input_selectize("charge_test_date", "Select the Date:", get_charging_data())
+        
     
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.data_granularity)
+    def test_columns():
+        granularity = input.data_granularity()
+
+        if granularity == "Granular":
+            return ui.input_selectize("selected_cols", "Select Columns to Preview", choices=list(uploaded_cols().columns), multiple=True, selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC (%)","Bat 1 SOH (%)", "Bat 1 Max Cell Temp (°C)", "Temperature (°F)", "Visibility (mi)"], width="100%"),
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
