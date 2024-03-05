@@ -76,6 +76,17 @@ custom_variables_columns = {
 }
 custom_variables = list(custom_variables_columns.keys())
 
+# List of variables
+charging_variables_columns = {
+    "Time (min)": ["time_min"], 
+    "State-of-Charge": ["bat_1_soc", "bat_2_soc"], 
+    "State-of-Health": ["bat_1_soh", "bat_2_soh"], 
+    "Average Cell Temperature": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"],
+    "Minimum Cell Temperature": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"],
+    "Maximum Cell Temperature": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"],
+}
+charging_variables = list(charging_variables_columns.keys())
+
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def change_order():
     order_activities = ["pre-flight", "takeoff", "climb", "cruise", "descent", "landing"]
@@ -146,6 +157,23 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
     flight_data = flights.get_flight_id_and_dates(columns, table)
     
     return flight_data
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def get_charging_data(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+    """
+    The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
+
+    Parameters:
+        date: Boolean value to specify if you only want to return a list of flight dates from the DB.
+
+    Returns:
+        if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
+    """
+    charging_sessions = query_flights()
+
+    charging_data = charging_sessions.get_flight_id_and_dates(columns, table, "Charging")
+    
+    return charging_data
 
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
@@ -610,6 +638,55 @@ app_ui = ui.page_fluid(
                       )
                 )
             ),
+            #  ===============================================================================================================================================================
+            # START: CHARGING GRAPHS TAB
+            # ===============================================================================================================================================================
+            ui.nav_panel("Charging Graphs",
+                div(HTML("<h2> Charging Graphs Graph </h2>")),
+                div(HTML("<hr>")),
+                ui.card(
+                    ui.card_header("Welcome to ElectriFly's Charging Graphs Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
+                    ui.p("Our charging graph tool enables you to visualize and selectively explore the charging data for all of the charging sessions."), min_height="130px"
+                ), 
+                div(HTML("<hr>")),
+                ui.layout_columns(
+                    ui.card(
+                        ui.tooltip(
+                            ui.input_selectize("select_charging", "Charging Date and Time:", get_charging_data()), 
+                            "Select the date for which you want to view the data."
+                        ),
+                        ui.tooltip(
+                            ui.input_selectize("select_charging_graph", "Graph Type:", ["Line Plot", "Scatter Plot"]), 
+                            "Select the type of graph you want to see."
+                        )
+                    ),
+                    ui.card(
+                        ui.tooltip(
+                            ui.input_selectize("select_x_charging_variable", "Independent (X) Variable:", charging_variables, selected=charging_variables[0]),
+                            "Select the X (independent) variable on the graph."
+                        ),
+                        ui.tooltip(
+                            ui.input_selectize("select_y_charging_variable", "Dependent (Y) Variable:", charging_variables, selected=charging_variables[3]),
+                            "Lastly select the Y (dependent) variable on the graph."
+                        )
+                    ),
+                    ui.card(
+                        ui.panel_absolute(
+                            ui.output_plot(
+                                "charging_graph",
+                                width="100%",
+                                height='100%'
+                            ),
+                            left="2%",
+                            top="2%",
+                            width="95%",
+                            height='100%',
+                        ),
+                        height='600px'
+                    ),
+                    col_widths=(2, 2, 8)
+                )
+            ),
         ),
         ui.nav_menu("Flight Planning",
             # ===============================================================================================================================================================
@@ -931,6 +1008,25 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # return the number
         return query_result
+    
+     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot()
+    def charging_graph():
+
+        # Get all the inputs
+        flight_id = input.select_charging()
+        graph_type = input.select_charging_graph()
+        x_var_label = input.select_x_charging_variable()
+        y_var_label = input.select_y_charging_variable()
+        x_variables = charging_variables_columns[x_var_label]
+        y_variables = charging_variables_columns[y_var_label]
+
+        # Make the graph
+        created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
+
+        # Return the custom graph
+        return created_custom_graph  
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: DATA ANALYSIS SCREEN 

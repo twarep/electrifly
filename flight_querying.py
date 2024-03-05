@@ -71,17 +71,24 @@ class query_flights:
     
 
     # Get Flights Function -----------------------------------------------------------------------------------------------------------------
-    def get_flights(self, columns: list, table):
+    def get_flights(self, columns: list, table, flight_type=None):
         """
         The function runs the following query: SELECT {columns} FROM {table}. This gets all the flight id's and dates of the flight.
         """
 
         # Make query
-        if len(columns) == 0:
-            query = f"SELECT * FROM {table}"
+        if flight_type == None:
+          if len(columns) == 0:
+              query = f"SELECT * FROM {table}"
+          else:
+              str_column = "".join([f"{column}, " for column in columns])[:-2]
+              query = f"SELECT {str_column} FROM {table}"
         else:
-            str_column = "".join([f"{column}, " for column in columns])[:-2]
-            query = f"SELECT {str_column} FROM {table}"
+            if len(columns) == 0:
+              query = f"SELECT * FROM {table} WHERE flight_type='{flight_type}'"
+            else:
+              str_column = "".join([f"{column}, " for column in columns])[:-2]
+              query = f"SELECT {str_column} FROM {table} WHERE flight_type='{flight_type}'"
 
         # Make database connection
         engine = self.__connect()
@@ -273,7 +280,7 @@ class query_flights:
 
 
     # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
-    def get_flight_id_and_dates(self, columns, table):
+    def get_flight_id_and_dates(self, columns, table, flight_type=None):
         """
         Function gets all flight ids and dates and returns a dictionary of flight_id : flight_date 
         """
@@ -282,7 +289,10 @@ class query_flights:
         flight_dict = {}
 
         # Get all the flights
-        flights_df = self.get_flights(columns, table)
+        if flight_type == None:
+          flights_df = self.get_flights(columns, table)
+        else:
+          flights_df = self.get_flights(columns, table, flight_type)
 
         # Change to Numpy
         ids = flights_df[columns[0]].to_numpy()
