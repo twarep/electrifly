@@ -139,7 +139,7 @@ def uploaded_cols():
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+def get_flights(flight_type="Flight test", columns=["id", "flight_date", "flight_time_utc"], table="flights"):
     """
     The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
 
@@ -151,7 +151,7 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
     """
     flights = query_flights()
 
-    flight_data = flights.get_flight_id_and_dates(columns, table)
+    flight_data = flights.get_flight_id_and_dates(flight_type, columns, table)
     
     return flight_data
 
@@ -1108,13 +1108,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.data_type_selection)
     def data_type_dates():
         data_type = input.data_type_selection()
-
-        if data_type == "Flight test":
-            return ui.input_selectize("flight_test_date", "Select the Date:", get_flights())
-        elif data_type == "Ground test":
-            return ui.input_selectize("ground_test_date", "Select the Date:", get_ground_test_data())
-        else:
-            return ui.input_selectize("charge_test_date", "Select the Date:", get_charging_data())
+        return ui.input_selectize("flight_test_date", "Select the Date:", get_flights(flight_type=data_type))
         
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
