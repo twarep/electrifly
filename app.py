@@ -733,7 +733,7 @@ app_ui = ui.page_fluid(
                                         ui.tooltip(
                                             ui.input_action_button(
                                                 "delete_selected_activity", 
-                                                "Delete Row", 
+                                                "Delete activity", 
                                                 style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
                                             ),
                                             "Delete any single selected row in the table below."
