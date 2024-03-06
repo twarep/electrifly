@@ -430,7 +430,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("<h4> Flight Graphs </h4>")),
                 ui.layout_columns(
-                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights()),
+                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights_stats()),
                     col_widths=(3)
                 ),
                 ui.p("          "),
@@ -460,7 +460,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("<h4> Time Graphs </h4>")),
                 ui.layout_columns(
-                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True),
+                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights_stats(), multiple=True),
                     col_widths=(3)
                 ),
                 ui.p("          "),
