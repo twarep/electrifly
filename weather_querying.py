@@ -33,7 +33,7 @@ class query_weather:
         engine = self.connect()
 
         query = f"""SELECT weather.weather_time_utc AS "Time (UTC)", 
-                          weather.temperature AS "Temperature (°C)", 
+                          weather.temperature AS "Temperature (°F)", 
                           weather.wind_speed AS "Wind Speed (knots)", 
                           weather.wind_direction AS "Wind Direction (Degrees)", 
                           weather.visibility AS "Visibility (Mi)"
