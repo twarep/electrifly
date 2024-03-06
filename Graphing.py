@@ -361,3 +361,53 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
 
     # Return the axis
     return custom_figure
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def charging_graph_creation(graph_type: str, flight_id, x_variable: str, y_variable: str, x_label: str, y_label: str):
+
+    # Make the query connection
+    flight_db_conn = query_flights()
+    # Get data from x-variables
+    if x_variable[0] == "temperature":
+      query_result = flight_db_conn.get_temperature_on_id(flight_id)
+    else:
+      query_result = flight_db_conn.get_flight_data_on_id(x_variable, flight_id)
+
+    if len(x_variable) == 2:
+        x_ax_data = (query_result[x_variable[0]].to_numpy() + query_result[x_variable[1]].to_numpy()) / 2
+    else:
+        x_ax_data = query_result[x_variable].to_numpy()
+
+    # Get data from y-variables if they are not the same as the x-variables
+    if y_variable != x_variable:
+        if y_variable[0] == "temperature":
+            query_result = flight_db_conn.get_temperature_on_id(flight_id)
+        else:
+            query_result = flight_db_conn.get_flight_data_on_id(y_variable, flight_id)
+    
+    if len(y_variable) == 2:
+        print(query_result)
+        y_ax_data = (query_result[y_variable[0]].to_numpy() + query_result[y_variable[1]].to_numpy()) / 2
+    else:
+        y_ax_data = query_result[y_variable].to_numpy()
+
+    # Set Plot
+    custom_figure = plt.figure(figsize=(6, 6))
+    custom_figure.tight_layout()
+
+    # For each graph type graph different things.
+    print(x_ax_data)
+    print(y_ax_data)
+    if graph_type == "Line Plot":
+        plt.plot(x_ax_data, y_ax_data)
+
+    elif graph_type == "Scatter Plot":
+        plt.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.05, c='blue')
+    
+    # Add labels and legend to plot
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(f"{x_label} vs {y_label}")
+
+    # Return the axis
+    return custom_figure

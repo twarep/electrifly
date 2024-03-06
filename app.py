@@ -84,6 +84,7 @@ charging_variables_columns = {
     "Average Cell Temperature": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"],
     "Minimum Cell Temperature": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"],
     "Maximum Cell Temperature": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"],
+    "Temperature": ["temperature"],
 }
 charging_variables = list(charging_variables_columns.keys())
 
@@ -1023,7 +1024,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         y_variables = charging_variables_columns[y_var_label]
 
         # Make the graph
-        created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
+        created_custom_graph = Graphing.charging_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
 
         # Return the custom graph
         return created_custom_graph  
