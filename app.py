@@ -147,6 +147,22 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
     
     return flight_data
 
+def get_flights_stats(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+    """
+    The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
+
+    Parameters:
+        date: Boolean value to specify if you only want to return a list of flight dates from the DB.
+
+    Returns:
+        if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
+    """
+    flights = query_flights()
+
+    flight_data = flights.get_flight_id_and_dates_stats(columns, table)
+    
+    return flight_data
+
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
     new_date = flights.get_last_scraper_runtime().strftime("%b %d, %Y at %I:%M %p")
@@ -414,7 +430,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("<h4> Flight Graphs </h4>")),
                 ui.layout_columns(
-                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights()),
+                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights_stats()),
                     col_widths=(3)
                 ),
                 ui.p("          "),
@@ -444,7 +460,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("<h4> Time Graphs </h4>")),
                 ui.layout_columns(
-                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True),
+                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights_stats(), multiple=True),
                     col_widths=(3)
                 ),
                 ui.p("          "),
@@ -542,7 +558,7 @@ app_ui = ui.page_fluid(
                     ui.p("Discover valuable insights into the heart of the e-plane — the battery. Explore how different aircraft maneuvers affect the battery’s state of charge through detailed statistical visualizations. Additionally, monitor the battery's health over time, enabling you to derive actionable insights and enhance your decision-making processes."), min_height="130px"
                 ), 
                 div(HTML("<hr>")),
-                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights_stats()),
                 ui.p("          "),
                 ui.row(
                     ui.column(6,
