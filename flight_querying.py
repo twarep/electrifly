@@ -92,6 +92,30 @@ class query_flights:
 
         return flights
     
+    # Get Flights Function Stats-----------------------------------------------------------------------------------------------------------------
+    def get_flights_stats(self, columns: list, table):
+        """
+        The function runs the following query: SELECT {columns} FROM {table} WHERE flight_type NOT IN ('Charging', 'Ground test') . This gets all the flight id's and dates of the flight.
+        """
+
+        # Make query
+        if len(columns) == 0:
+            query = f"SELECT * FROM {table}"
+        else:
+            str_column = "".join([f"{column}, " for column in columns])[:-2]
+            query = f"SELECT {str_column} FROM {table} WHERE flight_type IN ('Flight test')"
+
+        # Make database connection
+        engine = self.__connect()
+
+        # Select the data based on the query
+        flights = pd.read_sql_query(query, engine)
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        return flights
+    
     # get all Flight IDs ------------------------------------------------------------------------------------------------------------
     def get_flight_ids(self):
         """
@@ -303,6 +327,40 @@ class query_flights:
             flight_dict[id] = date
 
         return flight_dict
+
+    # Get Flight Id and Dates Function for Stats Graph (exclude ground test and charge data)---------------------------------------------------------------------------------------------------
+    def get_flight_id_and_dates_stats(self, columns, table):
+        """
+        Function gets all flight ids and dates and returns a dictionary of flight_id : flight_date 
+        """
+
+        # Initialize the dictionary
+        flight_dict = {}
+
+        # Get all the flights
+        flights_df = self.get_flights_stats(columns, table)
+
+        # Change to Numpy
+        ids = flights_df[columns[0]].to_numpy()
+        flight_dates = flights_df[columns[1]].to_numpy()
+
+        if len(columns) > 2:
+            flight_times = flights_df[columns[2]].to_numpy()
+            datetimes = [datetime.combine(flight_dates[i], flight_times[i]) - relativedelta(hours=5) for i in range(len(flight_dates))]
+
+        # Loop over all the flight dates to input into dictionary
+        for i in range(len(flight_dates)):
+            
+            # Create a string object to show the date in mm/dd/year format. Create Key: Value relation.
+            if len(columns) > 2:
+                date = datetimes[i].strftime("%b %d, %Y at %I:%M %p")
+            else:
+                date = flight_dates[i].strftime("%B %d, %Y")
+
+            id = str(ids[i])
+            flight_dict[id] = date
+
+        return flight_dict    
     
 
     # Get Flight Id, SOC, and Time (in minutes) Function --------------------------------------------------------------------------------

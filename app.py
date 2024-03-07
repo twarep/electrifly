@@ -29,7 +29,7 @@ flight_operation_dictionary = {
     "Activity": [], 
     "Time (mins)": [], 
     "SOH (%)": [],
-    "Incrementing Altitude (m)": [],
+    "Altitude Gain/Loss (ft)": [],
     "Ground Speed (knots)": [],
     "Motor Power (KW)": [],
     "SOC (%)": [],
@@ -192,6 +192,23 @@ def get_ground_test_data(columns=["id", "flight_date", "flight_time_utc"], table
     return ground_test_data
 
 
+def get_flights_stats(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+    """
+    The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
+
+    Parameters:
+        date: Boolean value to specify if you only want to return a list of flight dates from the DB.
+
+    Returns:
+        if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
+    """
+    flights = query_flights()
+
+    flight_data = flights.get_flight_id_and_dates_stats(columns, table)
+    
+    return flight_data
+
+
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
     new_date = flights.get_last_scraper_runtime().strftime("%b %d, %Y at %I:%M %p")
@@ -248,9 +265,9 @@ app_ui = ui.page_fluid(
                                 </p> 
                                 <br>
                                 <p>
-                                  Our team is working with Pipistrel Velis Electro, the world’s first fully operational 
+                                  Our team is using data from the Pipistrel Velis Electro, the world’s first type certified 
                                   electric plane. Our platform enables researchers to analyze flight data and create a battery 
-                                  management system for the optimal operation of the electric plane. Leveraging machine learning,
+                                  management strategy for the optimal operation of the electric plane. Leveraging machine learning,
                                   ElectriFly optimizes flight schedules based on weather forecasts and improves flight planning by
                                   predicting battery consumption.
                                 </p>
@@ -470,7 +487,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("<h4> Flight Graphs </h4>")),
                 ui.layout_columns(
-                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights()),
+                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights_stats()),
                     col_widths=(3)
                 ),
                 ui.p("          "),
@@ -500,7 +517,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("<h4> Time Graphs </h4>")),
                 ui.layout_columns(
-                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True),
+                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights_stats(), multiple=True),
                     col_widths=(3)
                 ),
                 ui.p("          "),
@@ -598,7 +615,7 @@ app_ui = ui.page_fluid(
                     ui.p("Discover valuable insights into the heart of the e-plane — the battery. Explore how different aircraft maneuvers affect the battery’s state of charge through detailed statistical visualizations. Additionally, monitor the battery's health over time, enabling you to derive actionable insights and enhance your decision-making processes."), min_height="130px"
                 ), 
                 div(HTML("<hr>")),
-                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights_stats()),
                 ui.p("          "),
                 ui.row(
                     ui.column(6,
@@ -789,7 +806,7 @@ app_ui = ui.page_fluid(
                                         ui.tooltip(
                                             ui.input_action_button(
                                                 "delete_selected_activity", 
-                                                "Delete Row", 
+                                                "Delete activity", 
                                                 style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
                                             ),
                                             "Delete any single selected row in the table below."
@@ -1005,6 +1022,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         Returns 
             power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """
+        
         # Get all flight data
         flight_id = input.statistical_time()
         activities_filter = input.select_activities()
@@ -1367,7 +1385,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             flight_operation_dictionary["Activity"].append(operation)
             flight_operation_dictionary["Time (mins)"].append(act_time)
             flight_operation_dictionary["SOH (%)"].append(act_soh)
-            flight_operation_dictionary["Incrementing Altitude (m)"].append(act_alt)
+            flight_operation_dictionary["Altitude Gain/Loss (ft)"].append(act_alt)
             flight_operation_dictionary["Ground Speed (knots)"].append(act_groundspeed)
             flight_operation_dictionary["Motor Power (KW)"].append(act_power)
             flight_operation_dictionary["SOC (%)"].append(predicted_soc)
@@ -1397,7 +1415,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 del flight_operation_dictionary["Activity"][row_id]
                 del flight_operation_dictionary["Time (mins)"][row_id]
                 del flight_operation_dictionary["SOH (%)"][row_id]
-                del flight_operation_dictionary["Incrementing Altitude (m)"][row_id]
+                del flight_operation_dictionary["Altitude Gain/Loss (ft)"][row_id]
                 del flight_operation_dictionary["Ground Speed (knots)"][row_id]
                 del flight_operation_dictionary["Motor Power (KW)"][row_id]
                 del flight_operation_dictionary["SOC (%)"][row_id]
