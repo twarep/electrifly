@@ -26,7 +26,7 @@ flight_operation_dictionary = {
     "Activity": [], 
     "Time (mins)": [], 
     "SOH (%)": [],
-    "Incrementing Altitude (m)": [],
+    "Altitude Gain/Loss (ft)": [],
     "Ground Speed (knots)": [],
     "Motor Power (KW)": [],
     "SOC (%)": [],
@@ -217,9 +217,9 @@ app_ui = ui.page_fluid(
                                 </p> 
                                 <br>
                                 <p>
-                                  Our team is working with Pipistrel Velis Electro, the world’s first fully operational 
+                                  Our team is using data from the Pipistrel Velis Electro, the world’s first type certified 
                                   electric plane. Our platform enables researchers to analyze flight data and create a battery 
-                                  management system for the optimal operation of the electric plane. Leveraging machine learning,
+                                  management strategy for the optimal operation of the electric plane. Leveraging machine learning,
                                   ElectriFly optimizes flight schedules based on weather forecasts and improves flight planning by
                                   predicting battery consumption.
                                 </p>
@@ -749,7 +749,7 @@ app_ui = ui.page_fluid(
                                         ui.tooltip(
                                             ui.input_action_button(
                                                 "delete_selected_activity", 
-                                                "Delete Row", 
+                                                "Delete activity", 
                                                 style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
                                             ),
                                             "Delete any single selected row in the table below."
@@ -965,6 +965,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         Returns 
             power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """
+        
         # Get all flight data
         flight_id = input.statistical_time()
         activities_filter = input.select_activities()
@@ -1302,7 +1303,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             flight_operation_dictionary["Activity"].append(operation)
             flight_operation_dictionary["Time (mins)"].append(act_time)
             flight_operation_dictionary["SOH (%)"].append(act_soh)
-            flight_operation_dictionary["Incrementing Altitude (m)"].append(act_alt)
+            flight_operation_dictionary["Altitude Gain/Loss (ft)"].append(act_alt)
             flight_operation_dictionary["Ground Speed (knots)"].append(act_groundspeed)
             flight_operation_dictionary["Motor Power (KW)"].append(act_power)
             flight_operation_dictionary["SOC (%)"].append(predicted_soc)
@@ -1332,7 +1333,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 del flight_operation_dictionary["Activity"][row_id]
                 del flight_operation_dictionary["Time (mins)"][row_id]
                 del flight_operation_dictionary["SOH (%)"][row_id]
-                del flight_operation_dictionary["Incrementing Altitude (m)"][row_id]
+                del flight_operation_dictionary["Altitude Gain/Loss (ft)"][row_id]
                 del flight_operation_dictionary["Ground Speed (knots)"][row_id]
                 del flight_operation_dictionary["Motor Power (KW)"][row_id]
                 del flight_operation_dictionary["SOC (%)"][row_id]
