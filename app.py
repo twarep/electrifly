@@ -110,14 +110,14 @@ def uploaded_data():
     uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%b %d, %Y at %I:%M %p")
     # Convert the 'flight_date' column back to a string
     uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%b %d, %Y")
+
     # Rename columns to be human readable
-    readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current (amp)','Bat 1 Voltage (volts)','Bat 2 Current (amp)','Bat 2 Voltage (volts)','Bat 1 SOC (%)','Bat 2 SOC (%)',
-                        'Bat 1 SOH (%)', 'Bat 2 SOH (%)', 'Bat 1 Min Cell Temp (°C)', 'Bat 2 Min Cell Temp (°C)', 'Bat 1 Max Cell Temp (°C)', 'Bat 2 Max Cell Temp (°C)', 'Bat 1 Avg Cell Temp (°C)', 'Bat 2 Avg Cell Temp (°C)', 'Bat 1 Min Cell Volt (volts)', 'Bat 2 Min Cell Volt (volts)',
-                        'Bat 1 Max Cell Volt (volts)', 'Bat 2 Max Cell Volt (volts)', 'Requested Torque (Nm)', 'Motor RPM (rpm)', 'Motor Power (KW)', 'Motor Temp (°C)', 'Indicated Air Speed (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)',
-                        'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)', 'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp (Seconds)',
-                        'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint (°F)',
-                        'Relative Humidity (%)','Wind Direction (Degrees)', 'Wind Speed (knots)', 'Pressure Altimeter (in)','Sea Level Pressure (mbar)', 'Visibility (mi)', 'Wind Gust (knots)', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
-                        'Sky Coverage 4', 'Sky Level 1 (ft)', 'Sky Level 2 (ft)','Sky Level 3 (ft)','Sky Level 4 (ft)','Weather Codes', 'Metar']
+    readable_columns = ['Fw Flight ID', 'Flight Date', 'Flight Time (UTC)', 'Flight Type', 'Total Weight', 'Weather ID', 'Weather Date', 'Weather Time (UTC)', 'Temperature (°C)', 'Dewpoint (°C)', 'Relative Humidity (%)', 'Wind Direction (Degrees)', 'Wind Speed (knots)',
+                    'Pressure Altimeter (in)', 'Sea Level Pressure (mbar)', 'Visibility (mi)', 'Wind Gust (knots)', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 'Sky Coverage 4', 'Sky Level 1 (ft)', 'Sky Level 2 (ft)', 'Sky Level 3 (ft)', 'Sky Level 4 (ft)',
+                    'Weather Codes', 'METAR', 'Flight ID', 'Time (Min)', 'Bat 1 Current (A)', 'Bat 1 Voltage (V)', 'Bat 2 Current (A)', 'Bat 2 Voltage (V)', 'Bat 1 SOC (%)', 'Bat 2 SOC (%)', 'Bat 1 SOH (%)', 'Bat 2 SOH (%)', 'Bat 1 Min Cell Temp (°C)', 'Bat 2 Min Cell Temp (°C)',
+                    'Bat 1 Max Cell Temp (°C)', 'Bat 2 Max Cell Temp (°C)', 'Bat 1 Avg Cell Temp (°C)', 'Bat 2 Avg Cell Temp (°C)', 'Bat 1 Min Cell Volt (V)', 'Bat 2 Min Cell Volt (V)', 'Bat 1 Max Cell Volt (V)', 'Bat 2 Max Cell Volt (V)', 'Requested Torque (Nm)', 'Motor RPM (rpm)',
+                    'Motor Power (KW)', 'Motor Temp (°C)', 'IAS (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)', 'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)',
+                    'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp', 'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'OAT (°C)', 'ISO Leakage Current', 'Difference Between Flight and Weather Time (min)', 'Index']
     uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
     engine.dispose()
     return uploaded_data_df
