@@ -198,19 +198,22 @@ class query_flights:
         return flight_data
     
 
-    def get_flight_weather_aggregate(self, granularity: str, flight_id: str, limit: int):
+    def get_flight_by_column_dict(self, flight_id: int, columns_dict: dict):
 
         # Get the connection
         engine = self.__connect()
 
-        # Get readable columns
-        readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current (amp)','Bat 1 Voltage (volts)','Bat 2 Current (amp)','Bat 2 Voltage (volts)','Bat 1 SOC (%)','Bat 2 SOC (%)',
-                        'Bat 1 SOH (%)', 'Bat 2 SOH (%)', 'Bat 1 Min Cell Temp (°C)', 'Bat 2 Min Cell Temp (°C)', 'Bat 1 Max Cell Temp (°C)', 'Bat 2 Max Cell Temp (°C)', 'Bat 1 Avg Cell Temp (°C)', 'Bat 2 Avg Cell Temp (°C)', 'Bat 1 Min Cell Volt (volts)', 'Bat 2 Min Cell Volt (volts)',
-                        'Bat 1 Max Cell Volt (volts)', 'Bat 2 Max Cell Volt (volts)', 'Requested Torque (Nm)', 'Motor RPM (rpm)', 'Motor Power (KW)', 'Motor Temp (°C)', 'Indicated Air Speed (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)',
-                        'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)', 'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp (Seconds)',
-                        'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint (°F)',
-                        'Relative Humidity (%)','Wind Direction (Degrees)', 'Wind Speed (knots)', 'Pressure Altimeter (in)','Sea Level Pressure (mbar)', 'Visibility (mi)', 'Wind Gust (knots)', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
-                        'Sky Coverage 4', 'Sky Level 1 (ft)', 'Sky Level 2 (ft)','Sky Level 3 (ft)','Sky Level 4 (ft)','Weather Codes', 'Metar']
+        # Get the columns in order and make the query
+        str_column = "".join([f"{value[0]} AS \"{key}\", " if len(value) == 1 else f"({value[0]}+{value[1]})/2 AS \"{key}\", " for key, value in list(columns_dict.items())])[:-2]
+        query = f"""SELECT {str_column} 
+                    FROM flightdata_{flight_id};"""
+        
+        # Select the data based on the query
+        flight_df = pd.read_sql_query(query, engine)
+
+        # Dispose and return
+        engine.dispose()
+        return flight_df
 
 
     # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
