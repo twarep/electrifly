@@ -24,45 +24,45 @@ from pathlib import Path
 import asyncio
 from math import ceil, floor
 
-# Global variable to hold the flight operations.
-flight_operation_dictionary = {
-    "Activity": [], 
-    "Time (mins)": [], 
-    "SOH (%)": [],
-    "Altitude Gain/Loss (ft)": [],
-    "Ground Speed (knots)": [],
-    "Motor Power (KW)": [],
-    "SOC (%)": [],
-}
-
-# initialize the different type of stuff done on plane testing.
-flights = query_flights()
-
-# Get the list of activities from labeled_activities_view
-list_of_activities = flights.get_flight_activities()
-
-# List of variables
-custom_variables_columns = {
+# List of custom aggregate variables
+custom_aggregate_variables_dict = {
     "Time (min)": ["time_min"], 
-    "Current": ["bat_1_current", "bat_2_current"], 
-    "Voltage": ["bat_1_voltage", "bat_2_voltage"], 
-    "State-of-Charge": ["bat_1_soc", "bat_2_soc"], 
-    "State-of-Health": ["bat_1_soh", "bat_2_soh"], 
-    "Average Cell Temperature": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"],
-    "Minimum Cell Temperature": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"],
-    "Maximum Cell Temperature": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"],
-    "Minimum Cell Volt": ["bat_1_min_cell_volt", "bat_2_min_cell_volt"],
-    "Maximum Cell Volt": ["bat_1_max_cell_volt", "bat_2_max_cell_volt"],
-    "Inverter Cooling Temperature": ["inverter_cooling_temp_1", "inverter_cooling_temp_1"],
-    "Motor RPM": ["motor_rpm"],
-    "Motor Power": ["motor_power"],
-    "Motor Temperature": ["motor_temp"],
-    "Requested Torque": ["requested_torque"],
-    "Indicated Air Speed": ["ias"],
-    "Pressure Altitude": ["pressure_alt"],
+    "Current (Amp)": ["bat_1_current", "bat_2_current"], 
+    "Voltage (Volts)": ["bat_1_voltage", "bat_2_voltage"], 
+    "State-of-Charge (%)": ["bat_1_soc", "bat_2_soc"], 
+    "State-of-Health (%)": ["bat_1_soh", "bat_2_soh"], 
+    "Motor Power (KW)": ["motor_power"], 
+    "Ground Speed (Knots)": ["ground_speed"], 
+    "Pressure Altitude (Meters)": ["pressure_alt"],
+    "Average Cell Temperature (°C)": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"], 
+    "Minimum Cell Temperature (°C)": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"], 
+    "Maximum Cell Temperature (°C)": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"], 
+    "Minimum Cell Volt (Volts)": ["bat_1_min_cell_volt", "bat_2_min_cell_volt"], 
+    "Maximum Cell Volt (Volts)": ["bat_1_max_cell_volt", "bat_2_max_cell_volt"], 
+    "Inverter Cooling Temperature (°C)": ["inverter_cooling_temp_1", "inverter_cooling_temp_1"], 
+    "Motor RPM (rpm)": ["motor_rpm"], 
+    "Motor Temperature (°C)": ["motor_temp"], 
+    "Requested Torque (Nm)": ["requested_torque"], 
+    "Indicated Air Speed (Knots)": ["ias"], 
+    "Latitude (Degrees)": ["lat"], 
+    "Longitude (Degrees)": ["lng"]
 }
-custom_variables = list(custom_variables_columns.keys())
+custom_aggregate_variables = list(custom_aggregate_variables_dict.keys())
 
+
+# # List of custom granular variables
+# custom_granular_variables = {"Flight ID": ["flight_id"], "Time (Min)": ["time_min"],
+#                         'Bat 1 Current (amp)': ["bat_1_current"], 'Bat 2 Current (amp)': ["bat_2_current"], 
+#                         'Bat 1 Voltage (volts)': ["bat_1_voltage"], 'Bat 2 Voltage (volts)': ["bat_2_voltage"],
+#                         'Bat 1 SOC (%)': ["bat_1_soc"], 'Bat 2 SOC (%)': ["bat_2_soc"], 'Bat 1 SOH (%)': ["bat_1_soh"], 'Bat 2 SOH (%)': ["bat_2_soh"], 
+#                         'Bat 1 Min Cell Temp (°C)': ["bat_1_min_cell_temp"], 'Bat 2 Min Cell Temp (°C)': ["bat_2_min_cell_temp"], 
+#                         'Bat 1 Max Cell Temp (°C)': ["bat_1_max_cell_temp"], 'Bat 2 Max Cell Temp (°C)': ["bat_2_max_cell_temp"], 
+#                         'Bat 1 Avg Cell Temp (°C)': ["bat_1_avg_cell_temp"], 'Bat 2 Avg Cell Temp (°C)': ["bat_2_avg_cell_temp"], 
+#                         'Bat 1 Min Cell Volt (volts)': ["bat_1_min_cell_volt"], 'Bat 2 Min Cell Volt (volts)': ["bat_2_min_cell_volt"], 
+#                         'Bat 1 Max Cell Volt (volts)': ["bat_1_max_cell_volt"], 'Bat 2 Max Cell Volt (volts)': ["bat_2_max_cell_volt"], 
+#                         'Requested Torque (Nm)', 'Motor RPM (rpm)', 'Motor Power (KW)', 'Motor Temp (°C)', 'Indicated Air Speed (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)',
+#                         'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)', 'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp (Seconds)',
+#                         'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'Outside Air Temperature (°C)', 'ISO Leakage Current'}
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 # Getting the dates to be used in the ML UI:
@@ -86,10 +86,17 @@ def get_dates():
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def change_order():
+    # initialize flight querying and get list of uniqye activities
+    flight_conn = query_flights()
+    list_of_activities = flight_conn.get_flight_activities()
+
+    # Set the activity order and add all other activities aside from NA and TBD
     order_activities = ["pre-flight", "takeoff", "climb", "cruise", "descent", "landing"]
     for activity in list_of_activities:
         if activity not in order_activities and activity not in ["NA", "TBD"]:
             order_activities.append(activity)
+        
+    # Return the ordered activity
     return order_activities
 
 
@@ -156,62 +163,11 @@ def get_flights(flight_type="Flight test", columns=["id", "flight_date", "flight
     return flight_data
 
 
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_charging_data(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
-    """
-    The function uses the Charge class to get all the charging data ids and dates in a dictionary of key: value --> charge_date: charge_id. 
-
-    Parameters:
-        date: Boolean value to specify if you only want to return a list of charge dates from the DB.
-
-    Returns:
-        if date is FALSE --> charge_date: dictionary of charge_date: charge_id pairs
-    """
-    charge_var = Charge()
-
-    charge_data = charge_var.get_charge_data_id_and_dates(columns, table)
-    
-    return charge_data
-
-
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_ground_test_data(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
-    """
-    The function uses the Ground class to get all the ground test data ids and dates in a dictionary of key: value --> ground_test_date: ground_test_id. 
-
-    Parameters:
-        date: Boolean value to specify if you only want to return a list of charge dates from the DB.
-
-    Returns:
-        if date is FALSE --> ground_test_date: dictionary of ground_test_date: ground_test_id pairs
-    """
-    ground_test_var = Ground()
-
-    ground_test_data = ground_test_var.get_ground_test_data_id_and_dates(columns, table)
-    
-    return ground_test_data
-
-
-def get_flights_stats(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
-    """
-    The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
-
-    Parameters:
-        date: Boolean value to specify if you only want to return a list of flight dates from the DB.
-
-    Returns:
-        if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
-    """
-    flights = query_flights()
-
-    flight_data = flights.get_flight_id_and_dates_stats(columns, table)
-    
-    return flight_data
-
-
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
-    new_date = flights.get_last_scraper_runtime().strftime("%b %d, %Y at %I:%M %p")
+    # initialize flight querying and get list of uniqye activities
+    flight_conn = query_flights()
+    new_date = flight_conn.get_last_scraper_runtime().strftime("%b %d, %Y at %I:%M %p")
     return new_date
 
 
@@ -487,7 +443,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("<h4> Flight Graphs </h4>")),
                 ui.layout_columns(
-                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights_stats()),
+                    ui.input_selectize("singular_flight_date", "Choose Flight Date:", get_flights()),
                     col_widths=(3)
                 ),
                 ui.p("          "),
@@ -517,7 +473,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 div(HTML("<h4> Time Graphs </h4>")),
                 ui.layout_columns(
-                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights_stats(), multiple=True),
+                    ui.input_selectize("multi_select_flight_dates", "Choose Flight Date(s):", get_flights(), multiple=True),
                     col_widths=(3)
                 ),
                 ui.p("          "),
@@ -579,11 +535,11 @@ app_ui = ui.page_fluid(
                     ),
                     ui.card(
                         ui.tooltip(
-                            ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_variables, selected=custom_variables[0]),
+                            ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_aggregate_variables, selected=custom_aggregate_variables[0]),
                             "Select the X (independent) variable on the graph."
                         ),
                         ui.tooltip(
-                            ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_variables, selected=custom_variables[3]),
+                            ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_aggregate_variables, selected=custom_aggregate_variables[3]),
                             "Lastly select the Y (dependent) variable on the graph."
                         )
                     ),
@@ -615,14 +571,14 @@ app_ui = ui.page_fluid(
                     ui.p("Discover valuable insights into the heart of the e-plane — the battery. Explore how different aircraft maneuvers affect the battery’s state of charge through detailed statistical visualizations. Additionally, monitor the battery's health over time, enabling you to derive actionable insights and enhance your decision-making processes."), min_height="130px"
                 ), 
                 div(HTML("<hr>")),
-                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights_stats()),
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
                 ui.p("          "),
                 ui.row(
                     ui.column(6,
                         ui.input_selectize("select_activities", 
                             "Choose activities:", 
-                            list_of_activities, 
-                            selected=list_of_activities, 
+                            change_order(), 
+                            selected=change_order(), 
                             width="500px",
                             multiple=True
                         ),
@@ -908,8 +864,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         graph_type = input.select_graph()
         x_var_label = input.select_x_variable()
         y_var_label = input.select_y_variable()
-        x_variables = custom_variables_columns[x_var_label]
-        y_variables = custom_variables_columns[y_var_label]
+        x_variables = custom_aggregate_variables_dict[x_var_label]
+        y_variables = custom_aggregate_variables_dict[y_var_label]
 
         # Make the graph
         created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
@@ -1115,7 +1071,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     # Found yield answer here: https://github.com/posit-dev/py-shiny/issues/476
-    @render.download(filename=lambda: f"test.csv")
+    @render.download(filename=lambda: f"{str(input.data_type_selection())}-{str(input.data_granularity())}-{str(input.flight_test_date())}.csv")
     async def downloadData():
         await asyncio.sleep(0.25)
         yield preview_data_retreiver().to_csv()
@@ -1149,6 +1105,16 @@ def server(input: Inputs, output: Outputs, session: Session):
     # For the selection of the flight operations.
     table_data_show = reactive.Value(-1)
     new_model = Model()
+    # Global variable to hold the flight operations.
+    flight_operation_dictionary = {
+        "Activity": [], 
+        "Time (mins)": [], 
+        "SOH (%)": [],
+        "Altitude Gain/Loss (ft)": [],
+        "Ground Speed (knots)": [],
+        "Motor Power (KW)": [],
+        "SOC (%)": [],
+    }
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -1297,9 +1263,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(table_data_show)
     def remaining_soc():
 
-        # Get the global flight holder variable
-        global flight_operation_dictionary
-
         # Get the total soc and return it
         total_soc = sum(flight_operation_dictionary["SOC (%)"]) if len(flight_operation_dictionary["SOC (%)"]) != 0 else 0
         soc = round(float(100 - total_soc), 2)
@@ -1317,9 +1280,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(table_data_show)
     def model_predict_output():
 
-        # Get the global flight holder variable
-        global flight_operation_dictionary
-
         # Make it a data frame
         flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
 
@@ -1331,9 +1291,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.add_activity)
     def _():
-
-        # Get the global flight holder variable
-        global flight_operation_dictionary
 
         # Get the reactive variable:
         reactive_var = table_data_show.get() + 1
@@ -1398,9 +1355,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.delete_selected_activity)
     def _():
-
-        # Get the global flight holder variable
-        global flight_operation_dictionary
 
         # Get the specific row from the table
         delete_row_indexes = input.model_predict_output_selected_rows()

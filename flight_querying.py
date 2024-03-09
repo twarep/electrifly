@@ -24,49 +24,6 @@ class query_flights:
 
         return engine
     
-    # Getting the activities -------------------------------------------------------------------------------------------------
-    def get_unique_activity(self):
-        """
-        The function uses psycopg2 to get unique columns
-        """
-
-        # Make database connection
-        engine = self.__connect()
-
-        query_string = "select distinct(activity) from labeled_activities_view order by activity;"
-        df = pd.read_sql_query(query_string, engine)
-        activities = list(df["activity"].to_numpy())
-
-        # Dispose of the connection, so we don't overuse it.
-        engine.dispose()
-
-        # Return the activities
-        return activities
-    
-
-    # Getting the flight data column names -------------------------------------------------------------------------------------------------
-    # From Example 1 here: https://www.geeksforgeeks.org/get-column-names-from-postgresql-table-using-psycopg2/
-    def get_flight_columns(self):
-        """
-        The function uses psycopg2 to get the column name 
-        """
-
-        # Make database connection
-        engine = self.__connect()
-
-        # Make and execute the query
-        sql_query = 'SELECT * FROM flightdata_4620 LIMIT 1'
-        flights = pd.read_sql_query(sql_query, engine)
-
-        # Dispose of the connection, so we don't overuse it.
-        engine.dispose()
-
-        # Save the column names to an array
-        columns = [column for column in flights.columns if column not in ["flight_id"]]
-
-        # Return the columns
-        return columns
-    
 
     # Get Flights Function -----------------------------------------------------------------------------------------------------------------
     def get_flights(self, flight_type: str, columns: list, table):
@@ -92,58 +49,6 @@ class query_flights:
 
         return flights
     
-    # Get Flights Function Stats-----------------------------------------------------------------------------------------------------------------
-    def get_flights_stats(self, columns: list, table):
-        """
-        The function runs the following query: SELECT {columns} FROM {table} WHERE flight_type NOT IN ('Charging', 'Ground test') . This gets all the flight id's and dates of the flight.
-        """
-
-        # Make query
-        if len(columns) == 0:
-            query = f"SELECT * FROM {table}"
-        else:
-            str_column = "".join([f"{column}, " for column in columns])[:-2]
-            query = f"SELECT {str_column} FROM {table} WHERE flight_type IN ('Flight test')"
-
-        # Make database connection
-        engine = self.__connect()
-
-        # Select the data based on the query
-        flights = pd.read_sql_query(query, engine)
-
-        # Dispose of the connection, so we don't overuse it.
-        engine.dispose()
-
-        return flights
-    
-    # get all Flight IDs ------------------------------------------------------------------------------------------------------------
-    def get_flight_ids(self):
-        """
-        The function runs the following query: SELECT id FROM flights. This gets all the flight IDs in the database.
-        """
-        query = "SELECT id FROM flights"
-        engine = self.__connect()
-        flight_ids = pd.read_sql_query(query, engine)
-        engine.dispose()
-        return flight_ids
-    
-    # add flight to flight activities table ------------------------------------------------------------------------------------------------------------
-    def add_flight_activities(self, id: int):
-        """
-        The function runs the following query: INSERT INTO flight_activities (flight_id, time_min) SELECT flight_id, time_min FROM flightdata_<ID>. 
-        This adds the flight with the given id to the flight_activities table
-        """
-        query = f"INSERT INTO flight_activities (flight_id, time_min) SELECT flight_id, time_min FROM flightdata_{str(id)}"
-        execute(query, id)
-
-    # add flight activity to a given flight id and time_min ------------------------------------------------------------------------------------------------------------
-    def add_flight_activity(self, flight_id: int, time_min: float, activity: str):
-        """
-        The function runs the following query: UPDATE flight_activities SET activity={activity} WHERE flight_id={flight_id} AND time_min={time_min}
-        This should be run after a flight is labelled and has activity mappings that need to be pushed to the flight_activities table
-        """
-        query = f"UPDATE flight_activities SET activity='{str(activity)}' WHERE flight_id={str(flight_id)} AND time_min={time_min}"
-        execute(query)
 
     # Get Flight by Id Function ------------------------------------------------------------------------------------------------------------
     def get_flight_by_id(self, id: int):
@@ -293,6 +198,20 @@ class query_flights:
         return flight_data
     
 
+    def get_flight_weather_aggregate(self, granularity: str, flight_id: str, limit: int):
+
+        # Get the connection
+        engine = self.__connect()
+
+        # Get readable columns
+        readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current (amp)','Bat 1 Voltage (volts)','Bat 2 Current (amp)','Bat 2 Voltage (volts)','Bat 1 SOC (%)','Bat 2 SOC (%)',
+                        'Bat 1 SOH (%)', 'Bat 2 SOH (%)', 'Bat 1 Min Cell Temp (°C)', 'Bat 2 Min Cell Temp (°C)', 'Bat 1 Max Cell Temp (°C)', 'Bat 2 Max Cell Temp (°C)', 'Bat 1 Avg Cell Temp (°C)', 'Bat 2 Avg Cell Temp (°C)', 'Bat 1 Min Cell Volt (volts)', 'Bat 2 Min Cell Volt (volts)',
+                        'Bat 1 Max Cell Volt (volts)', 'Bat 2 Max Cell Volt (volts)', 'Requested Torque (Nm)', 'Motor RPM (rpm)', 'Motor Power (KW)', 'Motor Temp (°C)', 'Indicated Air Speed (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)',
+                        'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)', 'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp (Seconds)',
+                        'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint (°F)',
+                        'Relative Humidity (%)','Wind Direction (Degrees)', 'Wind Speed (knots)', 'Pressure Altimeter (in)','Sea Level Pressure (mbar)', 'Visibility (mi)', 'Wind Gust (knots)', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
+                        'Sky Coverage 4', 'Sky Level 1 (ft)', 'Sky Level 2 (ft)','Sky Level 3 (ft)','Sky Level 4 (ft)','Weather Codes', 'Metar']
+
 
     # Get Flight Id and Dates Function ---------------------------------------------------------------------------------------------------
     def get_flight_id_and_dates(self, flight_type, columns, table):
@@ -328,41 +247,7 @@ class query_flights:
 
         return flight_dict
 
-    # Get Flight Id and Dates Function for Stats Graph (exclude ground test and charge data)---------------------------------------------------------------------------------------------------
-    def get_flight_id_and_dates_stats(self, columns, table):
-        """
-        Function gets all flight ids and dates and returns a dictionary of flight_id : flight_date 
-        """
-
-        # Initialize the dictionary
-        flight_dict = {}
-
-        # Get all the flights
-        flights_df = self.get_flights_stats(columns, table)
-
-        # Change to Numpy
-        ids = flights_df[columns[0]].to_numpy()
-        flight_dates = flights_df[columns[1]].to_numpy()
-
-        if len(columns) > 2:
-            flight_times = flights_df[columns[2]].to_numpy()
-            datetimes = [datetime.combine(flight_dates[i], flight_times[i]) - relativedelta(hours=5) for i in range(len(flight_dates))]
-
-        # Loop over all the flight dates to input into dictionary
-        for i in range(len(flight_dates)):
-            
-            # Create a string object to show the date in mm/dd/year format. Create Key: Value relation.
-            if len(columns) > 2:
-                date = datetimes[i].strftime("%b %d, %Y at %I:%M %p")
-            else:
-                date = flight_dates[i].strftime("%B %d, %Y")
-
-            id = str(ids[i])
-            flight_dict[id] = date
-
-        return flight_dict    
     
-
     # Get Flight Id, SOC, and Time (in minutes) Function --------------------------------------------------------------------------------
     def get_flight_soc_and_time(self, flight_ids: list):
         """
@@ -457,6 +342,7 @@ class query_flights:
 
         return flight_dict
     
+
     # Get Flight Id, SOH, SOC rate Function -------------------------------------------------------------------------
     def get_flight_soh_soc_rate(self, id: list):
         """
@@ -486,6 +372,7 @@ class query_flights:
 
         return flight_dict
     
+
     # Get Date, SOH Function -------------------------------------------------------------------------
     def get_flight_soh(self):
         """
@@ -564,13 +451,16 @@ class query_flights:
         return num_circuits
     
 
+    # Function --------------------------------------------------------------------------------
     def get_flight_activities(self):
         """
-            Function that gets a list of all possible unique flight activities from the labeled_activities_view
-            Query: select distinct activity from labeled_activities_view;
+            Function that gets a list of all possible unique flight activities from the flight_activities table
+            Query: select distinct activity from the flight_activities table;
         """
+
+        # Make database connection and the query
         engine = self.__connect()
-        query = f"""select distinct activity from labeled_activities_view;"""
+        query = f"""SELECT DISTINCT(activity) FROM flight_activities;"""
 
         # Put the result of the query in a list
         activities_list = pd.read_sql_query(query, engine).to_numpy().tolist()
@@ -584,12 +474,16 @@ class query_flights:
 
         return result_list
     
+
+    # Function --------------------------------------------------------------------------------
     def get_last_scraper_runtime(self):
         """
             Function that returns the most recent runtime of the scraper
         """
         return select("select * from scraper_last_run")[0]
     
+
+    # Function --------------------------------------------------------------------------------
     def get_soc_roc_stats_by_id(self, flight_id):
         """
         Function that uses a flight id to get the soc rate of change and calculates its stats (min, max, mean, standard deviation, variance). 
@@ -625,6 +519,7 @@ class query_flights:
         statistics_df = df.groupby('Activity')['SOC Rate of Change'].agg(['max', 'min', 'mean', 'std', 'var']).reset_index()
 
         return statistics_df
+
 
     # JOIN ML tables Function ------------------------------------------------------------------------------------------------------------
     def connect_flight_for_ml_data_label(self, flight: int):
@@ -662,6 +557,7 @@ class query_flights:
         # Return the data
         return flight_data
     
+
     # get flight data for labelling ------------------------------------------------------------------------------------------------------------
     def get_flightdata_for_ml_data_label(self, flight: int):
         """
@@ -691,6 +587,7 @@ class query_flights:
         flight_data = pd.read_sql_query(query, engine) 
         engine.dispose()
         return flight_data
+
 
     # JOIN ML tables Function ------------------------------------------------------------------------------------------------------------
     def connect_flight_for_ml_data_prescription(self, flight: int):
