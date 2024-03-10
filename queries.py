@@ -106,123 +106,16 @@ $$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE VIEW flight_weather_data_view AS
-
-with flightweather_joined2 AS (
-    SELECT
-        fw.flight_id,
-        f.flight_date,
-        f.flight_time_utc,
-        f.flight_type,
-        f.total_weight,
-        w.id as weather_id,
-        w.weather_date,
-        w.weather_time_utc,
-        w.temperature,
-        w.dewpoint,
-        w.relative_humidity,
-        w.wind_direction,
-        w.wind_speed,
-        w.pressure_altimeter,
-        w.sea_level_pressure,
-        w.visibility,
-        w.wind_gust,
-        w.sky_coverage_1,
-        w.sky_coverage_2,
-        w.sky_coverage_3,
-        w.sky_coverage_4,
-        w.sky_level_1,
-        w.sky_level_2,
-        w.sky_level_3,
-        w.sky_level_4,
-        w.weather_codes,
-        w.metar
-    FROM
-        flight_weather fw
-    JOIN weather w ON fw.weather_id = w.id
-    join flights f  on f.id = fw.flight_id 
-
-),
-
-duplicate_flightweather_joined2 as (
-	select 
-		fw.flight_id as fw_flight_id,
-		fw.flight_date,
-		fw.flight_time_utc,
-		fw.flight_type,
-		fw.total_weight,
-		fw.weather_id,
-		fw.weather_date,
-		fw.weather_time_utc, 
-		fw.temperature,
-		fw.dewpoint,
-        fw.relative_humidity,
-        fw.wind_direction,
-		fw.wind_speed,
-		fw.pressure_altimeter,
-        fw.sea_level_pressure,
-        fw.visibility,
-        fw.wind_gust,
-        fw.sky_coverage_1,
-        fw.sky_coverage_2,
-        fw.sky_coverage_3,
-        fw.sky_coverage_4,
-        fw.sky_level_1,
-        fw.sky_level_2,
-        fw.sky_level_3,
-        fw.sky_level_4,
-        fw.weather_codes,
-        fw.metar,
-		
-        fd.flight_id as flight_id,
-		fd.time_min, 
-		fd.bat_1_current, 
-		fd.bat_1_voltage, 
-		fd.bat_2_current, 
-		fd.bat_2_voltage, 
-		fd.bat_1_soc, 
-		fd.bat_2_soc, 
-		fd.bat_1_soh, 
-		fd.bat_2_soh, 
-		fd.bat_1_min_cell_temp, 
-		fd.bat_2_min_cell_temp, 
-		fd.bat_1_max_cell_temp, 
-		fd.bat_2_max_cell_temp, 
-		fd.bat_1_avg_cell_temp, 
-		fd.bat_2_avg_cell_temp, 
-		fd.bat_1_min_cell_volt, 
-		fd.bat_2_min_cell_volt, 
-		fd.bat_1_max_cell_volt, 
-		fd.bat_2_max_cell_volt, 
-		fd.requested_torque, 
-		fd.motor_rpm, 
-		fd.motor_power, 
-		fd.motor_temp, 
-		fd.ias, 
-		fd.stall_warn_active, 
-		fd.inverter_temp, 
-		fd.bat_1_cooling_temp, 
-		fd.inverter_cooling_temp_1, 
-		fd.inverter_cooling_temp_2, 
-		fd.remaining_flight_time, 
-		fd.pressure_alt, fd.lat, fd.lng, 
-		fd.ground_speed, fd.pitch, fd.roll, 
-		fd.time_stamp, fd.heading, 
-		fd.stall_diff_pressure, fd.qng, 
-		fd.oat, fd.iso_leakage_current,
-		ABS(EXTRACT(epoch FROM (fw.flight_time_utc + (fd.time_min || ' minutes')::interval  - fw.weather_time_utc) ) / 60) as time_diff_current
-	from flightweather_joined2 fw 
-		join get_flight_data(fw.flight_id) fd(flight_id, time_min, bat_1_current, bat_1_voltage, bat_2_current, bat_2_voltage, bat_1_soc, bat_2_soc, bat_1_soh, bat_2_soh, bat_1_min_cell_temp, bat_2_min_cell_temp, bat_1_max_cell_temp, bat_2_max_cell_temp, bat_1_avg_cell_temp, bat_2_avg_cell_temp, bat_1_min_cell_volt, bat_2_min_cell_volt, bat_1_max_cell_volt, bat_2_max_cell_volt, requested_torque, motor_rpm, motor_power, motor_temp, ias, stall_warn_active, inverter_temp, bat_1_cooling_temp, inverter_cooling_temp_1, inverter_cooling_temp_2, remaining_flight_time, pressure_alt, lat, lng, ground_speed, pitch, roll, time_stamp, heading, stall_diff_pressure, qng, oat, iso_leakage_current)
-		on fw.flight_id = fd.flight_id 
-),
-
-ranked_data as(
-	SELECT *,
-		row_number () OVER(PARTITION BY fw_flight_id, time_min ORDER BY time_diff_current asc) as row_num
-	FROM duplicate_flightweather_joined2
-	order by fw_flight_id asc
-)
-
-select * from ranked_data where row_num = 1;
+SELECT
+    fw.flight_id AS fw_flight_id,
+    ff.flight_date,
+    ff.flight_time_utc,
+    fd.*,
+    w.*
+FROM flight_weather fw
+JOIN flights ff ON fw.flight_id = ff.id
+JOIN weather w ON fw.weather_id = w.id
+JOIN LATERAL get_flight_data(fw.flight_id) fd ON true;
 """
 
 CREATE_FORECAST = """
