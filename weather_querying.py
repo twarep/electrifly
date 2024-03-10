@@ -66,6 +66,3 @@ class query_weather:
 
         return weather_flight_df
         
-
-
-

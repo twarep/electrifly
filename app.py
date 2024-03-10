@@ -415,7 +415,7 @@ app_ui = ui.page_fluid(
                     ),
                     ui.output_ui("flight_preview_columns_choice"),
                     ui.p("          "),
-                    ui.input_selectize("weather_cols", "Select Weather Data Columns", choices=custom_weather_variables, multiple=True, selected=custom_weather_variables[:10], width="100%"),
+                    ui.input_selectize("weather_cols", "Select Weather Data Columns", choices=custom_weather_variables, multiple=True, selected=custom_weather_variables[:5], width="100%"),
                     ui.layout_columns(
                         ui.p("          "),
                         ui.input_action_button("filter_data", "Apply Filters", style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px"),
@@ -1086,9 +1086,34 @@ def server(input: Inputs, output: Outputs, session: Session):
         with ui.Progress(min=1, max=15) as p:
             p.set(message="Calculation in progress", detail="This may take a while...")
 
-            # Get the weather and flight data
+            # get the flight query and all other queries
+            FLIGHT = query_flights()
             weather_data = query_weather().get_weather_data(flight_id, weather_col_dict)
-            flight_data = query_flights().get_flight_by_column_dict(flight_id, flight_col_dict)
+            flight_data = FLIGHT.get_flight_by_column_dict(flight_id, flight_col_dict)
+
+            # Get specific data out of the way
+            flight_first_col = flight_data.iloc[:, 0].to_numpy()
+
+            # If the length of the weather data is just 1. Fill everything like the weather and return.
+            if len(weather_data) == 1:
+                for weather_col in weather_data.columns:
+                    weather_full_data = pd.Series(np.full_like(flight_first_col, weather_data[weather_col][0]))
+                    flight_data = pd.concat([flight_data, weather_full_data], axis=1)
+            else:
+                # split each value
+                test_dict = {}
+                all_arrays = np.split(flight_first_col, len(weather_data))
+                for weather_col in weather_data.columns:
+                    weather_full_data = np.full_like(flight_first_col, 0.0, dtype=np.double)
+                    idx_counter = 0
+                    for i in range(len(all_arrays)):
+                        split = all_arrays[i]
+                        split_len = len(split) + idx_counter
+                        split_weather_data = np.full_like(split, weather_data[weather_col][i])
+                        weather_full_data[idx_counter:split_len] = split_weather_data
+                        idx_counter = split_len
+                    weather_full_data_series = pd.Series(weather_full_data)
+                    flight_data = pd.concat([flight_data, weather_full_data_series], axis=1)
 
         return flight_data.loc[2:limit, :]
 
@@ -1140,9 +1165,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         granularity = input.data_granularity()
 
         if granularity == "Granular":
-            return ui.input_selectize("flight_cols", "Select Flight Data Columns", choices=custom_granular_variables, multiple=True, selected=custom_granular_variables[:10], width="100%")
+            return ui.input_selectize("flight_cols", "Select Flight Data Columns", choices=custom_granular_variables, multiple=True, selected=custom_granular_variables[:5], width="100%")
         else:
-            return ui.input_selectize("flight_cols", "Select Flight Data Columns", choices=custom_aggregate_variables, multiple=True, selected=custom_aggregate_variables[:10], width="100%")
+            return ui.input_selectize("flight_cols", "Select Flight Data Columns", choices=custom_aggregate_variables, multiple=True, selected=custom_aggregate_variables[:5], width="100%")
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
