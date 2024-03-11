@@ -1,12 +1,12 @@
 from shiny import App, render, ui, Inputs, Outputs, Session, reactive
 from htmltools import HTML, css, div
-# from shiny.types import NavSetArg
-# from shiny.types import ImgData
+from shiny.types import NavSetArg
+from shiny.types import ImgData
 from flight_querying import query_flights
 from weather_querying import query_weather
 import Graphing as Graphing
 import shinyswatch
-# import numpy as np
+import numpy as np
 import pandas as pd
 import numpy as np
 from os import getenv
@@ -14,16 +14,17 @@ from dotenv import load_dotenv
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
 from datetime import datetime, timedelta
-# import simulation
-# import shiny.experimental as x
+import simulation
+import shiny.experimental as x
 import faicons as fa
-# from model_querying import Model
+from model_querying import Model
 from pathlib import Path
 import asyncio
-# from math import ceil, floor
+from math import ceil, floor
 
 # List of custom aggregate variables
 custom_aggregate_variables_dict = {
+    "Flight ID": ["flight_id"], 
     "Time (min)": ["time_min"], 
     "Current (Amp)": ["bat_1_current", "bat_2_current"], 
     "Voltage (Volts)": ["bat_1_voltage", "bat_2_voltage"], 
@@ -71,13 +72,10 @@ custom_granular_variables_dict = {"Flight ID": ["flight_id"], "Time (Min)": ["ti
 custom_granular_variables = list(custom_granular_variables_dict.keys())
 
 # List of custom granular variables
-custom_weather_dict = {"Weather ID": ["id"], "Weather Date": ["weather_date"],
-                        'Weather Time (UTC)': ["weather_time_utc"], "Temperature (°F)": ["temperature"], "Dewpoint (°F)": ["dewpoint"], "Relative Humidity (Percent)": ["relative_humidity"],
+custom_weather_dict = {"Temperature (°F)": ["temperature"], "Dewpoint (°F)": ["dewpoint"], "Relative Humidity (Percent)": ["relative_humidity"],
                         "Wind Direction (Degrees)": ["wind_direction"], "Wind Speed (knots)": ["wind_speed"], "Pressure Altimeter (in)": ["pressure_altimeter"],
                         "Sea Level Pressure (mbar)": ["sea_level_pressure"], "Visibility (mi)": ["visibility"], 
-                        "Wind Gust (knots)": ["wind_gust"], "Weather Codes": ["weather_codes"], "Metar": ["metar"],
-                        "Sky Coverage 1": ["sky_coverage_1"], "Sky Coverage 2": ["sky_coverage_2"], "Sky Coverage 3": ["sky_coverage_3"], "Sky Coverage 4": ["sky_coverage_4"], 
-                        "Sky Level 1 (ft)": ["sky_level_1"], "Sky Level 2 (ft)": ["sky_level_2"], "Sky Level 3 (ft)": ["sky_level_3"], "Sky Level 4 (ft)": ["sky_level_4"]
+                        "Wind Gust (knots)": ["wind_gust"], "Sky Level 1 (ft)": ["sky_level_1"], "Sky Level 2 (ft)": ["sky_level_2"], "Sky Level 3 (ft)": ["sky_level_3"], "Sky Level 4 (ft)": ["sky_level_4"]
 }
 custom_weather_variables = list(custom_weather_dict.keys())
 
@@ -549,11 +547,11 @@ app_ui = ui.page_fluid(
                     ),
                     ui.card(
                         ui.tooltip(
-                            ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_aggregate_variables, selected=custom_aggregate_variables[0]),
+                            ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_aggregate_variables, selected=custom_aggregate_variables[1]),
                             "Select the X (independent) variable on the graph."
                         ),
                         ui.tooltip(
-                            ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_aggregate_variables, selected=custom_aggregate_variables[3]),
+                            ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_aggregate_variables, selected=custom_aggregate_variables[4]),
                             "Lastly select the Y (dependent) variable on the graph."
                         )
                     ),
@@ -574,240 +572,240 @@ app_ui = ui.page_fluid(
                     col_widths=(2, 2, 8)
                 )
             ),
-            # # ===============================================================================================================================================================
-            # # START: Statistical Insights TAB
-            # # ===============================================================================================================================================================
-            # ui.nav_panel("Statistical Insights", 
-            #     div(HTML("<h2> Statistical Insights </h2>")),
-            #     div(HTML("<hr>")),
-            #     ui.card(
-            #         ui.card_header("Welcome to ElectriFly's Statistical Insights Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
-            #         ui.p("Discover valuable insights into the heart of the e-plane — the battery. Explore how different aircraft maneuvers affect the battery’s state of charge through detailed statistical visualizations. Additionally, monitor the battery's health over time, enabling you to derive actionable insights and enhance your decision-making processes."), min_height="130px"
-            #     ), 
-            #     div(HTML("<hr>")),
-            #     ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
-            #     ui.p("          "),
-            #     ui.row(
-            #         ui.column(6,
-            #             ui.input_selectize("select_activities", 
-            #                 "Choose activities:", 
-            #                 change_order(), 
-            #                 selected=change_order(), 
-            #                 width="500px",
-            #                 multiple=True
-            #             ),
-            #             div(HTML("<hr>")),
-            #             ui.card(
-            #                 ui.output_table("soc_roc_table"), 
-            #                 max_height="450px"
-            #             ),
-            #         ),
-            #         ui.column(6,
-            #             ui.card(
-            #                 ui.panel_absolute(
-            #                     ui.output_plot(
-            #                         "power_soc_rate_of_change_scatter_plot",
-            #                         width="100%",
-            #                         height='100%'
-            #                     ), 
-            #                     width="95%",
-            #                     height='100%',
-            #                 ),
-            #                 height='600px'
-            #             ),
-            #         )
-            #     ),
-            #     div(HTML("<h2> SOH Insights </h2>")),
-            #     div(HTML("<hr>")),
-            #     ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(), multiple=True),
-            #     ui.p("          "),
-            #     ui.row(
-            #         ui.column(6,
-            #             ui.card(
-            #                 ui.panel_absolute(
-            #                     ui.output_plot(
-            #                         "soh_soc_rate_of_change_scatter_plot",
-            #                         width="100%",
-            #                         height='100%'
-            #                     ), 
-            #                     width="95%",
-            #                     height='100%',
-            #                 ),
-            #                 height='600px'
-            #             ),
-            #         ),
+            # ===============================================================================================================================================================
+            # START: Statistical Insights TAB
+            # ===============================================================================================================================================================
+            ui.nav_panel("Statistical Insights", 
+                div(HTML("<h2> Statistical Insights </h2>")),
+                div(HTML("<hr>")),
+                ui.card(
+                    ui.card_header("Welcome to ElectriFly's Statistical Insights Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
+                    ui.p("Discover valuable insights into the heart of the e-plane — the battery. Explore how different aircraft maneuvers affect the battery’s state of charge through detailed statistical visualizations. Additionally, monitor the battery's health over time, enabling you to derive actionable insights and enhance your decision-making processes."), min_height="130px"
+                ), 
+                div(HTML("<hr>")),
+                ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
+                ui.p("          "),
+                ui.row(
+                    ui.column(6,
+                        ui.input_selectize("select_activities", 
+                            "Choose activities:", 
+                            change_order(), 
+                            selected=change_order(), 
+                            width="500px",
+                            multiple=True
+                        ),
+                        div(HTML("<hr>")),
+                        ui.card(
+                            ui.output_table("soc_roc_table"), 
+                            max_height="450px"
+                        ),
+                    ),
+                    ui.column(6,
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "power_soc_rate_of_change_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ),
+                    )
+                ),
+                div(HTML("<h2> SOH Insights </h2>")),
+                div(HTML("<hr>")),
+                ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(), multiple=True),
+                ui.p("          "),
+                ui.row(
+                    ui.column(6,
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "soh_soc_rate_of_change_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ),
+                    ),
 
-            #         ui.column(6,
-            #             ui.card(
-            #                 ui.panel_absolute(
-            #                     ui.output_plot(
-            #                         "soh_scatter_plot",
-            #                         width="100%",
-            #                         height='100%'
-            #                     ), 
-            #                     width="95%",
-            #                     height='100%',
-            #                 ),
-            #                 height='600px'
-            #             ), 
-            #           )
-            #     )
-            # ),
+                    ui.column(6,
+                        ui.card(
+                            ui.panel_absolute(
+                                ui.output_plot(
+                                    "soh_scatter_plot",
+                                    width="100%",
+                                    height='100%'
+                                ), 
+                                width="95%",
+                                height='100%',
+                            ),
+                            height='600px'
+                        ), 
+                      )
+                )
+            ),
         ),
         # ===============================================================================================================================================================
         # END: DATA ANALYSIS SCREEN
         # ===============================================================================================================================================================
-        # # ===============================================================================================================================================================
-        # # START: FLIGHT PLANNING SCREEN
-        # # ===============================================================================================================================================================
-        # ui.nav_menu("Flight Planning",
-        #     # ===============================================================================================================================================================
-        #     # START: Flight Scheduling TAB
-        #     # ===============================================================================================================================================================
-        #     ui.nav_panel("Flight Scheduling",
-        #         div(HTML("<h2> Flight Scheduling </h2>")),
-        #         div(HTML("<hr>")),
-        #         ui.card(
-        #             ui.card_header("Welcome to ElectriFly's Flight Scheduling Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
-        #             #ui.p
-        #                 div(HTML("""<p>Discover the best flying times for the next 72 hours with our flight scheduling tool. Using Waterloo's forecasted weather data, our tool categorizes each time slot into green, yellow, and red zones, indicating safety levels for flight. Hover over times for detailed safety explanations to inform your flight planning decisions. Happy flying!</p>
+        # ===============================================================================================================================================================
+        # START: FLIGHT PLANNING SCREEN
+        # ===============================================================================================================================================================
+        ui.nav_menu("Flight Planning",
+            # ===============================================================================================================================================================
+            # START: Flight Scheduling TAB
+            # ===============================================================================================================================================================
+            ui.nav_panel("Flight Scheduling",
+                div(HTML("<h2> Flight Scheduling </h2>")),
+                div(HTML("<hr>")),
+                ui.card(
+                    ui.card_header("Welcome to ElectriFly's Flight Scheduling Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
+                    #ui.p
+                        div(HTML("""<p>Discover the best flying times for the next 72 hours with our flight scheduling tool. Using Waterloo's forecasted weather data, our tool categorizes each time slot into green, yellow, and red zones, indicating safety levels for flight. Hover over times for detailed safety explanations to inform your flight planning decisions. Happy flying!</p>
                             
-        #                     <p>🟩 = Safe for flight<br>
-        #                     🟨 = Potentially safe for flight<br>
-        #                     🟥 = Not safe for flight</p>
-        #                     """))
-        #             ,min_height = "250px"
-        #         ),
-        #         ui.row( 
-        #             ui.column(6,
-        #                 div(HTML("<hr>")),
-        #                 div(HTML("<p><b>Three Day Flight Forecast</b></p>")),
-        #                 div(HTML("<hr>")),
-        #                 ui.output_table("simulation_table")
-        #             ),
-        #             ui.column(6,
-        #                 div(HTML("<hr>")),
-        #                 div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
-        #                 div(HTML("<hr>")),
-        #                 ui.output_table("flight_planning_table", width="100%"),
-        #             ),
-        #         ),
-        #     ),
-        #     # ===============================================================================================================================================================
-        #     # START: Flight Exercise Planning TAB
-        #     # ===============================================================================================================================================================
-        #     ui.nav_panel("Flight Exercise Planning", 
-        #         div(HTML("<h2> Flight Exercise Planning </h2>")),
-        #         div(HTML("<hr>")),
-        #         ui.card(
-        #             ui.card_header("Welcome to ElectriFly's Flight Exercise Planning Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
-        #             div(HTML(f"""<p>Prepare your flight exercises with precision by customizing key attributes. Our innovative tool leverages a machine 
-        #                             learning prediction engine to estimate battery level (SOC) throughout each exercise, as well as the total battery consumption by the end of your 
-        #                             flight. Empower yourself with this data to make well-informed decisions for your flight planning.
-        #                         </p>
-        #                         <p>The tool enables pilots to choose <span style="color: {blue}; font-weight: bold">two input methods</span>. Changing the method is controlled 
-        #                             by the switch under the \'Flight Activity Selection\' section to the left. Additionally, the date and time enable the tool to query forecasted weather data.
-        #                         </p>
-        #                         <ol>
-        #                         <li><span style="color: {blue}; font-weight: bold">Method 1:</span> Range attribute selection. Through the specified range, a random value is chosen as the prediction value for the prediction engine</li>
-        #                         <li><span style="color: {blue}; font-weight: bold">Method 2:</span> Single attribute selection. For each attribute, a value is input. Which will be used as the prediction value for the prediction engine</li>
-        #                         </ol>
-        #             """)),
-        #             min_height="130px"
-        #         ), 
-        #         div(HTML("<hr>")),  
-        #         ui.p("          "), 
-        #         # Selecting the date
-        #         ui.row(
-        #             ui.column(3,
-        #                 ui.accordion(
-        #                     ui.accordion_panel(
-        #                         "Flight Date & Time",
-        #                         ui.input_selectize("date_operations", "Choose Flight Date:", get_dates(), multiple=False, selected=get_dates()[0]),
-        #                         ui.p("          "),
-        #                         ui.input_selectize(
-        #                             "flight_time_select", 
-        #                             "Choose start time of flight:", 
-        #                             ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", 
-        #                                 "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", 
-        #                                 "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", 
-        #                                 "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", 
-        #                                 "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", 
-        #                                 "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", 
-        #                                 "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", 
-        #                                 "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", 
-        #                                 "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", 
-        #                                 "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", 
-        #                                 "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"]
-        #                         )
-        #                     ),
-        #                     ui.accordion_panel(
-        #                         "Flight Activity Selection",
-        #                         ui.input_switch("manual_model_input_switch", label="Single attribute selection", value=False),
-        #                         ui.input_selectize(
-        #                             "flight_activities", 
-        #                             "Choose Flight Activity:", 
-        #                             change_order(), 
-        #                             multiple=False, 
-        #                             width=6),
-        #                         ui.p("          "),
-        #                         ui.output_ui("duration_of_activity"),
-        #                         ui.p("          "),
-        #                         ui.output_ui("power_setting_activity"),
-        #                         ui.p("          "),
-        #                         ui.output_ui("altitude_activity"),
-        #                         ui.p("          "),
-        #                         ui.output_ui("ground_speed_activity"),
-        #                         ui.p("          "),
-        #                         ui.output_ui("soh_activity"),
-        #                     ),
-        #                     id="prediction_model",  
-        #                     open="Flight Date & Time", 
-        #                 ),
-        #             ),
-        #             ui.column(9,
-        #                 ui.row(
-        #                     ui.column(8, ui.card(ui.output_ui("remaining_soc"), height="60px", style="background-color: #FFFFFF; border: 1px solid #000000; padding: 0px;")), 
-        #                     ui.column(4,
-        #                         ui.row( 
-        #                             ui.layout_columns(
-        #                                 ui.tooltip(
-        #                                     ui.input_action_button(
-        #                                         "add_activity", 
-        #                                         "Add activity", 
-        #                                         style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px",
-        #                                     ),
-        #                                     "Add selected activity under the \'Flight Activity Selection\' setting"
-        #                                 ),
-        #                                 ui.tooltip(
-        #                                     ui.input_action_button(
-        #                                         "delete_selected_activity", 
-        #                                         "Delete activity", 
-        #                                         style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
-        #                                     ),
-        #                                     "Delete any single selected row in the table below."
-        #                                 ),
-        #                                 col_widths=(6, 6)
-        #                             ), 
-        #                         ) 
-        #                     )
-        #                 ),
-        #                 ui.p("          "),
-        #                 ui.row(
-        #                     ui.card(
-        #                         ui.output_data_frame("model_predict_output"), 
-        #                         height="660px",
-        #                         style="background-color: #FFFFFF; border: 1px solid #000000;"  
-        #                     )
-        #                 )
-        #             ),
-        #             height="700px"
-        #         )            
-        #     )
-        # ),
-        # # ===============================================================================================================================================================
-        # # END: FLIGHT PLANNING SCREEN
-        # # ===============================================================================================================================================================
+                            <p>🟩 = Safe for flight<br>
+                            🟨 = Potentially safe for flight<br>
+                            🟥 = Not safe for flight</p>
+                            """))
+                    ,min_height = "250px"
+                ),
+                ui.row( 
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Three Day Flight Forecast</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.output_table("simulation_table")
+                    ),
+                    ui.column(6,
+                        div(HTML("<hr>")),
+                        div(HTML("<p><b>Upcoming Flights for Today</b></p>")),
+                        div(HTML("<hr>")),
+                        ui.output_table("flight_planning_table", width="100%"),
+                    ),
+                ),
+            ),
+            # ===============================================================================================================================================================
+            # START: Flight Exercise Planning TAB
+            # ===============================================================================================================================================================
+            ui.nav_panel("Flight Exercise Planning", 
+                div(HTML("<h2> Flight Exercise Planning </h2>")),
+                div(HTML("<hr>")),
+                ui.card(
+                    ui.card_header("Welcome to ElectriFly's Flight Exercise Planning Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
+                    div(HTML(f"""<p>Prepare your flight exercises with precision by customizing key attributes. Our innovative tool leverages a machine 
+                                    learning prediction engine to estimate battery level (SOC) throughout each exercise, as well as the total battery consumption by the end of your 
+                                    flight. Empower yourself with this data to make well-informed decisions for your flight planning.
+                                </p>
+                                <p>The tool enables pilots to choose <span style="color: {blue}; font-weight: bold">two input methods</span>. Changing the method is controlled 
+                                    by the switch under the \'Flight Activity Selection\' section to the left. Additionally, the date and time enable the tool to query forecasted weather data.
+                                </p>
+                                <ol>
+                                <li><span style="color: {blue}; font-weight: bold">Method 1:</span> Range attribute selection. Through the specified range, a random value is chosen as the prediction value for the prediction engine</li>
+                                <li><span style="color: {blue}; font-weight: bold">Method 2:</span> Single attribute selection. For each attribute, a value is input. Which will be used as the prediction value for the prediction engine</li>
+                                </ol>
+                    """)),
+                    min_height="130px"
+                ), 
+                div(HTML("<hr>")),  
+                ui.p("          "), 
+                # Selecting the date
+                ui.row(
+                    ui.column(3,
+                        ui.accordion(
+                            ui.accordion_panel(
+                                "Flight Date & Time",
+                                ui.input_selectize("date_operations", "Choose Flight Date:", get_dates(), multiple=False, selected=get_dates()[0]),
+                                ui.p("          "),
+                                ui.input_selectize(
+                                    "flight_time_select", 
+                                    "Choose start time of flight:", 
+                                    ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", 
+                                        "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", 
+                                        "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", 
+                                        "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", 
+                                        "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", 
+                                        "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", 
+                                        "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", 
+                                        "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", 
+                                        "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", 
+                                        "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", 
+                                        "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"]
+                                )
+                            ),
+                            ui.accordion_panel(
+                                "Flight Activity Selection",
+                                ui.input_switch("manual_model_input_switch", label="Single attribute selection", value=False),
+                                ui.input_selectize(
+                                    "flight_activities", 
+                                    "Choose Flight Activity:", 
+                                    change_order(), 
+                                    multiple=False, 
+                                    width=6),
+                                ui.p("          "),
+                                ui.output_ui("duration_of_activity"),
+                                ui.p("          "),
+                                ui.output_ui("power_setting_activity"),
+                                ui.p("          "),
+                                ui.output_ui("altitude_activity"),
+                                ui.p("          "),
+                                ui.output_ui("ground_speed_activity"),
+                                ui.p("          "),
+                                ui.output_ui("soh_activity"),
+                            ),
+                            id="prediction_model",  
+                            open="Flight Date & Time", 
+                        ),
+                    ),
+                    ui.column(9,
+                        ui.row(
+                            ui.column(8, ui.card(ui.output_ui("remaining_soc"), height="60px", style="background-color: #FFFFFF; border: 1px solid #000000; padding: 0px;")), 
+                            ui.column(4,
+                                ui.row( 
+                                    ui.layout_columns(
+                                        ui.tooltip(
+                                            ui.input_action_button(
+                                                "add_activity", 
+                                                "Add activity", 
+                                                style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px",
+                                            ),
+                                            "Add selected activity under the \'Flight Activity Selection\' setting"
+                                        ),
+                                        ui.tooltip(
+                                            ui.input_action_button(
+                                                "delete_selected_activity", 
+                                                "Delete activity", 
+                                                style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
+                                            ),
+                                            "Delete any single selected row in the table below."
+                                        ),
+                                        col_widths=(6, 6)
+                                    ), 
+                                ) 
+                            )
+                        ),
+                        ui.p("          "),
+                        ui.row(
+                            ui.card(
+                                ui.output_data_frame("model_predict_output"), 
+                                height="660px",
+                                style="background-color: #FFFFFF; border: 1px solid #000000;"  
+                            )
+                        )
+                    ),
+                    height="700px"
+                )            
+            )
+        ),
+        # ===============================================================================================================================================================
+        # END: FLIGHT PLANNING SCREEN
+        # ===============================================================================================================================================================
         id="tab",  
     )  
 )
@@ -988,78 +986,78 @@ def server(input: Inputs, output: Outputs, session: Session):
     # END: DATA ANALYSIS SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#     # START: INSIGHTS SCREEN 
-#     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # START: INSIGHTS SCREEN 
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#     # Function -------------------------------------------------------------------------------------------------------------------------------------------
-#     @output
-#     @render.plot(alt="An interactive plot")
-#     def power_soc_rate_of_change_scatter_plot():
-#         """
-#         The function uses the input from the 'power_soc_rate_state' parameter to get data on power, soc rate of change, and activities for all the selected dates.
-#         Returns 
-#             power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
-#         """
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def power_soc_rate_of_change_scatter_plot():
+        """
+        The function uses the input from the 'power_soc_rate_state' parameter to get data on power, soc rate of change, and activities for all the selected dates.
+        Returns 
+            power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+        """
         
-#         # Get all flight data
-#         flight_id = input.statistical_time()
-#         activities_filter = input.select_activities()
+        # Get all flight data
+        flight_id = input.statistical_time()
+        activities_filter = input.select_activities()
 
-#         # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
-#         power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_id, activities_filter)
+        # Graph the power vs. soc rate of change scatter plot, whilte taking into account activities selected
+        power_soc_rate_of_change_scatterplot = Graphing.power_soc_rate_scatterplot(flight_id, activities_filter)
 
-#         # Return the power vs. soc rate of change scatter plot
-#         return power_soc_rate_of_change_scatterplot
+        # Return the power vs. soc rate of change scatter plot
+        return power_soc_rate_of_change_scatterplot
     
-#      # Function -------------------------------------------------------------------------------------------------------------------------------------------
-#     @output
-#     @render.plot(alt="An interactive plot")
-#     def soh_soc_rate_of_change_scatter_plot():
-#         """
-#         The function uses the input from the 'statistical_multi_time' parameter to get data on soh and soc rate of change for all the selected dates.
-#         Returns 
-#             soh_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
-#         """
-#         # Get all flight data
-#         flight_ids = input.statistical_multi_time()
+     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def soh_soc_rate_of_change_scatter_plot():
+        """
+        The function uses the input from the 'statistical_multi_time' parameter to get data on soh and soc rate of change for all the selected dates.
+        Returns 
+            soh_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
+        """
+        # Get all flight data
+        flight_ids = input.statistical_multi_time()
 
-#         # Graph the soh vs. soc rate of change scatter plot
-#         soh_soc_rate_of_change_scatterplot = Graphing.soh_soc_rate_scatterplot(flight_ids)
+        # Graph the soh vs. soc rate of change scatter plot
+        soh_soc_rate_of_change_scatterplot = Graphing.soh_soc_rate_scatterplot(flight_ids)
 
-#         # Return the soh vs. soc rate of change scatter plot
-#         return soh_soc_rate_of_change_scatterplot
+        # Return the soh vs. soc rate of change scatter plot
+        return soh_soc_rate_of_change_scatterplot
     
-#     # Function -------------------------------------------------------------------------------------------------------------------------------------------
-#     @output
-#     @render.plot(alt="An interactive plot")
-#     def soh_scatter_plot():
-#         """
-#         Returns 
-#             soh_plot: a matplotlib figure line plot with the data plotted already.
-#         """
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def soh_scatter_plot():
+        """
+        Returns 
+            soh_plot: a matplotlib figure line plot with the data plotted already.
+        """
 
-#         # Graph the date vs. soh line plot
-#         soh_plot = Graphing.soh_plot()
+        # Graph the date vs. soh line plot
+        soh_plot = Graphing.soh_plot()
 
-#         # Return the date vs. soh line plot
-#         return soh_plot
+        # Return the date vs. soh line plot
+        return soh_plot
     
-#     # Function -------------------------------------------------------------------------------------------------------------------------------------------
-#     @output
-#     @render.table
-#     def soc_roc_table(): 
-#         """
-#         The function uses the input from the 'soc_roc_state' parameter to get data on soc rate of change stats per activity for the selected date.
-#         Returns 
-#             soc_roc_df: a dataframe that will output as a table.
-#         """
-#         # Get the flight ID corresponding to the chosen date
-#         flight_id = input.statistical_time()
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def soc_roc_table(): 
+        """
+        The function uses the input from the 'soc_roc_state' parameter to get data on soc rate of change stats per activity for the selected date.
+        Returns 
+            soc_roc_df: a dataframe that will output as a table.
+        """
+        # Get the flight ID corresponding to the chosen date
+        flight_id = input.statistical_time()
 
-#         soc_roc_df = query_flights().get_soc_roc_stats_by_id(flight_id)
+        soc_roc_df = query_flights().get_soc_roc_stats_by_id(flight_id)
 
-#         return soc_roc_df 
+        return soc_roc_df 
     
 #     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #     # END: INSIGHTS SCREEN 
@@ -1087,33 +1085,64 @@ def server(input: Inputs, output: Outputs, session: Session):
             p.set(message="Calculation in progress", detail="This may take a while...")
 
             # get the flight query and all other queries
-            FLIGHT = query_flights()
             weather_data = query_weather().get_weather_data(flight_id, weather_col_dict)
-            flight_data = FLIGHT.get_flight_by_column_dict(flight_id, flight_col_dict)
+            flight_data = query_flights().get_flight_by_column_dict(flight_id, flight_col_dict)
 
             # Get specific data out of the way
             flight_first_col = flight_data.iloc[:, 0].to_numpy()
 
-            # If the length of the weather data is just 1. Fill everything like the weather and return.
+            # If the length of the weather data is just 1. Fill everything like the weather and return. Else break into chunks and merge.
             if len(weather_data) == 1:
+
+                # Loop over the weather columns
                 for weather_col in weather_data.columns:
-                    weather_full_data = pd.Series(np.full_like(flight_first_col, weather_data[weather_col][0]))
-                    flight_data = pd.concat([flight_data, weather_full_data], axis=1)
+
+                    # Check to see if the col is any type of date or time. If there is, change the string to that value.
+                    weather_full_data = np.full_like(flight_first_col, weather_data[weather_col][0], dtype=np.double)
+
+                    # Add the numpy list to the dict to make into a dataframe
+                    weather_concat_dict[weather_col] = weather_full_data
+
+                # Add the final dict as a dataframe to a concatenated flight data. All data together.
+                flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
+
             else:
-                # split each value
-                test_dict = {}
-                all_arrays = np.split(flight_first_col, len(weather_data))
+                # split each value by the length of the number of weather data points and make the holder dictionary 
+                weather_concat_dict = {}
+                all_arrays = np.array_split(flight_first_col, len(weather_data))
+
+                # Loop over the weather columns
                 for weather_col in weather_data.columns:
+
+                    # Make the full list to hold the weather data in bits.
                     weather_full_data = np.full_like(flight_first_col, 0.0, dtype=np.double)
+
+                    # count the indexes
                     idx_counter = 0
+
+                    # loop over the split arrays.
                     for i in range(len(all_arrays)):
+
+                        # Get the split array on the index.
                         split = all_arrays[i]
+
+                        # get the length of the split by the index counter plus the length of the split array.
                         split_len = len(split) + idx_counter
-                        split_weather_data = np.full_like(split, weather_data[weather_col][i])
+
+                        # Add the splited weather data based on the index of the array.
+                        split_weather_data = np.full_like(split, weather_data[weather_col][i], dtype=np.double)
+
+                        # For the lenth of the split add the data point.
                         weather_full_data[idx_counter:split_len] = split_weather_data
+
+                        # Make the index counter to the length of the split for the next split.
                         idx_counter = split_len
-                    weather_full_data_series = pd.Series(weather_full_data)
-                    flight_data = pd.concat([flight_data, weather_full_data_series], axis=1)
+                    
+                    # Add the data to the weather dict.
+                    weather_concat_dict[weather_col] = weather_full_data
+
+                # Add to the final flight data to put together.
+                flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
 
         return flight_data.loc[2:limit, :]
 
@@ -1144,6 +1173,64 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Get the weather and flight data
             weather_data = query_weather().get_weather_data(flight_id, weather_col_dict)
             flight_data = query_flights().get_flight_by_column_dict(flight_id, flight_col_dict)
+
+            # Get specific data out of the way
+            flight_first_col = flight_data.iloc[:, 0].to_numpy()
+
+            # If the length of the weather data is just 1. Fill everything like the weather and return.
+            if len(weather_data) == 1:
+                # Initialize the dict to hold all data
+                weather_concat_dict = {}
+
+                # Loop over the weather columns
+                for weather_col in weather_data.columns:
+
+                    # Check to see if the col is any type of date or time. If there is, change the string to that value.
+                    weather_full_data = np.full_like(flight_first_col, weather_data[weather_col][0], dtype=np.double)
+
+                    # Add the numpy list to the dict to make into a dataframe
+                    weather_concat_dict[weather_col] = weather_full_data
+
+                # Add the final dict as a dataframe to a concatenated flight data. All data together.
+                flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
+
+            else:
+                # split each value by the length of the number of weather data points and make the holder dictionary 
+                weather_concat_dict = {}
+                all_arrays = np.array_split(flight_first_col, len(weather_data))
+
+                # Loop over the weather columns
+                for weather_col in weather_data.columns:
+
+                    # Make the full list to hold the weather data in bits.
+                    weather_full_data = np.full_like(flight_first_col, 0.0, dtype=np.double)
+
+                    # count the indexes
+                    idx_counter = 0
+
+                    # loop over the split arrays.
+                    for i in range(len(all_arrays)):
+
+                        # Get the split array on the index.
+                        split = all_arrays[i]
+
+                        # get the length of the split by the index counter plus the length of the split array.
+                        split_len = len(split) + idx_counter
+
+                        # Add the splited weather data based on the index of the array.
+                        split_weather_data = np.full_like(split, weather_data[weather_col][i], dtype=np.double)
+
+                        # For the lenth of the split add the data point.
+                        weather_full_data[idx_counter:split_len] = split_weather_data
+
+                        # Make the index counter to the length of the split for the next split.
+                        idx_counter = split_len
+                    
+                    # Add the data to the weather dict.
+                    weather_concat_dict[weather_col] = weather_full_data
+
+                # Add to the final flight data to put together.
+                flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
         
         await asyncio.sleep(0.25)
         yield flight_data.to_csv()
@@ -1176,283 +1263,288 @@ def server(input: Inputs, output: Outputs, session: Session):
     # # START: SIMULATION SCREEN 
     # #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    # # For the selection of the flight operations.
-    # table_data_show = reactive.Value(-1)
-    # new_model = Model()
-    # # Global variable to hold the flight operations.
-    # flight_operation_dictionary = {
-    #     "Activity": [], 
-    #     "Time (mins)": [], 
-    #     "SOH (%)": [],
-    #     "Altitude Gain/Loss (ft)": [],
-    #     "Ground Speed (knots)": [],
-    #     "Motor Power (KW)": [],
-    #     "SOC (%)": [],
-    # }
+    # For the selection of the flight operations. Global variable to hold the flight operations.
+    table_data_show = reactive.Value(-1)
+    new_model = Model()
+    flight_operation_dictionary = {
+        "Activity": [], 
+        "Time (mins)": [], 
+        "SOH (%)": [],
+        "Altitude Gain/Loss (ft)": [],
+        "Ground Speed (knots)": [],
+        "Motor Power (KW)": [],
+        "SOC (%)": [],
+    }
 
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.table(columns=["Forecast Time", simulation.first_date, simulation.second_date, simulation.third_date])
-    # def simulation_table(): 
-    #     # Apply conditional formatting
-    #     zones = simulation.zones_table
-    #     explanations = simulation.explanations_table
-    #     styled_data = zones.style.set_tooltips(explanations, props='visibility: hidden; position: absolute; z-index: 1; border: 1px solid #000066;'
-    #                      'background-color: white; color: #000066; font-size: 0.8em;'
-    #                      'transform: translate(0px, -24px); padding: 0.6em; border-radius: 0.5em;').applymap(style_cell).set_table_styles(
-    #                          [{'selector': 'td', 'props': [('width', '450px'), ('border', '5px solid white')]},
-    #                           {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
-    #                           {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
-    #                           ]).hide(axis="index")
-    #     return styled_data
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table(columns=["Forecast Time", simulation.first_date, simulation.second_date, simulation.third_date])
+    def simulation_table(): 
+        # Apply conditional formatting
+        zones = simulation.zones_table
+        explanations = simulation.explanations_table
+        styled_data = zones.style.set_tooltips(explanations, props='visibility: hidden; position: absolute; z-index: 1; border: 1px solid #000066;'
+                         'background-color: white; color: #000066; font-size: 0.8em;'
+                         'transform: translate(0px, -24px); padding: 0.6em; border-radius: 0.5em;').applymap(style_cell).set_table_styles(
+                             [{'selector': 'td', 'props': [('width', '450px'), ('border', '5px solid white')]},
+                              {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                              {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                              ]).hide(axis="index")
+        return styled_data
     
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # # Define a function to determine the cell background color
-    # def style_cell(val):
-    #     if val == 'red':
-    #         return "background-color: #c62828; color: #c62828;"
-    #     elif val == 'yellow':
-    #         return "background-color: #fdd835; color: #fdd835;"
-    #     elif val == 'green':
-    #         return "background-color: #43a047; color: #43a047;"
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    # Define a function to determine the cell background color
+    def style_cell(val):
+        if val == 'red':
+            return "background-color: #c62828; color: #c62828;"
+        elif val == 'yellow':
+            return "background-color: #fdd835; color: #fdd835;"
+        elif val == 'green':
+            return "background-color: #43a047; color: #43a047;"
     
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # def colour_word(word):
-    #     # make these words red
-    #     if (word =='no' or word == 'flights' or word == 'available'):
-    #         return 'color: red'
-    #     else:
-    #         return 'color: black'
-    # @output
-    # @render.table
-    # def flight_planning_table(): 
-    #     # if the feasible_flights dataframe is empty
-    #     if simulation.feasible_flights.empty:
-    #         # Return a DataFrame with the message
-    #         message_df = pd.DataFrame({"Message": ["There are no flights available to be scheduled today due to weather conditions."]})
-    #         message_df['Message'] = message_df['Message'].apply(lambda x: ' '.join(['<span style="{}">{}</span>'.format(colour_word(word), word) for word in x.split()])) # formats "no flights available" as red
 
-    #         message_style = message_df.style.hide(axis="index").hide(axis="columns").set_table_styles([
-    #                         {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
-    #                         {'selector': 'td', 'props': [('width', '700px')]}, # Set table width
-    #                         {'selector': 'td', 'props': [('text-align', 'left')]}, # left align text in cells
-    #                     ]) 
-    #         return message_style
-    #     else:
-    #         flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
-    #                         {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
-    #                         {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
-    #                         {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
-    #                         {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
-    #                         {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
-    #                     ])
-    #         return flight_plan
-    
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.ui
-    # @reactive.event(input.date_operations)
-    # def time_selector():
-    #     flight_dates = input.date_operations()
-
-    #     if flight_dates == "":
-    #         return ui.output_text("Please select a date to fly")
-    #     else:
-    #         return ui.input_selectize("flight_time_select", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
-
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.ui
-    # @reactive.event(input.manual_model_input_switch, input.flight_activities)
-    # def duration_of_activity():
-    #     flight_activity = input.flight_activities()
-    #     manual_input = input.manual_model_input_switch()
-
-    #     if manual_input == True:
-    #         return ui.input_numeric("duration_chooser", f"Time (mins) for {flight_activity}:", 1, min=1, max=60)
-    #     else:
-    #         return ui.input_slider("time_delta_slider", "Time (mins)", min=0, max=60, step=0.5, value=[5, 8])
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    def colour_word(word):
+        # make these words red
+        if (word =='no' or word == 'flights' or word == 'available'):
+            return 'color: red'
+        else:
+            return 'color: black'
         
 
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.ui
-    # @reactive.event(input.manual_model_input_switch, input.flight_activities)
-    # def power_setting_activity():
-    #     flight_activity = input.flight_activities()
-    #     manual_input = input.manual_model_input_switch()
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.table
+    def flight_planning_table(): 
+        # if the feasible_flights dataframe is empty
+        if simulation.feasible_flights.empty:
+            # Return a DataFrame with the message
+            message_df = pd.DataFrame({"Message": ["There are no flights available to be scheduled today due to weather conditions."]})
+            message_df['Message'] = message_df['Message'].apply(lambda x: ' '.join(['<span style="{}">{}</span>'.format(colour_word(word), word) for word in x.split()])) # formats "no flights available" as red
 
-    #     if manual_input == True:
-    #         return ui.input_numeric("power_setting_chooser", f"Motor power (KW) for {flight_activity}:", 1, min=0, max=70)
-    #     else:
-    #         return ui.input_slider("power_setting_slider", "Motor power (KW)", min=0, max=65, step=2, value=[4, 20])
-
-
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.ui
-    # @reactive.event(input.manual_model_input_switch, input.flight_activities)
-    # def altitude_activity():
-    #     flight_activity = input.flight_activities()
-    #     manual_input = input.manual_model_input_switch()
-
-    #     if manual_input == True:
-    #         return ui.input_numeric("altitude_chooser", f"Altitude (m) for {flight_activity}:", 0, min=-1000, max=1000)
-    #     else:
-    #         return ui.input_slider("altitude_slider", "Change in Altitude (m)", min=-1000, max=1000, step=10, value=[400, 500])
-        
-    
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.ui
-    # @reactive.event(input.manual_model_input_switch, input.flight_activities)
-    # def soh_activity():
-    #     flight_activity = input.flight_activities()
-    #     manual_input = input.manual_model_input_switch()
-
-    #     if manual_input == True:
-    #         return ui.input_numeric("soh_chooser", f"State-of-health (%) for {flight_activity}:", 100, min=0, max=100)
-    #     else:
-    #         return div(HTML(f"""<p style="font-weight: normal; font-size: 18px;">
-    #                         State-of-health (%) from the <span style="color: {blue};">latest flight</span> will be used.</p>"""))
+            message_style = message_df.style.hide(axis="index").hide(axis="columns").set_table_styles([
+                            {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+                            {'selector': 'td', 'props': [('width', '700px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'left')]}, # left align text in cells
+                        ]) 
+            return message_style
+        else:
+            flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+                            {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+                            {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+                            {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                            {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                        ])
+            return flight_plan
     
 
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.ui
-    # @reactive.event(input.manual_model_input_switch, input.flight_activities)
-    # def ground_speed_activity():
-    #     flight_activity = input.flight_activities()
-    #     manual_input = input.manual_model_input_switch()
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.date_operations)
+    def time_selector():
+        flight_dates = input.date_operations()
 
-    #     if manual_input == True:
-    #         return ui.input_numeric("ground_speed_chooser", f"Ground speed (knots) for {flight_activity}:", 1, min=0, max=20)
-    #     else:
-    #         return ui.input_slider("ground_speed_slider", "Ground speed (knots)", min=0, max=100, step=5, value=[45, 50])
+        if flight_dates == "":
+            return ui.output_text("Please select a date to fly")
+        else:
+            return ui.input_selectize("flight_time_select", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
+
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    def duration_of_activity():
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
+
+        if manual_input == True:
+            return ui.input_numeric("duration_chooser", f"Time (mins) for {flight_activity}:", 1, min=1, max=60)
+        else:
+            return ui.input_slider("time_delta_slider", "Time (mins)", min=0, max=60, step=0.5, value=[5, 8])
         
 
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.ui
-    # @reactive.event(table_data_show)
-    # def remaining_soc():
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    def power_setting_activity():
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
 
-    #     # Get the total soc and return it
-    #     total_soc = sum(flight_operation_dictionary["SOC (%)"]) if len(flight_operation_dictionary["SOC (%)"]) != 0 else 0
-    #     soc = round(float(100 - total_soc), 2)
-    #     if total_soc >= 70:
-    #         return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {red};">SOC: {soc}</span>.
-    #              You are below <span style="color: {red};">30 % threshold</span>. Adding additional activities <span style="color: {red};">impacts pilot safety</span>.</p>"""))
-    #     else:
-    #         return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.
-    #              You are <span style="color: {blue};">free to add</span> more activities in this flight.</p>"""))
+        if manual_input == True:
+            return ui.input_numeric("power_setting_chooser", f"Motor power (KW) for {flight_activity}:", 1, min=0, max=70)
+        else:
+            return ui.input_slider("power_setting_slider", "Motor power (KW)", min=0, max=65, step=2, value=[4, 20])
 
 
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @output
-    # @render.data_frame 
-    # @reactive.event(table_data_show)
-    # def model_predict_output():
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    def altitude_activity():
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
 
-    #     # Make it a data frame
-    #     flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
+        if manual_input == True:
+            return ui.input_numeric("altitude_chooser", f"Altitude (m) for {flight_activity}:", 0, min=-1000, max=1000)
+        else:
+            return ui.input_slider("altitude_slider", "Change in Altitude (m)", min=-1000, max=1000, step=10, value=[400, 500])
+        
+    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    def soh_activity():
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
 
-    #     # Return that data frame
-    #     return render.DataGrid(flight_operation_output_table, row_selection_mode="single")
+        if manual_input == True:
+            return ui.input_numeric("soh_chooser", f"State-of-health (%) for {flight_activity}:", 100, min=0, max=100)
+        else:
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 18px;">
+                            State-of-health (%) from the <span style="color: {blue};">latest flight</span> will be used.</p>"""))
+    
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.manual_model_input_switch, input.flight_activities)
+    def ground_speed_activity():
+        flight_activity = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
+
+        if manual_input == True:
+            return ui.input_numeric("ground_speed_chooser", f"Ground speed (knots) for {flight_activity}:", 1, min=0, max=20)
+        else:
+            return ui.input_slider("ground_speed_slider", "Ground speed (knots)", min=0, max=100, step=5, value=[45, 50])
+        
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(table_data_show)
+    def remaining_soc():
+
+        # Get the total soc and return it
+        total_soc = sum(flight_operation_dictionary["SOC (%)"]) if len(flight_operation_dictionary["SOC (%)"]) != 0 else 0
+        soc = round(float(100 - total_soc), 2)
+        if total_soc >= 70:
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {red};">SOC: {soc}</span>.
+                 You are below <span style="color: {red};">30 % threshold</span>. Adding additional activities <span style="color: {red};">impacts pilot safety</span>.</p>"""))
+        else:
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.
+                 You are <span style="color: {blue};">free to add</span> more activities in this flight.</p>"""))
 
 
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @reactive.effect
-    # @reactive.event(input.add_activity)
-    # def _():
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.data_frame 
+    @reactive.event(table_data_show)
+    def model_predict_output():
 
-    #     # Get the reactive variable:
-    #     reactive_var = table_data_show.get() + 1
+        # Make it a data frame
+        flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
 
-    #     # Get the inputs from the flight operation and time selection criteria
-    #     operation = input.flight_activities()
-    #     manual_input = input.manual_model_input_switch()
-    #     date = input.date_operations()
-    #     time = input.flight_time_select()
+        # Return that data frame
+        return render.DataGrid(flight_operation_output_table, row_selection_mode="single")
 
-    #     with ui.Progress(min=1, max=15) as p:
-    #         p.set(message="Calculation in progress", detail="This may take a while...")
 
-    #         # Change the time to see if the time is incremented every 15 minutes.
-    #         if len(flight_operation_dictionary["Time (mins)"]) > 0:
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(input.add_activity)
+    def _():
+
+        # Get the reactive variable:
+        reactive_var = table_data_show.get() + 1
+
+        # Get the inputs from the flight operation and time selection criteria
+        operation = input.flight_activities()
+        manual_input = input.manual_model_input_switch()
+        date = input.date_operations()
+        time = input.flight_time_select()
+
+        with ui.Progress(min=1, max=15) as p:
+            p.set(message="Calculation in progress", detail="This may take a while...")
+
+            # Change the time to see if the time is incremented every 15 minutes.
+            if len(flight_operation_dictionary["Time (mins)"]) > 0:
                 
-    #             # Get each segment of the time string
-    #             hour_str = time[0:3]
-    #             period = time[5:8]
+                # Get each segment of the time string
+                hour_str = time[0:3]
+                period = time[5:8]
 
-    #             # Change the minutes to every 15 when the time passes that minute
-    #             if len(flight_operation_dictionary["Time (mins)"]) == 1:
-    #                 current_time = flight_operation_dictionary["Time (mins)"][0]
-    #             else:
-    #                 current_time = sum(flight_operation_dictionary["Time (mins)"])
-    #             if current_time > 15:
-    #                 time = hour_str + "15" + period
-    #             elif current_time > 30:
-    #                 time = hour_str + "30" + period
-    #             elif current_time > 45:
-    #                 time = hour_str + "45" + period
+                # Change the minutes to every 15 when the time passes that minute
+                if len(flight_operation_dictionary["Time (mins)"]) == 1:
+                    current_time = flight_operation_dictionary["Time (mins)"][0]
+                else:
+                    current_time = sum(flight_operation_dictionary["Time (mins)"])
+                if current_time > 15:
+                    time = hour_str + "15" + period
+                elif current_time > 30:
+                    time = hour_str + "30" + period
+                elif current_time > 45:
+                    time = hour_str + "45" + period
 
-    #         # Get soc based on inputs
-    #         if manual_input: 
-    #             model_time = input.duration_chooser()
-    #             model_power = input.power_setting_chooser()
-    #             model_altitude = input.altitude_chooser()
-    #             model_soh = input.soh_chooser()
-    #             model_speed = input.ground_speed_chooser()
-    #             predicted_soc, act_time, act_power, act_soh, act_alt, act_groundspeed = new_model.get_manual_model_prediction(operation, date, time, model_time, model_altitude, model_speed, model_power, model_soh)
-    #         else:
-    #             tuple_time = input.time_delta_slider()
-    #             tuple_power = input.power_setting_slider()
-    #             tuple_altitude = input.altitude_slider()
-    #             tuple_speed = input.ground_speed_slider()
-    #             predicted_soc, act_time, act_power, act_soh, act_alt, act_groundspeed = new_model.get_model_prediction(operation, date, time, tuple_time, tuple_altitude, tuple_speed, tuple_power)
+            # Get soc based on inputs
+            if manual_input: 
+                model_time = input.duration_chooser()
+                model_power = input.power_setting_chooser()
+                model_altitude = input.altitude_chooser()
+                model_soh = input.soh_chooser()
+                model_speed = input.ground_speed_chooser()
+                predicted_soc, act_time, act_power, act_soh, act_alt, act_groundspeed = new_model.get_manual_model_prediction(operation, date, time, model_time, model_altitude, model_speed, model_power, model_soh)
+            else:
+                tuple_time = input.time_delta_slider()
+                tuple_power = input.power_setting_slider()
+                tuple_altitude = input.altitude_slider()
+                tuple_speed = input.ground_speed_slider()
+                predicted_soc, act_time, act_power, act_soh, act_alt, act_groundspeed = new_model.get_model_prediction(operation, date, time, tuple_time, tuple_altitude, tuple_speed, tuple_power)
 
-    #         # Append all the activities and times in the variable
-    #         flight_operation_dictionary["Activity"].append(operation)
-    #         flight_operation_dictionary["Time (mins)"].append(act_time)
-    #         flight_operation_dictionary["SOH (%)"].append(act_soh)
-    #         flight_operation_dictionary["Altitude Gain/Loss (ft)"].append(act_alt)
-    #         flight_operation_dictionary["Ground Speed (knots)"].append(act_groundspeed)
-    #         flight_operation_dictionary["Motor Power (KW)"].append(act_power)
-    #         flight_operation_dictionary["SOC (%)"].append(predicted_soc)
+            # Append all the activities and times in the variable
+            flight_operation_dictionary["Activity"].append(operation)
+            flight_operation_dictionary["Time (mins)"].append(act_time)
+            flight_operation_dictionary["SOH (%)"].append(act_soh)
+            flight_operation_dictionary["Altitude Gain/Loss (ft)"].append(act_alt)
+            flight_operation_dictionary["Ground Speed (knots)"].append(act_groundspeed)
+            flight_operation_dictionary["Motor Power (KW)"].append(act_power)
+            flight_operation_dictionary["SOC (%)"].append(predicted_soc)
 
-    #     # Set the data show to 1
-    #     table_data_show.set(reactive_var)
-
-
-    # # Function -------------------------------------------------------------------------------------------------------------------------------------------
-    # @reactive.effect
-    # @reactive.event(input.delete_selected_activity)
-    # def _():
-
-    #     # Get the specific row from the table
-    #     delete_row_indexes = input.model_predict_output_selected_rows()
-
-    #     if len(delete_row_indexes) != 0:
-
-    #         # Get the reactive variable:
-    #         reactive_var = table_data_show.get() - 1
-
-    #         # remove the specific index
-    #         for row_id in delete_row_indexes:
-    #             del flight_operation_dictionary["Activity"][row_id]
-    #             del flight_operation_dictionary["Time (mins)"][row_id]
-    #             del flight_operation_dictionary["SOH (%)"][row_id]
-    #             del flight_operation_dictionary["Altitude Gain/Loss (ft)"][row_id]
-    #             del flight_operation_dictionary["Ground Speed (knots)"][row_id]
-    #             del flight_operation_dictionary["Motor Power (KW)"][row_id]
-    #             del flight_operation_dictionary["SOC (%)"][row_id]
+        # Set the data show to 1
+        table_data_show.set(reactive_var)
 
 
-    #         # Set the data show to 1
-    #         table_data_show.set(reactive_var)
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @reactive.effect
+    @reactive.event(input.delete_selected_activity)
+    def _():
 
-    
+        # Get the specific row from the table
+        delete_row_indexes = input.model_predict_output_selected_rows()
+
+        if len(delete_row_indexes) != 0:
+
+            # Get the reactive variable:
+            reactive_var = table_data_show.get() - 1
+
+            # remove the specific index
+            for row_id in delete_row_indexes:
+                del flight_operation_dictionary["Activity"][row_id]
+                del flight_operation_dictionary["Time (mins)"][row_id]
+                del flight_operation_dictionary["SOH (%)"][row_id]
+                del flight_operation_dictionary["Altitude Gain/Loss (ft)"][row_id]
+                del flight_operation_dictionary["Ground Speed (knots)"][row_id]
+                del flight_operation_dictionary["Motor Power (KW)"][row_id]
+                del flight_operation_dictionary["SOC (%)"][row_id]
+
+
+            # Set the data show to 1
+            table_data_show.set(reactive_var)
 
     # #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # # END: SIMULATION SCREEN 
