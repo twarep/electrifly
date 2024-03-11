@@ -98,15 +98,15 @@ def soc_graph(flight_ids: list):
     danger_zone = [0, 15, 15, 0]
 
     # Set Plot
-    soc_figure = plt.figure(figsize=(5, 5))
+    soc_figure = plt.figure(figsize=(5, 8), dpi = 110)
 
     # Fill ranges
-    plt.fill(x_zone, warning_zone, c="yellow", alpha=0.5)
-    plt.fill(x_zone, danger_zone, c='r', alpha=0.5)
+    plt.fill(x_zone, warning_zone, c="gold", alpha=0.5)
+    plt.fill(x_zone, danger_zone, c='r', alpha=0.6)
 
     # Add text to fill ranges
-    plt.text(0.2, 20.5, 'Warning', fontweight='bold')
-    plt.text(0.2, 5.5, 'Danger', fontweight='bold', c='white')
+    plt.text(0.2, 20.5, '  Warning', fontweight='bold')
+    plt.text(0, 5.5, '  Danger', fontweight='bold', c='white')
 
     # Plot the graphs
     for i in range(0, len(flight_ids)):
@@ -122,7 +122,7 @@ def soc_graph(flight_ids: list):
     
     # Add labels and legend to plot
     plt.xlim([0, 55])
-    plt.ylim([-1, 101])
+    plt.ylim([0, 101])
     plt.xlabel("time (min)")
     plt.ylabel("SOC")
     plt.title("Time vs SOC")
@@ -152,7 +152,7 @@ def power_graph(flight_ids: list):
     flight_data = flight_db_conn.get_flight_motor_power_and_time(flight_ids)
 
     # Set Plot
-    power_figure = plt.figure(figsize=(6, 6))
+    power_figure = plt.figure(figsize=(6, 8), dpi= 110)
 
     # Plot the graphs
     for i in range(0, len(flight_ids)):
@@ -168,7 +168,7 @@ def power_graph(flight_ids: list):
     
     # Add labels and legend to plot
     plt.xlim([0, 55])
-    plt.ylim([-1, 70])
+    plt.ylim([0, 70])
     plt.xlabel("time (min)")
     plt.ylabel("Motor power (kilowatts-KW)")
     plt.title("Time vs Motor power")
@@ -344,7 +344,7 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
         y_ax_data = query_result[y_variable].to_numpy()
 
     # Set Plot
-    custom_figure = plt.figure(figsize=(6, 6))
+    custom_figure = plt.figure(figsize=(8, 8))
     custom_figure.tight_layout()
 
     # For each graph type graph different things.
