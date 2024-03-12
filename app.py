@@ -161,8 +161,9 @@ def get_charging_data(columns=["id", "flight_date", "flight_time_utc"], table="f
         if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
     """
     charging_sessions = query_flights()
+    charging_weather = query_weather()
 
-    charging_data = charging_sessions.get_flight_id_and_dates(columns, table, "Charging")
+    charging_data = charging_sessions.get_flight_id_and_dates("Charging", columns, table)
     
     return charging_data
 
