@@ -161,7 +161,6 @@ def get_charging_data(columns=["id", "flight_date", "flight_time_utc"], table="f
         if date is FALSE --> flight_date: dictionary of flight_date: flight_id pairs
     """
     charging_sessions = query_flights()
-    charging_weather = query_weather()
 
     charging_data = charging_sessions.get_flight_id_and_dates("Charging", columns, table)
     
@@ -661,7 +660,7 @@ app_ui = ui.page_fluid(
                 ui.layout_columns(
                     ui.card(
                         ui.tooltip(
-                            ui.input_selectize("select_charging", "Charging Date and Time:", get_charging_data()), 
+                            ui.input_selectize("select_charging", "Charging Date and Time:", get_charging_data(), multiple=True), 
                             "Select the date for which you want to view the data."
                         ),
                         ui.tooltip(
@@ -1033,7 +1032,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     def charging_graph():
 
         # Get all the inputs
-        flight_id = input.select_charging()
+        flight_ids = input.select_charging()
         graph_type = input.select_charging_graph()
         x_var_label = input.select_x_charging_variable()
         y_var_label = input.select_y_charging_variable()
@@ -1041,7 +1040,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         y_variables = charging_variables_columns[y_var_label]
 
         # Make the graph
-        created_custom_graph = Graphing.charging_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
+        created_custom_graph = Graphing.charging_graph_creation(graph_type, flight_ids, x_variables, y_variables, x_var_label, y_var_label)
 
         # Return the custom graph
         return created_custom_graph  

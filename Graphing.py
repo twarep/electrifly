@@ -363,151 +363,83 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
     return custom_figure
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def charging_graph_creation(graph_type: str, flight_id, x_variable: str, y_variable: str, x_label: str, y_label: str):
+def charging_graph_creation(graph_type: str, flight_ids, x_variable: str, y_variable: str, x_label: str, y_label: str):
 
+    x_ax_data = []
+    y_ax_data = []
     # Make the query connection
     flight_db_conn = query_flights()
     # Get data from x-variables
-    if x_variable[0] == "temperature":
-      query_result_x = flight_db_conn.get_temperature_on_id(flight_id)
-    else:
-      query_result_x = flight_db_conn.get_flight_data_on_id(x_variable, flight_id)
-
-    # Get data from y-variables if they are not the same as the x-variables
-    if y_variable != x_variable:
-        if y_variable[0] == "temperature":
-            query_result_y = flight_db_conn.get_temperature_on_id(flight_id)
+    for flight_id in flight_ids:
+        if x_variable[0] == "temperature":
+            query_result_x = flight_db_conn.get_temperature_on_id(flight_id)
         else:
-            query_result_y = flight_db_conn.get_flight_data_on_id(y_variable, flight_id)
+            query_result_x = flight_db_conn.get_flight_data_on_id(x_variable, flight_id)
 
-    # if one of the columns is temp, then we run the function
-    if x_variable[0] == "temperature":
-        query_result_x = aggregate_weather_for_charging(query_result_x, query_result_y)
-    elif y_variable[0] == "temperature":
-        query_result_y = aggregate_weather_for_charging(query_result_y, query_result_x)
-        print("query_result_y", query_result_y)
-    elif x_variable[0] and y_variable[0] == "temperature":
-        query_result_y = aggregate_weather_for_charging(query_result_x, query_result_x)
+        # Get data from y-variables if they are not the same as the x-variables
+        if y_variable != x_variable:
+            if y_variable[0] == "temperature":
+                query_result_y = flight_db_conn.get_temperature_on_id(flight_id)
+            else:
+                query_result_y = flight_db_conn.get_flight_data_on_id(y_variable, flight_id)
 
-    if len(x_variable) == 2:
-        x_ax_data = (query_result_x[x_variable[0]].to_numpy() + query_result_x[x_variable[1]].to_numpy()) / 2
-    else:
-        x_ax_data = query_result_x[x_variable].to_numpy()
+        # if one of the columns is temp, then we run the function
+        if x_variable[0] == "temperature":
+            query_result_x = aggregate_weather_for_charging(query_result_x, query_result_y)
+        elif y_variable[0] == "temperature":
+            query_result_y = aggregate_weather_for_charging(query_result_y, query_result_x)
+        elif x_variable[0] and y_variable[0] == "temperature":
+            query_result_y = aggregate_weather_for_charging(query_result_x, query_result_x)
 
-    
-    if len(y_variable) == 2:
-        y_ax_data = (query_result_y[y_variable[0]].to_numpy() + query_result_y[y_variable[1]].to_numpy()) / 2
-    else:
-        y_ax_data = query_result_y[y_variable].to_numpy()
+        if len(x_variable) == 2:
+            x_data = (query_result_x[x_variable[0]].to_numpy() + query_result_x[x_variable[1]].to_numpy()) / 2
+        else:
+            x_data = query_result_x[x_variable].to_numpy()
+
+        
+        if len(y_variable) == 2:
+            y_data = (query_result_y[y_variable[0]].to_numpy() + query_result_y[y_variable[1]].to_numpy()) / 2
+        else:
+            y_data = query_result_y[y_variable].to_numpy()
+        
+        x_ax_data.append(x_data)
+        y_ax_data.append(y_data)
 
     # Set Plot
     custom_figure = plt.figure(figsize=(6, 6))
     custom_figure.tight_layout()
 
     # For each graph type graph different things.
-    print(x_ax_data)
-    print(y_ax_data)
-    if graph_type == "Line Plot":
-        plt.plot(x_ax_data, y_ax_data)
+    for i in range(len(flight_ids)):
+        x_data = x_ax_data[i]
+        y_data = y_ax_data[i]
+        if graph_type == "Line Plot":
+            plt.plot(x_data, y_data, label=flight_ids[i])
 
-    elif graph_type == "Scatter Plot":
-        plt.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.05, c='blue')
+        elif graph_type == "Scatter Plot":
+            plt.scatter(x_data, y_data, s=0.1, alpha = 0.6, label=flight_ids[i])
     
     # Add labels and legend to plot
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(f"{x_label} vs {y_label}")
+    if graph_type == "Scatter Plot":
+        handles, labels = plt.gca().get_legend_handles_labels()
+        # Get colors from the scatter plot
+        scatter_colors = [handle.get_facecolor()[0] for handle in handles]
+        # Create custom legend with larger markers and actual scatter plot colors
+        custom_handles = [plt.Line2D([0], [0], marker='o', markersize=10, linestyle='', color=color, label=label) for color, label in zip(scatter_colors, labels)]
+        plt.legend(handles=custom_handles, labels=labels)
+    else:
+        plt.legend()
+
+        # Get the legend handles and labels
 
     # Return the axis
     return custom_figure
 
 def aggregate_weather_for_charging(weather_data, flight_data):
         
-        # # Get all the input needed
-        # weather_col_dict = {k: v for k, v in custom_weather_dict.items() if k in input.weather_cols()}
-        # data_granularity_var = input.data_granularity()
-        # selection_dict = custom_granular_variables_dict.items() if data_granularity_var == "Granular" else custom_aggregate_variables_dict.items()
-        # flight_col_dict = {k: v for k, v in selection_dict if k in input.flight_cols()}
-        # flight_id = input.data_preview_date()
-
-        # # If no columns are chosen, then download a dictionary that says to select the columns
-        # if len(weather_col_dict) == 0 or len(flight_col_dict) == 0:
-        #     error_dict = {"Please select a weather or flight data column to view. Thank you!": ["Please select a weather or flight data column to view. Thank you!"]}
-        #     error_df = pd.DataFrame(error_dict)
-        #     # await asyncio.sleep(0.25)
-        #     yield error_df.to_csv()
-        #     return
-
-        # with ui.Progress(min=1, max=15) as p:
-        #     p.set(message="Calculation in progress", detail="This may take a while...")
-
-        #     # Get the weather and flight data
-        #     weather_data = query_weather().get_weather_data(flight_id, weather_col_dict)
-        #     flight_data = query_flights().get_flight_by_column_dict(flight_id, flight_col_dict)
-
-        # Get specific data out of the way
-        # flight_first_col = flight_data.iloc[:, 0].to_numpy()
-        # print("flight_first_col:", flight_first_col)
-        # # Initialize the dict to hold all data
-        # weather_concat_dict = {}
-
-        # print(len(weather_data))
-        # # If the length of the weather data is just 1. Fill everything like the weather and return.
-        # if len(weather_data) == 1:
-        #     # Loop over the weather columns
-        #     for weather_col in weather_data.columns:
-        #         print("weather_col", weather_col)
-        #         # Check to see if the col is any type of date or time. If there is, change the string to that value.
-        #         weather_full_data = np.full_like(flight_first_col, weather_data[weather_col][0], dtype=np.double)
-        #         print("weather_full_data", weather_full_data)
-        #         # Add the numpy list to the dict to make into a dataframe
-        #         weather_concat_dict[weather_col] = weather_full_data
-
-        #     # Add the final dict as a dataframe to a concatenated flight data. All data together.
-        #     flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
-        #     print("flight_data", flight_data)
-
-        # else:
-        #     # split each value by the length of the number of weather data points
-        #     all_arrays = np.array_split(flight_first_col, len(weather_data))
-        #     print("all_arrays", all_arrays)
-        #     # Loop over the weather columns
-        #     for weather_col in weather_data.columns:
-        #         print("weather_col", weather_col)
-        #         # Make the full list to hold the weather data in bits.
-        #         weather_full_data = np.full_like(flight_first_col, 0.0, dtype=np.double)
-        #         print("weather_full_data", weather_full_data)
-        #         # count the indexes
-        #         idx_counter = 0
-
-        #         # loop over the split arrays.
-        #         for i in range(len(all_arrays)):
-
-        #             # Get the split array on the index.
-        #             split = all_arrays[i]
-
-        #             # get the length of the split by the index counter plus the length of the split array.
-        #             split_len = len(split) + idx_counter
-
-        #             # Add the splited weather data based on the index of the array.
-        #             split_weather_data = np.full_like(split, weather_data[weather_col][i], dtype=np.double)
-
-        #             # For the lenth of the split add the data point.
-        #             weather_full_data[idx_counter:split_len] = split_weather_data
-
-        #             # Make the index counter to the length of the split for the next split.
-        #             idx_counter = split_len
-                
-        #         # Add the data to the weather dict.
-        #         weather_concat_dict[weather_col] = weather_full_data
-        #         print("weather_concat_dict", weather_concat_dict)
-
-        #     # Add to the final flight data to put together.
-        #     print(flight_data, "flight_data")
-        #     flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
-    # Sample dataframes (df1 and df2)
-
-    print(weather_data)
     # Extract unique values from the column in the temperature dataframe
     unique_values = weather_data['temperature'].unique()
 
