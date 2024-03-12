@@ -60,7 +60,7 @@ custom_granular_variables_dict = {"Flight ID": ["flight_id"], "Time (Min)": ["ti
                         'Bat 1 Max Cell Volt (volts)': ["bat_1_max_cell_volt"], 'Bat 2 Max Cell Volt (volts)': ["bat_2_max_cell_volt"], 
                         'Requested Torque (Nm)': ["requested_torque"], 'Indicated Air Speed (knots)': ["ias"],
                         'Motor RPM (rpm)': ["motor_rpm"], 'Motor Power (KW)': ["motor_power"], 'Motor Temp (°C)': ["motor_temp"], 
-                        'Stall Warn Active (0/1)': ["stall_warn_active"], 'Inverter Temp (°C)': ["inverter_temp"], 'Bat 1 Cooling Temp (°C)': ["bat_1_colling_temp"],
+                        'Stall Warn Active (0/1)': ["stall_warn_active"], 'Inverter Temp (°C)': ["inverter_temp"], 'Bat 1 Cooling Temp (°C)': ["bat_1_cooling_temp"],
                         'Inverter Cooling Temp 1 (°C)': ["inverter_cooling_temp_1"], 'Inverter Cooling Temp 2 (°C)': ["inverter_cooling_temp_2"], 
                         'Remaining Flight Time': ["remaining_flight_time"], 'Pressure Altitude (m)': ["pressure_alt"], 
                         'Latitude (Degrees)': ["lat"], 'Longitude (Degrees)': ["lng"], 
@@ -116,41 +116,8 @@ def change_order():
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-#database connection 
-def connect_to_db():
-    load_dotenv()
-    db_url = "postgresql+psycopg2" + getenv('DATABASE_URL')[8:]
-    engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
-    return engine
-
-
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def delete_style(val):
     return "font-weight: bold; text-decoration: underline;"
-
-
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-# flight_type: str, data_type: str, 
-def preview_data_retreiver(limit = 10):
-    engine = connect_to_db()
-    query = f"SELECT * FROM flight_weather_data_view WHERE time_min >= 0.04 LIMIT {limit};"
-
-    # Execute the query and fetch the data into a DataFrame
-    uploaded_data_df = pd.read_sql(query, con=engine)
-    uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%b %d, %Y at %I:%M %p")
-    # Convert the 'flight_date' column back to a string
-    uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%b %d, %Y")
-    # Rename columns to be human readable
-    readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current (amp)','Bat 1 Voltage (volts)','Bat 2 Current (amp)','Bat 2 Voltage (volts)','Bat 1 SOC (%)','Bat 2 SOC (%)',
-                        'Bat 1 SOH (%)', 'Bat 2 SOH (%)', 'Bat 1 Min Cell Temp (°C)', 'Bat 2 Min Cell Temp (°C)', 'Bat 1 Max Cell Temp (°C)', 'Bat 2 Max Cell Temp (°C)', 'Bat 1 Avg Cell Temp (°C)', 'Bat 2 Avg Cell Temp (°C)', 'Bat 1 Min Cell Volt (volts)', 'Bat 2 Min Cell Volt (volts)',
-                        'Bat 1 Max Cell Volt (volts)', 'Bat 2 Max Cell Volt (volts)', 'Requested Torque (Nm)', 'Motor RPM (rpm)', 'Motor Power (KW)', 'Motor Temp (°C)', 'Indicated Air Speed (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)',
-                        'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)', 'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp (Seconds)',
-                        'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint (°F)',
-                        'Relative Humidity (%)','Wind Direction (Degrees)', 'Wind Speed (knots)', 'Pressure Altimeter (in)','Sea Level Pressure (mbar)', 'Visibility (mi)', 'Wind Gust (knots)', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
-                        'Sky Coverage 4', 'Sky Level 1 (ft)', 'Sky Level 2 (ft)','Sky Level 3 (ft)','Sky Level 4 (ft)','Weather Codes', 'Metar']
-    uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
-    engine.dispose()
-    return uploaded_data_df
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
