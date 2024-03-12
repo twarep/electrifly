@@ -121,7 +121,7 @@ def delete_style(val):
 
   
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_flights(flight_type="Flight Test", columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+def get_flights(flight_type="Flight test", columns=["id", "flight_date", "flight_time_utc"], table="flights"):
     """
     The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
 
