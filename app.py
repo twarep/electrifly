@@ -119,9 +119,9 @@ def change_order():
 def delete_style(val):
     return "font-weight: bold; text-decoration: underline;"
 
-
+  
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_flights(flight_type="Flight test", columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
     """
     The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
 
