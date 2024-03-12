@@ -19,62 +19,85 @@ import shiny.experimental as x
 import faicons as fa
 from model_querying import Model
 from pathlib import Path
+import asyncio
 from math import ceil, floor
 
-# Global variable to hold the flight operations.
-flight_operation_dictionary = {
-    "Activity": [], 
-    "Time (mins)": [], 
-    "SOH (%)": [],
-    "Incrementing Altitude (m)": [],
-    "Ground Speed (knots)": [],
-    "Motor Power (KW)": [],
-    "SOC (%)": [],
-}
-
-# Getting initial data
-flights = query_flights()
-
-# Get the list of activities from labeled_activities_view
-list_of_activities = flights.get_flight_activities()
-
-# Getting the dates to be used in the ML UI:
-# Get current date
-current_date = datetime.now().date()
-string_current_date = current_date.strftime("%b %d, %Y")
-
-# Get tomorrow's date
-tomorrow_date = current_date + timedelta(days=1)
-string_tomorrow_date = tomorrow_date.strftime("%b %d, %Y")
-
-# Get the day after tomorrow's date
-day_after_tomorrow_date = current_date + timedelta(days=2)
-string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%b %d, %Y")
-
-# Create a list and add the dates
-list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
-
-# List of variables
-custom_variables_columns = {
+# List of custom aggregate variables
+custom_aggregate_variables_dict = {
+    "Flight ID": ["flight_id"], 
     "Time (min)": ["time_min"], 
-    "Current": ["bat_1_current", "bat_2_current"], 
-    "Voltage": ["bat_1_voltage", "bat_2_voltage"], 
-    "State-of-Charge": ["bat_1_soc", "bat_2_soc"], 
-    "State-of-Health": ["bat_1_soh", "bat_2_soh"], 
-    "Average Cell Temperature": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"],
-    "Minimum Cell Temperature": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"],
-    "Maximum Cell Temperature": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"],
-    "Minimum Cell Volt": ["bat_1_min_cell_volt", "bat_2_min_cell_volt"],
-    "Maximum Cell Volt": ["bat_1_max_cell_volt", "bat_2_max_cell_volt"],
-    "Inverter Cooling Temperature": ["inverter_cooling_temp_1", "inverter_cooling_temp_1"],
-    "Motor RPM": ["motor_rpm"],
-    "Motor Power": ["motor_power"],
-    "Motor Temperature": ["motor_temp"],
-    "Requested Torque": ["requested_torque"],
-    "Indicated Air Speed": ["ias"],
-    "Pressure Altitude": ["pressure_alt"],
+    "Current (Amp)": ["bat_1_current", "bat_2_current"], 
+    "Voltage (Volts)": ["bat_1_voltage", "bat_2_voltage"], 
+    "State-of-Charge (Percent)": ["bat_1_soc", "bat_2_soc"], 
+    "State-of-Health (Percent)": ["bat_1_soh", "bat_2_soh"], 
+    "Motor Power (KW)": ["motor_power"], "Ground Speed (Knots)": ["ground_speed"], "Pressure Altitude (Meters)": ["pressure_alt"],
+    "Average Cell Temperature (°C)": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"], 
+    "Minimum Cell Temperature (°C)": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"], 
+    "Maximum Cell Temperature (°C)": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"], 
+    "Minimum Cell Volt (Volts)": ["bat_1_min_cell_volt", "bat_2_min_cell_volt"], 
+    "Maximum Cell Volt (Volts)": ["bat_1_max_cell_volt", "bat_2_max_cell_volt"], 
+    "Inverter Cooling Temperature (°C)": ["inverter_cooling_temp_1", "inverter_cooling_temp_1"], 
+    "Motor RPM (rpm)": ["motor_rpm"], "Motor Temperature (°C)": ["motor_temp"], 
+    "Requested Torque (Nm)": ["requested_torque"], "Indicated Air Speed (Knots)": ["ias"], 
+    "Latitude (Degrees)": ["lat"], "Longitude (Degrees)": ["lng"],
+    'Stall Warn Active (0/1)': ["stall_warn_active"], 'Inverter Temp (°C)': ["inverter_temp"],
+    'Bat 1 Cooling Temp (°C)': ["bat_1_cooling_temp"], 'Remaining Flight Time': ["remaining_flight_time"],
+    'Pitch (Degrees)': ["pitch"], 'Roll (Degrees)': ["roll"], 'Heading (Degrees)': ["heading"],
+    'Stall Diff Pressure (Pa)': ["stall_diff_pressure"], 'QNG (hPa)': ["qng"], 
+    'Outside Air Temperature (°C)': ["oat"], 'ISO Leakage Current': ["iso_leakage_current"]
 }
-custom_variables = list(custom_variables_columns.keys())
+custom_aggregate_variables = list(custom_aggregate_variables_dict.keys())
+
+# List of custom granular variables
+custom_granular_variables_dict = {"Flight ID": ["flight_id"], "Time (Min)": ["time_min"],
+                        'Bat 1 Current (amp)': ["bat_1_current"], 'Bat 2 Current (amp)': ["bat_2_current"], 
+                        'Bat 1 Voltage (volts)': ["bat_1_voltage"], 'Bat 2 Voltage (volts)': ["bat_2_voltage"],
+                        'Bat 1 SOC (Percent)': ["bat_1_soc"], 'Bat 2 SOC (Percent)': ["bat_2_soc"], 'Bat 1 SOH (Percent)': ["bat_1_soh"], 'Bat 2 SOH (Percent)': ["bat_2_soh"], 
+                        'Bat 1 Min Cell Temp (°C)': ["bat_1_min_cell_temp"], 'Bat 2 Min Cell Temp (°C)': ["bat_2_min_cell_temp"], 
+                        'Bat 1 Max Cell Temp (°C)': ["bat_1_max_cell_temp"], 'Bat 2 Max Cell Temp (°C)': ["bat_2_max_cell_temp"], 
+                        'Bat 1 Avg Cell Temp (°C)': ["bat_1_avg_cell_temp"], 'Bat 2 Avg Cell Temp (°C)': ["bat_2_avg_cell_temp"], 
+                        'Bat 1 Min Cell Volt (volts)': ["bat_1_min_cell_volt"], 'Bat 2 Min Cell Volt (volts)': ["bat_2_min_cell_volt"], 
+                        'Bat 1 Max Cell Volt (volts)': ["bat_1_max_cell_volt"], 'Bat 2 Max Cell Volt (volts)': ["bat_2_max_cell_volt"], 
+                        'Requested Torque (Nm)': ["requested_torque"], 'Indicated Air Speed (knots)': ["ias"],
+                        'Motor RPM (rpm)': ["motor_rpm"], 'Motor Power (KW)': ["motor_power"], 'Motor Temp (°C)': ["motor_temp"], 
+                        'Stall Warn Active (0/1)': ["stall_warn_active"], 'Inverter Temp (°C)': ["inverter_temp"], 'Bat 1 Cooling Temp (°C)': ["bat_1_cooling_temp"],
+                        'Inverter Cooling Temp 1 (°C)': ["inverter_cooling_temp_1"], 'Inverter Cooling Temp 2 (°C)': ["inverter_cooling_temp_2"], 
+                        'Remaining Flight Time': ["remaining_flight_time"], 'Pressure Altitude (m)': ["pressure_alt"], 
+                        'Latitude (Degrees)': ["lat"], 'Longitude (Degrees)': ["lng"], 
+                        'Ground Speed (knots)': ["ground_speed"], 'Time Stamp (Seconds)': ["time_stamp"],
+                        'Pitch (Degrees)': ["pitch"], 'Roll (Degrees)': ["roll"], 'Heading (Degrees)': ["heading"], 
+                        'Stall Diff Pressure (Pa)': ["stall_diff_pressure"], 'QNG (hPa)': ["qng"], 
+                        'Outside Air Temperature (°C)': ["oat"], 'ISO Leakage Current': ["iso_leakage_current"]
+}
+custom_granular_variables = list(custom_granular_variables_dict.keys())
+
+# List of custom granular variables
+custom_weather_dict = {"Temperature (°F)": ["temperature"], "Dewpoint (°F)": ["dewpoint"], "Relative Humidity (Percent)": ["relative_humidity"],
+                        "Wind Direction (Degrees)": ["wind_direction"], "Wind Speed (knots)": ["wind_speed"], "Pressure Altimeter (in)": ["pressure_altimeter"],
+                        "Sea Level Pressure (mbar)": ["sea_level_pressure"], "Visibility (mi)": ["visibility"], 
+                        "Wind Gust (knots)": ["wind_gust"], "Sky Level 1 (ft)": ["sky_level_1"], "Sky Level 2 (ft)": ["sky_level_2"], "Sky Level 3 (ft)": ["sky_level_3"], "Sky Level 4 (ft)": ["sky_level_4"]
+}
+custom_weather_variables = list(custom_weather_dict.keys())
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+# Getting the dates to be used in the ML UI:
+def get_dates():
+    
+    # Get dates from datetime
+    current_date = datetime.now().date()
+    tomorrow_date = current_date + timedelta(days=1)
+    day_after_tomorrow_date = current_date + timedelta(days=2)
+
+    # Turn them into strings
+    string_current_date = current_date.strftime("%b %d, %Y")
+    string_tomorrow_date = tomorrow_date.strftime("%b %d, %Y")
+    string_day_after_tomorrow_date = day_after_tomorrow_date.strftime("%b %d, %Y")
+
+    # Create a list and add the dates
+    list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
+
+    return list_of_dates
+
 
 # List of variables
 charging_variables_columns = {
@@ -90,60 +113,27 @@ charging_variables = list(charging_variables_columns.keys())
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def change_order():
+    # initialize flight querying and get list of uniqye activities
+    flight_conn = query_flights()
+    list_of_activities = flight_conn.get_flight_activities()
+
+    # Set the activity order and add all other activities aside from NA and TBD
     order_activities = ["pre-flight", "takeoff", "climb", "cruise", "descent", "landing"]
     for activity in list_of_activities:
         if activity not in order_activities and activity not in ["NA", "TBD"]:
             order_activities.append(activity)
+        
+    # Return the ordered activity
     return order_activities
-
-
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-#database connection 
-def connect_to_db(provider: str):
-    load_dotenv()
-    provider == "PostgreSQL"
-    db_url = "postgresql+psycopg2" + getenv('DATABASE_URL')[8:]
-    engine = sa.create_engine(db_url, connect_args={"options": "-c timezone=US/Eastern"})
-    return engine
 
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def delete_style(val):
     return "font-weight: bold; text-decoration: underline;"
 
-
+  
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def uploaded_data():
-    engine = connect_to_db("PostgreSQL")
-    query = "SELECT * FROM flight_weather_data_view WHERE time_min > 0.04 LIMIT 10;"
-
-    # Execute the query and fetch the data into a DataFrame
-    uploaded_data_df = pd.read_sql(query, con=engine)
-    uploaded_data_df['flight_date'] = pd.to_datetime(uploaded_data_df['flight_date'], format="%b %d, %Y at %I:%M %p")
-    # Convert the 'flight_date' column back to a string
-    uploaded_data_df['flight_date'] = uploaded_data_df['flight_date'].dt.strftime("%b %d, %Y")
-    # Rename columns to be human readable
-    readable_columns = ['Fw Flight ID','Flight Date','Flight Time (UTC)','Flight ID','Time (Min)','Bat 1 Current (amp)','Bat 1 Voltage (volts)','Bat 2 Current (amp)','Bat 2 Voltage (volts)','Bat 1 SOC (%)','Bat 2 SOC (%)',
-                        'Bat 1 SOH (%)', 'Bat 2 SOH (%)', 'Bat 1 Min Cell Temp (°C)', 'Bat 2 Min Cell Temp (°C)', 'Bat 1 Max Cell Temp (°C)', 'Bat 2 Max Cell Temp (°C)', 'Bat 1 Avg Cell Temp (°C)', 'Bat 2 Avg Cell Temp (°C)', 'Bat 1 Min Cell Volt (volts)', 'Bat 2 Min Cell Volt (volts)',
-                        'Bat 1 Max Cell Volt (volts)', 'Bat 2 Max Cell Volt (volts)', 'Requested Torque (Nm)', 'Motor RPM (rpm)', 'Motor Power (KW)', 'Motor Temp (°C)', 'Indicated Air Speed (knots)', 'Stall Warn Active (0/1)', 'Inverter Temp (°C)', 'Bat 1 Cooling Temp (°C)',
-                        'Inverter Cooling Temp 1 (°C)', 'Inverter Cooling Temp 2 (°C)', 'Remaining Flight Time', 'Pressure Altitude (m)', 'Latitude (Degrees)', 'Longitude (Degrees)', 'Ground Speed (knots)', 'Pitch (Degrees)', 'Roll (Degrees)', 'Time Stamp (Seconds)',
-                        'Heading (Degrees)', 'Stall Diff Pressure (Pa)', 'QNG (hPa)', 'Outside Air Temperature (°C)', 'ISO Leakage Current', 'Weather ID', 'Weather Date', 'Weather Time UTC', 'Temperature (°F)','Dewpoint (°F)',
-                        'Relative Humidity (%)','Wind Direction (Degrees)', 'Wind Speed (knots)', 'Pressure Altimeter (in)','Sea Level Pressure (mbar)', 'Visibility (mi)', 'Wind Gust (knots)', 'Sky Coverage 1', 'Sky Coverage 2', 'Sky Coverage 3', 
-                        'Sky Coverage 4', 'Sky Level 1 (ft)', 'Sky Level 2 (ft)','Sky Level 3 (ft)','Sky Level 4 (ft)','Weather Codes', 'Metar']
-    uploaded_data_df.columns = readable_columns # TEST IF THIS WORKS
-    engine.dispose()
-    return uploaded_data_df
-
-
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def uploaded_cols(): 
-    uploaded_data_df = uploaded_data()
-    all_uploaded_cols = uploaded_data_df.iloc[:, 1:]
-    return all_uploaded_cols
-
-
-# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
-def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights"):
+def get_flights(flight_type="Flight test", columns=["id", "flight_date", "flight_time_utc"], table="flights"):
     """
     The function uses the query_flights class to get all the flights ids and dates in a dictionary of key: value --> flight_date: flight_id. 
 
@@ -155,7 +145,7 @@ def get_flights(columns=["id", "flight_date", "flight_time_utc"], table="flights
     """
     flights = query_flights()
 
-    flight_data = flights.get_flight_id_and_dates(columns, table)
+    flight_data = flights.get_flight_id_and_dates(flight_type, columns, table)
     
     return flight_data
 
@@ -178,14 +168,18 @@ def get_charging_data(columns=["id", "flight_date", "flight_time_utc"], table="f
 
 # Function ---------------------------------------------------------------------------------------------------------------------------------------------------------
 def get_most_recent_run_time():
-    new_date = flights.get_last_scraper_runtime().strftime("%b %d, %Y at %I:%M %p")
+    # initialize flight querying and get list of uniqye activities
+    flight_conn = query_flights()
+    new_date = flight_conn.get_last_scraper_runtime().strftime("%b %d, %Y at %I:%M %p")
     return new_date
+
 
 # blue theme color
 blue = "#3459e6"
 grey = "#878787"
 red = "#FF0000"
 light_grey = "#F0F0F0"
+
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 app_ui = ui.page_fluid(
@@ -230,9 +224,9 @@ app_ui = ui.page_fluid(
                                 </p> 
                                 <br>
                                 <p>
-                                  Our team is working with Pipistrel Velis Electro, the world’s first fully operational 
+                                  Our team is using data from the Pipistrel Velis Electro, the world’s first type certified 
                                   electric plane. Our platform enables researchers to analyze flight data and create a battery 
-                                  management system for the optimal operation of the electric plane. Leveraging machine learning,
+                                  management strategy for the optimal operation of the electric plane. Leveraging machine learning,
                                   ElectriFly optimizes flight schedules based on weather forecasts and improves flight planning by
                                   predicting battery consumption.
                                 </p>
@@ -379,11 +373,9 @@ app_ui = ui.page_fluid(
                 style="display: flex; flex-direction: column; align-items: center; padding: 3rem 2rem;"
           ),
         ),
-
         # ===============================================================================================================================================================
         # END: HOMEPAGE
         # ===============================================================================================================================================================
-                    
         # ===============================================================================================================================================================
         # START: DATA PREVIEW SCREEN
         # ===============================================================================================================================================================
@@ -398,36 +390,51 @@ app_ui = ui.page_fluid(
             div(HTML("<hr>")),
             # Column selection panel
             ui.div(
-                # Table header
-                ui.div(
-                    ui.include_css("bootstrap.css"), ui.h3("Most Recent Flight and Weather Data Records"), 
-                    style="margin-top: 2px;"
-                ), 
-                # Dropdown with checkboxes
-                ui.input_selectize(
-                    "selected_cols", 
-                    "Select Columns to Preview", 
-                    choices=list(uploaded_cols().columns), 
-                    multiple=True,
-                    selected=["Flight ID","Flight Date", "Time (Min)","Bat 1 SOC (%)","Bat 1 SOH (%)", "Bat 1 Max Cell Temp (°C)", "Temperature (°F)", "Visibility (mi)"],width="50%"
-                ),
+                ui.include_css("bootstrap.css"), ui.h3("Most Recent Flight and Weather Data Records"), 
                 style="margin-top:20px;"
-            ),  
-            # Table ouptut
+            ), 
+            ui.p("          "), 
+            ui.output_ui("most_recent_run"),
+            ui.p("          "), 
+            ui.accordion(
+                ui.accordion_panel(
+                    "Filters",
+                    ui.layout_columns(
+                        ui.input_selectize("data_granularity", "Select Data Granularity", choices=["Granular", "Aggregate"], selected="Granular"),
+                        ui.input_selectize("data_type_selection", "Select Data Type", choices=["Flight test", "Charging", "Ground test"], multiple=False, selected="Flight test"),
+                        ui.output_ui("data_type_dates"),
+                        ui.input_selectize("total_data_show", "Select Data Preview Limit", choices=[10, 20, 30], multiple=False, selected=10),
+                        col_widths=[3, 3, 3, 3]
+                    ),
+                    ui.output_ui("flight_preview_columns_choice"),
+                    ui.p("          "),
+                    ui.input_selectize("weather_cols", "Select Weather Data Columns", choices=custom_weather_variables, multiple=True, selected=custom_weather_variables[:5], width="100%"),
+                    ui.layout_columns(
+                        ui.p("          "),
+                        ui.input_action_button("filter_data", "Apply Filters", style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px"),
+                        col_widths=(9, 3)
+                    )
+                )
+            ),
+            ui.p("          "),   
             ui.div(
-                ui.output_data_frame("uploaded_data_df"),
+                ui.output_data_frame("preview_dataframe_construct"),
                 ui.include_css("bootstrap.css"),
                 style="margin-top: 2px; max-height: 3000px;"
             ),
-            # Display the most recent run time
-            ui.div(
-                ui.div(ui.output_text("most_recent_run")),
-                style="margin-top: 10px;"
-            ),
-        # ===============================================================================================================================================================
-        # End: DATA PREVIEW SCREEN
-        # ===============================================================================================================================================================
+            ui.layout_columns(
+                div(HTML(f"""<p style="font-weight: bold; font-size: 20px; padding: 10px;">Select the <span style="color: {blue};">Download</span> button to download the data
+                        based on the selected <span style="color: {blue};">granularity</span>, <span style="color: {blue};">data type</span>, and <span style="color: {blue};">date</span>.</p>""")),
+                ui.download_button("downloadData", "Download", width="100%", style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px"),
+                col_widths=(9, 3)
+            )
         ),
+        # ===============================================================================================================================================================
+        # END: DATA PREVIEW SCREEN
+        # ===============================================================================================================================================================
+        # ===============================================================================================================================================================
+        # START: DATA ANALYSIS SCREEN
+        # ===============================================================================================================================================================
         ui.nav_menu("Data Analysis",                    
             # ===============================================================================================================================================================
             # START: Recommended Graphs Tab
@@ -535,11 +542,11 @@ app_ui = ui.page_fluid(
                     ),
                     ui.card(
                         ui.tooltip(
-                            ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_variables, selected=custom_variables[0]),
+                            ui.input_selectize("select_x_variable", "Independent (X) Variable:", custom_aggregate_variables, selected=custom_aggregate_variables[1]),
                             "Select the X (independent) variable on the graph."
                         ),
                         ui.tooltip(
-                            ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_variables, selected=custom_variables[3]),
+                            ui.input_selectize("select_y_variable", "Dependent (Y) Variable:", custom_aggregate_variables, selected=custom_aggregate_variables[4]),
                             "Lastly select the Y (dependent) variable on the graph."
                         )
                     ),
@@ -577,8 +584,8 @@ app_ui = ui.page_fluid(
                     ui.column(6,
                         ui.input_selectize("select_activities", 
                             "Choose activities:", 
-                            list_of_activities, 
-                            selected=list_of_activities, 
+                            change_order(), 
+                            selected=change_order(), 
                             width="500px",
                             multiple=True
                         ),
@@ -689,6 +696,12 @@ app_ui = ui.page_fluid(
                 )
             ),
         ),
+        # ===============================================================================================================================================================
+        # END: DATA ANALYSIS SCREEN
+        # ===============================================================================================================================================================
+        # ===============================================================================================================================================================
+        # START: FLIGHT PLANNING SCREEN
+        # ===============================================================================================================================================================
         ui.nav_menu("Flight Planning",
             # ===============================================================================================================================================================
             # START: Flight Scheduling TAB
@@ -752,7 +765,7 @@ app_ui = ui.page_fluid(
                         ui.accordion(
                             ui.accordion_panel(
                                 "Flight Date & Time",
-                                ui.input_selectize("date_operations", "Choose Flight Date:", list_of_dates, multiple=False, selected=list_of_dates[0]),
+                                ui.input_selectize("date_operations", "Choose Flight Date:", get_dates(), multiple=False, selected=get_dates()[0]),
                                 ui.p("          "),
                                 ui.input_selectize(
                                     "flight_time_select", 
@@ -811,7 +824,7 @@ app_ui = ui.page_fluid(
                                         ui.tooltip(
                                             ui.input_action_button(
                                                 "delete_selected_activity", 
-                                                "Delete Row", 
+                                                "Delete activity", 
                                                 style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
                                             ),
                                             "Delete any single selected row in the table below."
@@ -834,6 +847,9 @@ app_ui = ui.page_fluid(
                 )            
             )
         ),
+        # ===============================================================================================================================================================
+        # END: FLIGHT PLANNING SCREEN
+        # ===============================================================================================================================================================
         id="tab",  
     )  
 )
@@ -913,8 +929,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         graph_type = input.select_graph()
         x_var_label = input.select_x_variable()
         y_var_label = input.select_y_variable()
-        x_variables = custom_variables_columns[x_var_label]
-        y_variables = custom_variables_columns[y_var_label]
+        x_variables = custom_aggregate_variables_dict[x_var_label]
+        y_variables = custom_aggregate_variables_dict[y_var_label]
 
         # Make the graph
         created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
@@ -1046,6 +1062,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         Returns 
             power_soc_rate_of_change_scatterplot: a matplotlib figure scatterplot with the data plotted already.
         """
+        
         # Get all flight data
         flight_id = input.statistical_time()
         activities_filter = input.select_activities()
@@ -1105,48 +1122,240 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return soc_roc_df 
     
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # END: INSIGHTS SCREEN 
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#     # END: INSIGHTS SCREEN 
+#     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # START: UPLOAD SCREEN 
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#     # START: UPLOAD SCREEN 
+#     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
-    @render.data_frame
-    def uploaded_data_df():
-        uploaded_data_df = uploaded_data()
-        selected_columns = input.selected_cols()
-        if not selected_columns:
-            # Return the entire DataFrame as default when no columns are selected
-            default_columns = uploaded_data_df.loc[:,["Flight ID","Flight Date", "Weather Time UTC", "Time (Min)","Bat 1 SOC", 
-                                               "Bat 2 SOC","Motor Power", "Motor Temp"]]
-            return default_columns
-        else:
-            # Filter the DataFrame based on the selected columns
-            filtered_df = uploaded_data_df.loc[:, selected_columns]
-            return filtered_df
+    @render.data_frame 
+    @reactive.event(input.filter_data)
+    def preview_dataframe_construct():
+
+        # Get all the input needed
+        weather_col_dict = {k: v for k, v in custom_weather_dict.items() if k in input.weather_cols()}
+        data_granularity_var = input.data_granularity()
+        selection_dict = custom_granular_variables_dict.items() if data_granularity_var == "Granular" else custom_aggregate_variables_dict.items()
+        flight_col_dict = {k: v for k, v in selection_dict if k in input.flight_cols()}
+        flight_id = input.data_preview_date()
+        limit = int(input.total_data_show())
+
+        # If no columns are chosen, then return a dictionary that tells the user to choose a column.
+        if len(weather_col_dict) == 0 or len(flight_col_dict) == 0:
+            error_dict = {"Please select a weather or flight data column to view. Thank you!": ["-"]}
+            error_df = pd.DataFrame(error_dict)
+            return render.DataGrid(error_df)
+
+        with ui.Progress(min=1, max=15) as p:
+            p.set(message="Calculation in progress", detail="This may take a while...")
+
+            # get the flight query and all other queries
+            weather_data = query_weather().get_weather_data(flight_id, weather_col_dict)
+            flight_data = query_flights().get_flight_by_column_dict(flight_id, flight_col_dict)
+
+            # Make the holder dictionary 
+            weather_concat_dict = {}
+
+            # Get specific data out of the way
+            flight_first_col = flight_data.iloc[:, 0].to_numpy()
+
+            # If the length of the weather data is just 1. Fill everything like the weather and return. Else break into chunks and merge.
+            if len(weather_data) == 1:
+
+                # Loop over the weather columns
+                for weather_col in weather_data.columns:
+
+                    # Check to see if the col is any type of date or time. If there is, change the string to that value.
+                    weather_full_data = np.full_like(flight_first_col, weather_data[weather_col][0], dtype=np.double)
+
+                    # Add the numpy list to the dict to make into a dataframe
+                    weather_concat_dict[weather_col] = weather_full_data
+
+                # Add the final dict as a dataframe to a concatenated flight data. All data together.
+                flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
+
+            else:
+                
+                # split the arrays
+                all_arrays = np.array_split(flight_first_col, len(weather_data))
+
+                # Loop over the weather columns
+                for weather_col in weather_data.columns:
+
+                    # Make the full list to hold the weather data in bits.
+                    weather_full_data = np.full_like(flight_first_col, 0.0, dtype=np.double)
+
+                    # count the indexes
+                    idx_counter = 0
+
+                    # loop over the split arrays.
+                    for i in range(len(all_arrays)):
+
+                        # Get the split array on the index.
+                        split = all_arrays[i]
+
+                        # get the length of the split by the index counter plus the length of the split array.
+                        split_len = len(split) + idx_counter
+
+                        # Add the splited weather data based on the index of the array.
+                        split_weather_data = np.full_like(split, weather_data[weather_col][i], dtype=np.double)
+
+                        # For the lenth of the split add the data point.
+                        weather_full_data[idx_counter:split_len] = split_weather_data
+
+                        # Make the index counter to the length of the split for the next split.
+                        idx_counter = split_len
+                    
+                    # Add the data to the weather dict.
+                    weather_concat_dict[weather_col] = weather_full_data
+
+                # Add to the final flight data to put together.
+                flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
+
+        return render.DataGrid(flight_data.loc[2:limit, :])
+
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.text
     def most_recent_run():
         most_recent_run_time = get_most_recent_run_time()  # Run the scraper.py script when the app is loaded
-        return f"Data was last refreshed: {most_recent_run_time}"  
+        return div(HTML(f"""Data was last refreshed: <span style="color: {blue};">{most_recent_run_time}</span>"""))
+
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    # Found yield answer here: https://github.com/posit-dev/py-shiny/issues/476
+    @render.download(filename=lambda: f"{str(input.data_type_selection())}-{str(input.data_granularity())}-{str(input.data_preview_date())}.csv")
+    async def downloadData():
+        
+        # Get all the input needed
+        weather_col_dict = {k: v for k, v in custom_weather_dict.items() if k in input.weather_cols()}
+        data_granularity_var = input.data_granularity()
+        selection_dict = custom_granular_variables_dict.items() if data_granularity_var == "Granular" else custom_aggregate_variables_dict.items()
+        flight_col_dict = {k: v for k, v in selection_dict if k in input.flight_cols()}
+        flight_id = input.data_preview_date()
+
+        # If no columns are chosen, then download a dictionary that says to select the columns
+        if len(weather_col_dict) == 0 or len(flight_col_dict) == 0:
+            error_dict = {"Please select a weather or flight data column to view. Thank you!": ["Please select a weather or flight data column to view. Thank you!"]}
+            error_df = pd.DataFrame(error_dict)
+            await asyncio.sleep(0.25)
+            yield error_df.to_csv()
+            return
+
+        with ui.Progress(min=1, max=15) as p:
+            p.set(message="Calculation in progress", detail="This may take a while...")
+
+            # Get the weather and flight data
+            weather_data = query_weather().get_weather_data(flight_id, weather_col_dict)
+            flight_data = query_flights().get_flight_by_column_dict(flight_id, flight_col_dict)
+
+            # Get specific data out of the way
+            flight_first_col = flight_data.iloc[:, 0].to_numpy()
+
+            # Initialize the dict to hold all data
+            weather_concat_dict = {}
+
+            # If the length of the weather data is just 1. Fill everything like the weather and return.
+            if len(weather_data) == 1:
+                
+                # Loop over the weather columns
+                for weather_col in weather_data.columns:
+
+                    # Check to see if the col is any type of date or time. If there is, change the string to that value.
+                    weather_full_data = np.full_like(flight_first_col, weather_data[weather_col][0], dtype=np.double)
+
+                    # Add the numpy list to the dict to make into a dataframe
+                    weather_concat_dict[weather_col] = weather_full_data
+
+                # Add the final dict as a dataframe to a concatenated flight data. All data together.
+                flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
+
+            else:
+                # split each value by the length of the number of weather data points
+                all_arrays = np.array_split(flight_first_col, len(weather_data))
+
+                # Loop over the weather columns
+                for weather_col in weather_data.columns:
+
+                    # Make the full list to hold the weather data in bits.
+                    weather_full_data = np.full_like(flight_first_col, 0.0, dtype=np.double)
+
+                    # count the indexes
+                    idx_counter = 0
+
+                    # loop over the split arrays.
+                    for i in range(len(all_arrays)):
+
+                        # Get the split array on the index.
+                        split = all_arrays[i]
+
+                        # get the length of the split by the index counter plus the length of the split array.
+                        split_len = len(split) + idx_counter
+
+                        # Add the splited weather data based on the index of the array.
+                        split_weather_data = np.full_like(split, weather_data[weather_col][i], dtype=np.double)
+
+                        # For the lenth of the split add the data point.
+                        weather_full_data[idx_counter:split_len] = split_weather_data
+
+                        # Make the index counter to the length of the split for the next split.
+                        idx_counter = split_len
+                    
+                    # Add the data to the weather dict.
+                    weather_concat_dict[weather_col] = weather_full_data
+
+                # Add to the final flight data to put together.
+                flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
+        
+        await asyncio.sleep(0.25)
+        yield flight_data.to_csv()
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.data_type_selection)
+    def data_type_dates():
+        data_type = input.data_type_selection()
+        return ui.input_selectize("data_preview_date", "Select the Date:", get_flights(flight_type=data_type))
+        
     
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.ui
+    @reactive.event(input.data_granularity)
+    def flight_preview_columns_choice():
+        granularity = input.data_granularity()
+
+        if granularity == "Granular":
+            return ui.input_selectize("flight_cols", "Select Flight Data Columns", choices=custom_granular_variables, multiple=True, selected=custom_granular_variables[:5], width="100%")
+        else:
+            return ui.input_selectize("flight_cols", "Select Flight Data Columns", choices=custom_aggregate_variables, multiple=True, selected=custom_aggregate_variables[:5], width="100%")
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     # END: UPLOAD SCREEN 
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------
     
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # START: SIMULATION SCREEN 
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # # START: SIMULATION SCREEN 
+    # #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    # For the selection of the flight operations.
+    # For the selection of the flight operations. Global variable to hold the flight operations.
     table_data_show = reactive.Value(-1)
     new_model = Model()
+    flight_operation_dictionary = {
+        "Activity": [], 
+        "Time (mins)": [], 
+        "SOH (%)": [],
+        "Altitude Gain/Loss (ft)": [],
+        "Ground Speed (knots)": [],
+        "Motor Power (KW)": [],
+        "SOC (%)": [],
+    }
+
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -1164,6 +1373,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                               ]).hide(axis="index")
         return styled_data
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     # Define a function to determine the cell background color
     def style_cell(val):
@@ -1174,6 +1384,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         elif val == 'green':
             return "background-color: #43a047; color: #43a047;"
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     def colour_word(word):
         # make these words red
@@ -1181,6 +1392,9 @@ def server(input: Inputs, output: Outputs, session: Session):
             return 'color: red'
         else:
             return 'color: black'
+        
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.table
     def flight_planning_table(): 
@@ -1206,6 +1420,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                         ])
             return flight_plan
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.ui
@@ -1217,6 +1432,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             return ui.output_text("Please select a date to fly")
         else:
             return ui.input_selectize("flight_time_select", "Choose start time of flight:", ["12:00 AM", "12:15 AM", "12:30 AM", "12:45 AM", "01:00 AM", "01:15 AM", "01:30 AM", "01:45 AM", "02:00 AM", "02:15 AM", "02:30 AM", "02:45 AM", "03:00 AM", "03:15 AM", "03:30 AM", "03:45 AM", "04:00 AM", "04:15 AM", "04:30 AM", "04:45 AM", "05:00 AM", "05:15 AM", "05:30 AM", "05:45 AM", "06:00 AM", "06:15 AM", "06:30 AM", "06:45 AM", "07:00 AM", "07:15 AM", "07:30 AM", "07:45 AM", "08:00 AM", "08:15 AM", "08:30 AM", "08:45 AM", "09:00 AM", "09:15 AM", "09:30 AM", "09:45 AM", "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM", "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM", "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM", "01:00 PM", "01:15 PM", "01:30 PM", "01:45 PM", "02:00 PM", "02:15 PM", "02:30 PM", "02:45 PM", "03:00 PM", "03:15 PM", "03:30 PM", "03:45 PM", "04:00 PM", "04:15 PM", "04:30 PM", "04:45 PM", "05:00 PM", "05:15 PM", "05:30 PM", "05:45 PM", "06:00 PM", "06:15 PM", "06:30 PM", "06:45 PM", "07:00 PM", "07:15 PM", "07:30 PM", "07:45 PM", "08:00 PM", "08:15 PM", "08:30 PM", "08:45 PM", "09:00 PM", "09:15 PM", "09:30 PM", "09:45 PM", "10:00 PM", "10:15 PM", "10:30 PM", "10:45 PM", "11:00 PM", "11:15 PM", "11:30 PM", "11:45 PM"])
+
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -1295,9 +1511,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(table_data_show)
     def remaining_soc():
 
-        # Get the global flight holder variable
-        global flight_operation_dictionary
-
         # Get the total soc and return it
         total_soc = sum(flight_operation_dictionary["SOC (%)"]) if len(flight_operation_dictionary["SOC (%)"]) != 0 else 0
         soc = round(float(100 - total_soc), 2)
@@ -1315,9 +1528,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(table_data_show)
     def model_predict_output():
 
-        # Get the global flight holder variable
-        global flight_operation_dictionary
-
         # Make it a data frame
         flight_operation_output_table = pd.DataFrame(flight_operation_dictionary)
 
@@ -1329,9 +1539,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.add_activity)
     def _():
-
-        # Get the global flight holder variable
-        global flight_operation_dictionary
 
         # Get the reactive variable:
         reactive_var = table_data_show.get() + 1
@@ -1383,7 +1590,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             flight_operation_dictionary["Activity"].append(operation)
             flight_operation_dictionary["Time (mins)"].append(act_time)
             flight_operation_dictionary["SOH (%)"].append(act_soh)
-            flight_operation_dictionary["Incrementing Altitude (m)"].append(act_alt)
+            flight_operation_dictionary["Altitude Gain/Loss (ft)"].append(act_alt)
             flight_operation_dictionary["Ground Speed (knots)"].append(act_groundspeed)
             flight_operation_dictionary["Motor Power (KW)"].append(act_power)
             flight_operation_dictionary["SOC (%)"].append(predicted_soc)
@@ -1396,9 +1603,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.delete_selected_activity)
     def _():
-
-        # Get the global flight holder variable
-        global flight_operation_dictionary
 
         # Get the specific row from the table
         delete_row_indexes = input.model_predict_output_selected_rows()
@@ -1413,7 +1617,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 del flight_operation_dictionary["Activity"][row_id]
                 del flight_operation_dictionary["Time (mins)"][row_id]
                 del flight_operation_dictionary["SOH (%)"][row_id]
-                del flight_operation_dictionary["Incrementing Altitude (m)"][row_id]
+                del flight_operation_dictionary["Altitude Gain/Loss (ft)"][row_id]
                 del flight_operation_dictionary["Ground Speed (knots)"][row_id]
                 del flight_operation_dictionary["Motor Power (KW)"][row_id]
                 del flight_operation_dictionary["SOC (%)"][row_id]
@@ -1422,11 +1626,9 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Set the data show to 1
             table_data_show.set(reactive_var)
 
-    
-
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # END: SIMULATION SCREEN 
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # # END: SIMULATION SCREEN 
+    # #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Get the App Ready and Host
 www_dir = Path(__file__).parent / "www"

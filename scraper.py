@@ -191,9 +191,7 @@ def create_views():
   view_list = ['flight_weather_data_view']
   create_queries = {'flight_weather_data_view': queries.CREATE_FLIGHT_WEATHER_VIEW}
   for view in view_list:
-    conn = db_connect()
-    if not view_exists(view, conn):
-      execute(create_queries[view])
+    execute(create_queries[view])
 
 # create the flight_activities table and views
 def flight_activity_tables_views():
