@@ -1036,7 +1036,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
-    @render.data_frame
+    @render.data_frame 
     @reactive.event(input.filter_data)
     def preview_dataframe_construct():
 
@@ -1048,12 +1048,21 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_id = input.data_preview_date()
         limit = int(input.total_data_show())
 
+        # If no columns are chosen, then return a dictionary that tells the user to choose a column.
+        if len(weather_col_dict) == 0 or len(flight_col_dict) == 0:
+            error_dict = {"Please select a weather or flight data column to view. Thank you!": ["-"]}
+            error_df = pd.DataFrame(error_dict)
+            return render.DataGrid(error_df)
+
         with ui.Progress(min=1, max=15) as p:
             p.set(message="Calculation in progress", detail="This may take a while...")
 
             # get the flight query and all other queries
             weather_data = query_weather().get_weather_data(flight_id, weather_col_dict)
             flight_data = query_flights().get_flight_by_column_dict(flight_id, flight_col_dict)
+
+            # Make the holder dictionary 
+            weather_concat_dict = {}
 
             # Get specific data out of the way
             flight_first_col = flight_data.iloc[:, 0].to_numpy()
@@ -1074,8 +1083,8 @@ def server(input: Inputs, output: Outputs, session: Session):
                 flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
 
             else:
-                # split each value by the length of the number of weather data points and make the holder dictionary 
-                weather_concat_dict = {}
+                
+                # split the arrays
                 all_arrays = np.array_split(flight_first_col, len(weather_data))
 
                 # Loop over the weather columns
@@ -1111,7 +1120,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # Add to the final flight data to put together.
                 flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
 
-        return flight_data.loc[2:limit, :]
+        return render.DataGrid(flight_data.loc[2:limit, :])
 
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1134,6 +1143,14 @@ def server(input: Inputs, output: Outputs, session: Session):
         flight_col_dict = {k: v for k, v in selection_dict if k in input.flight_cols()}
         flight_id = input.data_preview_date()
 
+        # If no columns are chosen, then download a dictionary that says to select the columns
+        if len(weather_col_dict) == 0 or len(flight_col_dict) == 0:
+            error_dict = {"Please select a weather or flight data column to view. Thank you!": ["Please select a weather or flight data column to view. Thank you!"]}
+            error_df = pd.DataFrame(error_dict)
+            await asyncio.sleep(0.25)
+            yield error_df.to_csv()
+            return
+
         with ui.Progress(min=1, max=15) as p:
             p.set(message="Calculation in progress", detail="This may take a while...")
 
@@ -1144,11 +1161,12 @@ def server(input: Inputs, output: Outputs, session: Session):
             # Get specific data out of the way
             flight_first_col = flight_data.iloc[:, 0].to_numpy()
 
+            # Initialize the dict to hold all data
+            weather_concat_dict = {}
+
             # If the length of the weather data is just 1. Fill everything like the weather and return.
             if len(weather_data) == 1:
-                # Initialize the dict to hold all data
-                weather_concat_dict = {}
-
+                
                 # Loop over the weather columns
                 for weather_col in weather_data.columns:
 
@@ -1162,8 +1180,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 flight_data = pd.concat([flight_data, pd.DataFrame(weather_concat_dict)], axis=1)
 
             else:
-                # split each value by the length of the number of weather data points and make the holder dictionary 
-                weather_concat_dict = {}
+                # split each value by the length of the number of weather data points
                 all_arrays = np.array_split(flight_first_col, len(weather_data))
 
                 # Loop over the weather columns
