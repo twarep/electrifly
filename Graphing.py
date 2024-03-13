@@ -41,7 +41,20 @@ def create_mapbox_map_per_flight(flight_id: int):
     query_result = query_conn.get_flight_data_on_id(query_columns, flight_id)
     query_result.replace(0, np.nan, inplace=True)
 
-    # Fine tune lat and long on the dataframe
+    # Filter rows where lat and lng are within Canada bounds
+    canada_bounds = {
+        'lat_min': 41.676555,
+        'lat_max': 83.110626,
+        'lng_min': -141.00187,
+        'lng_max': 82.617592
+    }
+
+    query_result = query_result[
+        (query_result['lat'] >= canada_bounds['lat_min']) & (query_result['lat'] <= canada_bounds['lat_max']) &
+        (query_result['lng'] >= canada_bounds['lng_min']) & (query_result['lng'] <= canada_bounds['lng_max'])
+    ]
+
+    # Fine-tune lat and long on the DataFrame
     latitude = query_result["lat"].to_numpy()
     longitude = query_result["lng"].to_numpy() * (-1)
 
