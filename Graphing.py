@@ -365,7 +365,7 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
         plt.plot(x_ax_data, y_ax_data)
 
     elif graph_type == "Scatter Plot":
-        plt.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.05, c='blue')
+        plt.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.6, c='blue')
     
     # Add labels and legend to plot
     plt.xlabel(x_label)
@@ -374,3 +374,104 @@ def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variabl
 
     # Return the axis
     return custom_figure
+
+# Function -------------------------------------------------------------------------------------------------------------------------------------------------------
+def charging_graph_creation(graph_type: str, flight_ids, x_variable: str, y_variable: str, x_label: str, y_label: str):
+
+    x_ax_data = []
+    y_ax_data = []
+    # Make the query connection
+    flight_db_conn = query_flights()
+    flight_data = flight_db_conn.get_flight_soc_and_time(flight_ids)
+    print(flight_data)
+    # Get data from x-variables
+    for flight_id in flight_ids:
+        if x_variable[0] == "temperature":
+            query_result_x = flight_db_conn.get_temperature_on_id(flight_id)
+        else:
+            query_result_x = flight_db_conn.get_flight_data_on_id(x_variable, flight_id)
+
+        # Get data from y-variables if they are not the same as the x-variables
+        if y_variable != x_variable:
+            if y_variable[0] == "temperature":
+                query_result_y = flight_db_conn.get_temperature_on_id(flight_id)
+            else:
+                query_result_y = flight_db_conn.get_flight_data_on_id(y_variable, flight_id)
+
+        # if one of the columns is temp, then we run the function
+        if x_variable[0] == "temperature":
+            query_result_x = aggregate_weather_for_charging(query_result_x, query_result_y)
+        elif y_variable[0] == "temperature":
+            query_result_y = aggregate_weather_for_charging(query_result_y, query_result_x)
+        elif x_variable[0] and y_variable[0] == "temperature":
+            query_result_y = aggregate_weather_for_charging(query_result_x, query_result_x)
+
+        if len(x_variable) == 2:
+            x_data = (query_result_x[x_variable[0]].to_numpy() + query_result_x[x_variable[1]].to_numpy()) / 2
+        else:
+            x_data = query_result_x[x_variable].to_numpy()
+
+        
+        if len(y_variable) == 2:
+            y_data = (query_result_y[y_variable[0]].to_numpy() + query_result_y[y_variable[1]].to_numpy()) / 2
+        else:
+            y_data = query_result_y[y_variable].to_numpy()
+        
+        x_ax_data.append(x_data)
+        y_ax_data.append(y_data)
+
+    # Set Plot
+    custom_figure = plt.figure(figsize=(6, 6))
+    custom_figure.tight_layout()
+
+    # For each graph type graph different things.
+    for i in range(len(flight_ids)):
+        x_data = x_ax_data[i]
+        y_data = y_ax_data[i]
+        date = flight_data[flight_ids[i]]["date"]
+        if graph_type == "Line Plot":
+            plt.plot(x_data, y_data, label=date)
+        elif graph_type == "Scatter Plot":
+            plt.scatter(x_data, y_data, s=0.1, alpha = 0.6, label=date)
+    
+    # Add labels and legend to plot
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(f"{x_label} vs {y_label}")
+    if graph_type == "Scatter Plot":
+        handles, labels = plt.gca().get_legend_handles_labels()
+        # Get colors from the scatter plot
+        scatter_colors = [handle.get_facecolor()[0] for handle in handles]
+        # Create custom legend with larger markers and actual scatter plot colors
+        custom_handles = [plt.Line2D([0], [0], marker='o', markersize=10, linestyle='', color=color, label=label) for color, label in zip(scatter_colors, labels)]
+        plt.legend(handles=custom_handles, labels=labels)
+    else:
+        plt.legend()
+
+        # Get the legend handles and labels
+
+    # Return the axis
+    return custom_figure
+
+def aggregate_weather_for_charging(weather_data, flight_data):
+        
+    # Extract unique values from the column in the temperature dataframe
+    unique_values = weather_data['temperature'].unique()
+
+    # Calculate the number of times each unique value should be repeated
+    num_repeats = len(flight_data) // len(unique_values)
+    remainder = len(flight_data) % len(unique_values)
+
+    # Create a list of repeated values
+    repeated_values = []
+    for value in unique_values:
+        repeated_values.extend([value] * num_repeats)
+
+    # Append remainder of values to evenly distribute
+    repeated_values.extend(unique_values[:remainder])
+
+    # Assign the repeated values to a new column in the first dataframe
+    flight_data['temperature'] = repeated_values[:len(flight_data)]
+
+    print(flight_data.head())
+    return flight_data

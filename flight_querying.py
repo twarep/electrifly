@@ -91,6 +91,21 @@ class query_flights:
 
         return flight_data
     
+    def get_temperature_on_id(self, id: int):
+        
+        # Make database connection
+        engine = self.__connect()
+
+        # Make query
+        query = f"SELECT temperature FROM flight_weather_data_view WHERE fw_flight_id = {str(id)}"
+
+        # Select the data based on the query
+        temperature = pd.read_sql_query(query, engine)
+
+        # Dispose of the connection, so we don't overuse it.
+        engine.dispose()
+
+        return temperature
 
     # Get Flight Data for every half minute Function ------------------------------------------------------------------------------------------------------------
     def get_flight_data_every_half_min_on_id(self, id: int):
