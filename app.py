@@ -649,11 +649,11 @@ app_ui = ui.page_fluid(
             #  ===============================================================================================================================================================
             # START: CHARGING GRAPHS TAB
             # ===============================================================================================================================================================
-            ui.nav_panel("Charging Graphs",
-                div(HTML("<h2> Charging Graphs Graph </h2>")),
+            ui.nav_panel("Charging Graph",
+                div(HTML("<h2> Charging Graph </h2>")),
                 div(HTML("<hr>")),
                 ui.card(
-                    ui.card_header("Welcome to ElectriFly's Charging Graphs Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
+                    ui.card_header("Welcome to ElectriFly's Charging Graph Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
                     ui.p("Our charging graph tool enables you to visualize and selectively explore the charging data for all of the charging sessions."), min_height="130px"
                 ), 
                 div(HTML("<hr>")),
