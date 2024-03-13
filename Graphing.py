@@ -369,6 +369,8 @@ def charging_graph_creation(graph_type: str, flight_ids, x_variable: str, y_vari
     y_ax_data = []
     # Make the query connection
     flight_db_conn = query_flights()
+    flight_data = flight_db_conn.get_flight_soc_and_time(flight_ids)
+    print(flight_data)
     # Get data from x-variables
     for flight_id in flight_ids:
         if x_variable[0] == "temperature":
@@ -413,11 +415,11 @@ def charging_graph_creation(graph_type: str, flight_ids, x_variable: str, y_vari
     for i in range(len(flight_ids)):
         x_data = x_ax_data[i]
         y_data = y_ax_data[i]
+        date = flight_data[flight_ids[i]]["date"]
         if graph_type == "Line Plot":
-            plt.plot(x_data, y_data, label=flight_ids[i])
-
+            plt.plot(x_data, y_data, label=date)
         elif graph_type == "Scatter Plot":
-            plt.scatter(x_data, y_data, s=0.1, alpha = 0.6, label=flight_ids[i])
+            plt.scatter(x_data, y_data, s=0.1, alpha = 0.6, label=date)
     
     # Add labels and legend to plot
     plt.xlabel(x_label)

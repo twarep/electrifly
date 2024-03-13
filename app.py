@@ -79,6 +79,18 @@ custom_weather_dict = {"Temperature (°F)": ["temperature"], "Dewpoint (°F)": [
 }
 custom_weather_variables = list(custom_weather_dict.keys())
 
+# List of variables
+charging_variables_columns = {
+    "Time (min)": ["time_min"], 
+    "State-of-Charge (Percent)": ["bat_1_soc", "bat_2_soc"], 
+    "State-of-Health (Percent)": ["bat_1_soh", "bat_2_soh"], 
+    "Average Cell Temperature (°C)": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"],
+    "Minimum Cell Temperature (°C)": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"],
+    "Maximum Cell Temperature (°C)": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"],
+    "Temperature (°C)": ["temperature"],
+}
+charging_variables = list(charging_variables_columns.keys())
+
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 # Getting the dates to be used in the ML UI:
 def get_dates():
@@ -97,19 +109,6 @@ def get_dates():
     list_of_dates = [string_current_date, string_tomorrow_date, string_day_after_tomorrow_date]
 
     return list_of_dates
-
-
-# List of variables
-charging_variables_columns = {
-    "Time (min)": ["time_min"], 
-    "State-of-Charge": ["bat_1_soc", "bat_2_soc"], 
-    "State-of-Health": ["bat_1_soh", "bat_2_soh"], 
-    "Average Cell Temperature": ["bat_1_avg_cell_temp", "bat_2_avg_cell_temp"],
-    "Minimum Cell Temperature": ["bat_1_min_cell_temp", "bat_2_min_cell_temp"],
-    "Maximum Cell Temperature": ["bat_1_max_cell_temp", "bat_2_max_cell_temp"],
-    "Temperature": ["temperature"],
-}
-charging_variables = list(charging_variables_columns.keys())
 
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def change_order():
