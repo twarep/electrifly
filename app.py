@@ -910,21 +910,44 @@ def server(input: Inputs, output: Outputs, session: Session):
         return ui.tags.div("Data grid will be here.")
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    
     @output
     @render.table
     def weather_interactive(): 
         # Get the flight ID corresponding to the chosen date
         flight_id = input.singular_flight_date()
         weather_df = query_weather().get_weather_by_flight_id(flight_id)
-        weather_df = weather_df.style.format('{:.1f}').set_table_styles([
+        weather_df = weather_df.style.set_table_styles([
                             {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
                             {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
-                            {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+                            {'selector': 'td', 'props': [('width', '500px')]}, # Set table width
                             {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
                             {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
-                        ])
+                        ]).hide(axis="index")
 
         return weather_df 
+
+    # @output
+    # @render.table
+    # def weather_interactive(): 
+    #     # Get the flight ID corresponding to the chosen date
+    #     flight_id = input.singular_flight_date()
+    #     weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        
+    #     weather_df_styled = weather_df.style.applymap(format_except_first_col).set_table_styles([
+    #                         {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+    #                         {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+    #                         {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+    #                         {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+    #                         {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+    #                     ])
+        
+    #     def format_except_first_col(val, column):
+    #         if column != weather_df.columns[0]:  # Check if the column is not the first column
+    #             return '{:.1f}'.format(val)
+    #         return val  # If it's the first column, return the value unchanged
+
+        
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
