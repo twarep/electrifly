@@ -291,6 +291,21 @@ class query_flights:
             flight_dict[id] = {"soc": soc, "time_min": times, "date": date}
 
         return flight_dict
+    
+
+    # Get Flight Id, SOC, and Time (in minutes) Function --------------------------------------------------------------------------------
+    def get_flight_weight(self, flight_id):
+        # Make database connection
+        engine = self.__connect()
+
+        # Loop through each flight id
+        flight_date_df = self.get_flight_by_id(flight_id)
+        total_weight = flight_date_df["total_weight"].iloc[0]
+        engine.dispose()
+        if total_weight==None: 
+            return "N/A"
+        else: 
+            return total_weight
 
     
     # Get Flight Id, Motor power, and Time (in minutes) Function -------------------------------------------------------------------------

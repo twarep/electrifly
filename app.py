@@ -455,13 +455,24 @@ app_ui = ui.page_fluid(
                 ui.p("          "),
                 ui.row(
                     ui.column(6,
-                        ui.value_box(
-                            "Number of circuits",
-                            ui.output_ui("num_circuits"),
-                            showcase=fa.icon_svg("jet-fighter"),
-                            min_height="150px"
-                        ),
+                        ui.row(
+                            ui.column(6,
+                            ui.value_box(
+                                "Number of circuits",
+                                ui.output_ui("num_circuits"),
+                                showcase=fa.icon_svg("jet-fighter"),
+                                min_height="150px"
+                            ),),
+                            ui.column(6,
+                                ui.value_box(
+                                "Aircraft Weight (lbs)",
+                                ui.output_ui("total_weight"),
+                                showcase=fa.icon_svg("weight-hanging"),
+                                min_height="150px"
+                            ),),
+
                         div(HTML("<hr>")),
+                        ),
                         ui.card(
                             ui.card_header("Weather Data for Selected Flight"),
                             ui.output_table("weather_interactive", align='center'),
@@ -516,7 +527,7 @@ app_ui = ui.page_fluid(
                         min_height="700px"
                     ),
                     col_widths=(6, 6)
-                )
+                ),  
             ),
             #  ===============================================================================================================================================================
             # START: CUSTOM GRAPH TAB
@@ -1024,7 +1035,26 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the Motor Power graph
         return motor_power_graph
     
-    
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.plot(alt="An interactive plot")
+    def pilotweight_graph():
+        """
+        The function uses the input from the 'power' parameter to get data on power vs time for all the selected dates.
+
+        Returns 
+            motor_power_graph: a matplotlib figure plot with the data plotted already.
+        """
+        # Get all flight data for interactive plot
+        flight_ids = input.multi_select_flight_dates()
+        
+        # Graph the Motor Power
+        pilotweight_graph = Graphing.pilotweight_graph(flight_ids)
+
+        # Return the Motor Power graph
+        return pilotweight_graph
+
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render_widget
@@ -1093,8 +1123,31 @@ def server(input: Inputs, output: Outputs, session: Session):
         query_result = query_conn.get_number_of_circuits(flight_id)
         return div(HTML(f"""<span style="color: {blue};">{query_result}</span>"""))
     
-
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.text
+    def total_weight():
+        """
+        Function uses a responsive text interface to show the total weight.
+
+        Returns:
+            query_result: A numeric value of the total weight
+        """
+
+        # Get the flight id
+        flight_id = input.singular_flight_date()
+        # If there is no flight, return statement to choose flight
+        if flight_id == "":
+            return div(HTML(f"""<span style="color: {red};">No Flight Date</span>"""))
+
+        query_conn = query_flights()
+        query_result = query_conn.get_flight_weight(flight_id)
+
+        # return the number
+        
+        return div(HTML(f"""<span style="color: {blue};">{query_result}</span>"""))
+    
+     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot()
     def charging_graph():
