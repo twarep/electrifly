@@ -36,27 +36,28 @@ def create_mapbox_map_per_flight(flight_id: int):
     wwfc_lon = -80.3881582036048
     query_columns = ['lat', 'lng']
 
-    # Get Flight data for specific flight.
-    query_conn = query_flights()
-    query_result = query_conn.get_flight_data_on_id(query_columns, flight_id)
-    query_result.replace(0, np.nan, inplace=True)
+    # In the event that nothing is sent. Then set a basic
+    if flight_id == "":
+        # Fine-tune lat and long on the DataFrame
+        latitude = [43.45567935107457]
+        longitude = [-80.3881582036048]
+    else:
+        # Get Flight data for specific flight.
+        query_conn = query_flights()
+        query_result = query_conn.get_flight_data_on_id(query_columns, flight_id)
+        query_result.replace(0, np.nan, inplace=True)
 
-    # Filter rows where lat and lng are within Canada bounds
-    canada_bounds = {
-        'lat_min': 41.676555,
-        'lat_max': 83.110626,
-        'lng_min': -141.00187,
-        'lng_max': 82.617592
-    }
+        # Filter rows where lat and lng are within Canada bounds
+        canada_bounds = {'lat_min': 41.676555, 'lat_max': 83.110626, 'lng_min': -141.00187, 'lng_max': 82.617592}
 
-    query_result = query_result[
-        (query_result['lat'] >= canada_bounds['lat_min']) & (query_result['lat'] <= canada_bounds['lat_max']) &
-        (query_result['lng'] >= canada_bounds['lng_min']) & (query_result['lng'] <= canada_bounds['lng_max'])
-    ]
+        query_result = query_result[
+            (query_result['lat'] >= canada_bounds['lat_min']) & (query_result['lat'] <= canada_bounds['lat_max']) &
+            (query_result['lng'] >= canada_bounds['lng_min']) & (query_result['lng'] <= canada_bounds['lng_max'])
+        ]
 
-    # Fine-tune lat and long on the DataFrame
-    latitude = query_result["lat"].to_numpy()
-    longitude = query_result["lng"].to_numpy() * (-1)
+        # Fine-tune lat and long on the DataFrame
+        latitude = query_result["lat"].to_numpy()
+        longitude = query_result["lng"].to_numpy() * (-1)
 
     # Graphing
     fig = go.Figure(go.Scattermapbox(
@@ -206,63 +207,67 @@ def power_soc_rate_scatterplot(flight_id: list, activities_filter: list):
         scatter_ax: The matplotlib figure axis with stored scatter plot data and other supports.
     """
 
-    # Make flight db connection
-    flight_db_conn = query_flights()
-    flight_data = flight_db_conn.get_flight_power_soc_rate(flight_id, activities_filter)
-
     # Set Plot
     scatter_figure = plt.figure(figsize=(6, 6))
     scatter_ax = scatter_figure.add_subplot(1, 1, 1)
     scatter_figure.tight_layout()
 
-    # Get the motor power and soc rate
-    motor_power = flight_data[flight_id]['motor_power']
-    soc_rate_of_change = flight_data[flight_id]['soc_rate_of_change']
+    # Only plot if id is there.
+    if flight_id != "":
 
-    # Get activities
-    activity = flight_data[flight_id]['activity']
+        # Make flight db connection
+        flight_db_conn = query_flights()
+        flight_data = flight_db_conn.get_flight_power_soc_rate(flight_id, activities_filter)
 
-    # Determine unique activities and assign colors or markers
-    unique_activities = np.unique(activity)
+        # Get the motor power and soc rate
+        motor_power = flight_data[flight_id]['motor_power']
+        soc_rate_of_change = flight_data[flight_id]['soc_rate_of_change']
 
-    # gets colours from the jet colour map
-    colors = plt.cm.jet(np.linspace(0, 1, len(unique_activities))) 
+        # Get activities
+        activity = flight_data[flight_id]['activity']
 
-    # assigns each unique activity to a colour
-    activity_color_map = dict(zip(unique_activities, colors)) 
-    
-    # Iterate over each unique activity type
-    for act in unique_activities:
+        # Determine unique activities and assign colors or markers
+        unique_activities = np.unique(activity)
+
+        # gets colours from the jet colour map
+        colors = plt.cm.jet(np.linspace(0, 1, len(unique_activities))) 
+
+        # assigns each unique activity to a colour
+        activity_color_map = dict(zip(unique_activities, colors)) 
         
-        # Create a boolean mask where the condition (activity == act) is True
-        # This mask is used to select only the data points corresponding to the current activity
-        act_mask = activity == act
+        # Iterate over each unique activity type
+        for act in unique_activities:
+            
+            # Create a boolean mask where the condition (activity == act) is True
+            # This mask is used to select only the data points corresponding to the current activity
+            act_mask = activity == act
 
-        # Plot the scatter points for the current activity
-        # motor_power[act_mask] and soc_rate_of_change[act_mask] select the data points that correspond to the current activity
-        plt.scatter(motor_power[act_mask], soc_rate_of_change[act_mask],
-                            s=10, color=activity_color_map[act], label=act)
-        
-        # Calculate and plot line of best fit for each activity
-        a, b = np.polyfit(motor_power[act_mask], soc_rate_of_change[act_mask], 1)
-        plt.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
-                        color=activity_color_map[act], linestyle='--', linewidth=2)
+            # Plot the scatter points for the current activity
+            # motor_power[act_mask] and soc_rate_of_change[act_mask] select the data points that correspond to the current activity
+            plt.scatter(motor_power[act_mask], soc_rate_of_change[act_mask],
+                                s=10, color=activity_color_map[act], label=act)
+            
+            # # Calculate and plot line of best fit for each activity
+            # a, b = np.polyfit(motor_power[act_mask], soc_rate_of_change[act_mask], 1)
+            # plt.plot(motor_power[act_mask], a*motor_power[act_mask] + b, 
+            #                 color=activity_color_map[act], linestyle='--', linewidth=2)
 
+        # Create a legend with unique entries
+        # Handles are references to the plot elements, and labels are the text descriptions for these elements
+        handles, labels = scatter_ax.get_legend_handles_labels()
+
+        # Create a unique list of handle-label pairs
+        # This is to ensure that each label (and its corresponding handle) appears only once in the legend
+        unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
+
+        # Create and set the legend for the scatter plot
+        # *zip(*unique) unpacks the unique handle-label pairs into separate tuples of handles and labels
+        plt.legend(*zip(*unique), loc='upper right', fontsize="7")
+
+    # Add plot stuff
     plt.xlabel("Motor Power")
     plt.ylabel("SOC Rate of Change (% change every 0.5 min)")
     plt.title("Motor Power vs. SOC Rate of Change Scatterplot")
-
-    # Create a legend with unique entries
-    # Handles are references to the plot elements, and labels are the text descriptions for these elements
-    handles, labels = scatter_ax.get_legend_handles_labels()
-
-    # Create a unique list of handle-label pairs
-    # This is to ensure that each label (and its corresponding handle) appears only once in the legend
-    unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
-
-    # Create and set the legend for the scatter plot
-    # *zip(*unique) unpacks the unique handle-label pairs into separate tuples of handles and labels
-    plt.legend(*zip(*unique), loc='upper right', fontsize="7")
 
     return scatter_figure
 
@@ -305,6 +310,7 @@ def soh_soc_rate_scatterplot(flight_ids: list):
 
     return scatter_figure
 
+
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def soh_plot():
     """
@@ -332,40 +338,47 @@ def soh_plot():
     return line_figure
 
 
-
 # Function -------------------------------------------------------------------------------------------------------------------------------------------------------
 def custom_graph_creation(graph_type: str, flight_id, x_variable: str, y_variable: str, x_label: str, y_label: str):
-
-    # Make the query connection
-    flight_db_conn = query_flights()
-
-    # Get data from x-variables
-    query_result = flight_db_conn.get_flight_data_on_id(x_variable, flight_id)
-
-    if len(x_variable) == 2:
-        x_ax_data = (query_result[x_variable[0]].to_numpy() + query_result[x_variable[1]].to_numpy()) / 2
-    else:
-        x_ax_data = query_result[x_variable].to_numpy()
-
-    # Get data from y-variables if they are not the same as the x-variables
-    if y_variable != x_variable:
-        query_result = flight_db_conn.get_flight_data_on_id(y_variable, flight_id)
-    
-    if len(y_variable) == 2:
-        y_ax_data = (query_result[y_variable[0]].to_numpy() + query_result[y_variable[1]].to_numpy()) / 2
-    else:
-        y_ax_data = query_result[y_variable].to_numpy()
+    """
+    The function creates a graph based on the flight id, variables, and type.
+    Returns:
+        custome_figure: figure of a graph
+    """
 
     # Set Plot
     custom_figure = plt.figure(figsize=(6, 6))
     custom_figure.tight_layout()
 
-    # For each graph type graph different things.
-    if graph_type == "Line Plot":
-        plt.plot(x_ax_data, y_ax_data)
+    # Make sure that all are not null, then plot.
+    if flight_id != "" and graph_type != "" and y_variable != "" and x_variable != "":
+    
+        # Make the query connection
+        flight_db_conn = query_flights()
 
-    elif graph_type == "Scatter Plot":
-        plt.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.6, c='blue')
+        # Get data from x-variables
+        query_result = flight_db_conn.get_flight_data_on_id(x_variable, flight_id)
+
+        if len(x_variable) == 2:
+            x_ax_data = (query_result[x_variable[0]].to_numpy() + query_result[x_variable[1]].to_numpy()) / 2
+        else:
+            x_ax_data = query_result[x_variable].to_numpy()
+
+        # Get data from y-variables if they are not the same as the x-variables
+        if y_variable != x_variable:
+            query_result = flight_db_conn.get_flight_data_on_id(y_variable, flight_id)
+
+        if len(y_variable) == 2:
+            y_ax_data = (query_result[y_variable[0]].to_numpy() + query_result[y_variable[1]].to_numpy()) / 2
+        else:
+            y_ax_data = query_result[y_variable].to_numpy()
+
+        # For each graph type graph different things.
+        if graph_type == "Line Plot":
+            plt.plot(x_ax_data, y_ax_data)
+
+        elif graph_type == "Scatter Plot":
+            plt.scatter(x_ax_data, y_ax_data, s=0.1, alpha = 0.6, c='blue')
     
     # Add labels and legend to plot
     plt.xlabel(x_label)

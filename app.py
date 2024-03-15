@@ -457,7 +457,7 @@ app_ui = ui.page_fluid(
                     ui.column(6,
                         ui.value_box(
                             "Number of circuits",
-                            ui.output_text("num_circuits"),
+                            ui.output_ui("num_circuits"),
                             showcase=fa.icon_svg("jet-fighter"),
                             min_height="150px"
                         ),
@@ -471,6 +471,7 @@ app_ui = ui.page_fluid(
                     ui.column(6,
                         ui.card(
                             ui.card_header("Flight Map"),
+                            ui.output_ui("map_output_variability"),
                             output_widget("lat_long_map"),
                             min_height="665px"
                         )
@@ -909,6 +910,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Placeholder for the actual data grid
         return ui.tags.div("Data grid will be here.")
 
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     
     @output
@@ -927,6 +929,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return weather_df 
 
+      
     # @output
     # @render.table
     # def weather_interactive(): 
@@ -947,7 +950,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     #             return '{:.1f}'.format(val)
     #         return val  # If it's the first column, return the value unchanged
 
-        
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -959,14 +961,25 @@ def server(input: Inputs, output: Outputs, session: Session):
         graph_type = input.select_graph()
         x_var_label = input.select_x_variable()
         y_var_label = input.select_y_variable()
-        x_variables = custom_aggregate_variables_dict[x_var_label]
-        y_variables = custom_aggregate_variables_dict[y_var_label]
+
+        # Make sure the x_variables are shown
+        if x_var_label != "":
+            x_variables = custom_aggregate_variables_dict[x_var_label]
+        else:
+            x_variables = ""
+
+        # Make sure the y_variables are shown
+        if y_var_label != "":
+            y_variables = custom_aggregate_variables_dict[y_var_label]
+        else:
+            y_variables = ""
 
         # Make the graph
         created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
 
         # Return the custom graph
         return created_custom_graph         
+
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -987,6 +1000,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the SOC graph
         return soc_graph
         
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot(alt="An interactive plot")
@@ -999,13 +1013,12 @@ def server(input: Inputs, output: Outputs, session: Session):
         """
         # Get all flight data for interactive plot
         flight_ids = input.multi_select_flight_dates()
-        
         # Graph the Motor Power
         motor_power_graph = Graphing.power_graph(flight_ids)
-
         # Return the Motor Power graph
         return motor_power_graph
-
+    
+    
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render_widget
@@ -1016,13 +1029,10 @@ def server(input: Inputs, output: Outputs, session: Session):
         Returns:
             figure: A map graph of the flight to showcase on the UI
         """
-
         # Get the flight id
         flight_id = input.singular_flight_date()
-        
         # Call the graphing function to map the latitudes and longitudes
         figure, latitudes, longitudes = Graphing.create_mapbox_map_per_flight(flight_id)
-
         if (np.count_nonzero(np.isnan(latitudes)) == len(latitudes)) or (np.count_nonzero(np.isnan(longitudes)) == len(longitudes)):
             @output
             @render.text
@@ -1033,12 +1043,30 @@ def server(input: Inputs, output: Outputs, session: Session):
             @render.text
             def flight_gps_response_text():
                 return "The following graph shows the flight path of the Pipistrel Velis Electro plane for the date chosen."
-
         return figure
 
-  # Function -------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.text
+    @reactive.event(input.singular_flight_date)
+    def map_output_variability():
+
+        # Get the flight id and output based on its outcome
+        flight_id = input.singular_flight_date()
+
+        # If there is no flight, return statement to choose flight
+        if flight_id == "":
+            return div(HTML(f"""Please input a <span style="color: {red};">flight date</span> to view the flight map."""))
+        
+        # If there is flight, return statement of id
+        return div(HTML(f"""Your viewing flight with flight id: <span style="color: {blue};">{str(flight_id)}</span>."""))
+    
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.text
+    @reactive.event(input.singular_flight_date)
     def num_circuits():
         """
         Function uses a responsive text interface to show the number of circuits.
@@ -1050,13 +1078,17 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Get the flight id
         flight_id = input.singular_flight_date()
 
+        # If there is no flight, return statement to choose flight
+        if flight_id == "":
+            return div(HTML(f"""<span style="color: {red};">No Flight Date</span>"""))
+        
+        # If there is flight, return the number of circuits.
         query_conn = query_flights()
         query_result = query_conn.get_number_of_circuits(flight_id)
-
-        # return the number
-        return query_result
+        return div(HTML(f"""<span style="color: {blue};">{query_result}</span>"""))
     
-     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot()
     def charging_graph():
@@ -1103,7 +1135,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot
     
-     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot(alt="An interactive plot")
     def soh_soc_rate_of_change_scatter_plot():
@@ -1121,6 +1154,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the soh vs. soc rate of change scatter plot
         return soh_soc_rate_of_change_scatterplot
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot(alt="An interactive plot")
@@ -1136,6 +1170,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the date vs. soh line plot
         return soh_plot
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.table
@@ -1501,9 +1536,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         manual_input = input.manual_model_input_switch()
 
         if manual_input == True:
-            return ui.input_numeric("altitude_chooser", f"Altitude (m) for {flight_activity}:", 0, min=-1000, max=1000)
+            return ui.input_numeric("altitude_chooser", f"Change in Altitude (ft) for {flight_activity}:", 0, min=-1000, max=1000)
         else:
-            return ui.input_slider("altitude_slider", "Change in Altitude (m)", min=-1000, max=1000, step=10, value=[400, 500])
+            return ui.input_slider("altitude_slider", "Change in Altitude (ft)", min=-1000, max=1000, step=10, value=[400, 500])
         
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
