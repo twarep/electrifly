@@ -249,7 +249,7 @@ class query_flights:
 
         if len(columns) > 2:
             flight_times = flights_df[columns[2]].to_numpy()
-            datetimes = [datetime.combine(flight_dates[i], flight_times[i]) - relativedelta(hours=5) for i in range(len(flight_dates))]
+            datetimes = [datetime.combine(flight_dates[i], flight_times[i]) for i in range(len(flight_dates))]
 
         # Loop over all the flight dates to input into dictionary
         for i in range(len(flight_dates)):
