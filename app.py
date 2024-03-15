@@ -916,6 +916,14 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Get the flight ID corresponding to the chosen date
         flight_id = input.singular_flight_date()
         weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        weather_df = weather_df.style.format('{:.1f}').set_table_styles([
+                            {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+                            {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+                            {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                            {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                        ])
+
         return weather_df 
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
