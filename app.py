@@ -459,7 +459,7 @@ app_ui = ui.page_fluid(
                             ui.column(6,
                             ui.value_box(
                                 "Number of circuits",
-                                ui.output_text("num_circuits"),
+                                ui.output_ui("num_circuits"),
                                 showcase=fa.icon_svg("jet-fighter"),
                                 min_height="150px"
                             ),),
@@ -1144,7 +1144,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         query_result = query_conn.get_flight_weight(flight_id)
 
         # return the number
-        return query_result
+        
+        return div(HTML(f"""<span style="color: {blue};">{query_result}</span>"""))
     
      # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
