@@ -465,7 +465,7 @@ app_ui = ui.page_fluid(
                             ),),
                             ui.column(6,
                                 ui.value_box(
-                                "Total Aircraft Weight (lbs)",
+                                "Aircraft Weight (lbs)",
                                 ui.output_ui("total_weight"),
                                 showcase=fa.icon_svg("weight-hanging"),
                                 min_height="150px"

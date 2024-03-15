@@ -303,7 +303,7 @@ class query_flights:
         total_weight = flight_date_df["total_weight"].iloc[0]
         engine.dispose()
         if total_weight==None: 
-            return "Not Available"
+            return "N/A"
         else: 
             return total_weight
 
