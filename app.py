@@ -470,17 +470,19 @@ app_ui = ui.page_fluid(
                                 showcase=fa.icon_svg("weight-hanging"),
                                 min_height="150px"
                             ),),
+
                         div(HTML("<hr>")),
                         ),
                         ui.card(
                             ui.card_header("Weather Data for Selected Flight"),
-                            ui.output_table("weather_interactive"),
+                            ui.output_table("weather_interactive", align='center'),
                             min_height="450px"
                         ),
                     ),
                     ui.column(6,
                         ui.card(
                             ui.card_header("Flight Map"),
+                            ui.output_ui("map_output_variability"),
                             output_widget("lat_long_map"),
                             min_height="665px"
                         )
@@ -818,7 +820,7 @@ app_ui = ui.page_fluid(
                     ),
                     ui.column(9,
                         ui.row(
-                            ui.column(8, ui.card(ui.output_ui("remaining_soc"), height="60px", style="background-color: #FFFFFF; border: 1px solid #000000; padding: 0px;")), 
+                            ui.column(8, ui.card(ui.output_ui("remaining_soc"), height="60px", style="background-color: #FFFFFF; border: 1px solid #DBDBDB; padding: 0px;")), 
                             ui.column(4,
                                 ui.row( 
                                     ui.layout_columns(
@@ -826,7 +828,7 @@ app_ui = ui.page_fluid(
                                             ui.input_action_button(
                                                 "add_activity", 
                                                 "Add activity", 
-                                                style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px",
+                                                style="background-color: #3459e6; color: white; border: 1px solid #DBDBDB; cursor: pointer; padding: 17px",
                                             ),
                                             "Add selected activity under the \'Flight Activity Selection\' setting"
                                         ),
@@ -834,7 +836,7 @@ app_ui = ui.page_fluid(
                                             ui.input_action_button(
                                                 "delete_selected_activity", 
                                                 "Delete activity", 
-                                                style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
+                                                style="background-color: #e7e7e7; color: black; border: 1px solid #DBDBDB; cursor: pointer; padding: 17px",
                                             ),
                                             "Delete any single selected row in the table below."
                                         ),
@@ -848,7 +850,7 @@ app_ui = ui.page_fluid(
                             ui.card(
                                 ui.output_data_frame("model_predict_output"), 
                                 height="660px",
-                                style="background-color: #FFFFFF; border: 1px solid #000000;"  
+                                style="background-color: #FFFFFF; border: 1px solid #DBDBDB;"  
                             )
                         )
                     ),
@@ -919,14 +921,46 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Placeholder for the actual data grid
         return ui.tags.div("Data grid will be here.")
 
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    
     @output
     @render.table
     def weather_interactive(): 
         # Get the flight ID corresponding to the chosen date
         flight_id = input.singular_flight_date()
         weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        weather_df = weather_df.style.set_table_styles([
+                            {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+                            {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+                            {'selector': 'td', 'props': [('width', '500px')]}, # Set table width
+                            {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+                            {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+                        ]).hide(axis="index")
+
         return weather_df 
+
+      
+    # @output
+    # @render.table
+    # def weather_interactive(): 
+    #     # Get the flight ID corresponding to the chosen date
+    #     flight_id = input.singular_flight_date()
+    #     weather_df = query_weather().get_weather_by_flight_id(flight_id)
+        
+    #     weather_df_styled = weather_df.style.applymap(format_except_first_col).set_table_styles([
+    #                         {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
+    #                         {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
+    #                         {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
+    #                         {'selector': 'td', 'props': [('text-align', 'center')]}, # Center align text in cells
+    #                         {'selector': 'th', 'props': [('text-align', 'center')]},  # Center align column names
+    #                     ])
+        
+    #     def format_except_first_col(val, column):
+    #         if column != weather_df.columns[0]:  # Check if the column is not the first column
+    #             return '{:.1f}'.format(val)
+    #         return val  # If it's the first column, return the value unchanged
+
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -938,14 +972,25 @@ def server(input: Inputs, output: Outputs, session: Session):
         graph_type = input.select_graph()
         x_var_label = input.select_x_variable()
         y_var_label = input.select_y_variable()
-        x_variables = custom_aggregate_variables_dict[x_var_label]
-        y_variables = custom_aggregate_variables_dict[y_var_label]
+
+        # Make sure the x_variables are shown
+        if x_var_label != "":
+            x_variables = custom_aggregate_variables_dict[x_var_label]
+        else:
+            x_variables = ""
+
+        # Make sure the y_variables are shown
+        if y_var_label != "":
+            y_variables = custom_aggregate_variables_dict[y_var_label]
+        else:
+            y_variables = ""
 
         # Make the graph
         created_custom_graph = Graphing.custom_graph_creation(graph_type, flight_id, x_variables, y_variables, x_var_label, y_var_label)
 
         # Return the custom graph
         return created_custom_graph         
+
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -966,6 +1011,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the SOC graph
         return soc_graph
         
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot(alt="An interactive plot")
@@ -978,10 +1024,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         """
         # Get all flight data for interactive plot
         flight_ids = input.multi_select_flight_dates()
-        
         # Graph the Motor Power
         motor_power_graph = Graphing.power_graph(flight_ids)
-
         # Return the Motor Power graph
         return motor_power_graph
     
@@ -1015,13 +1059,10 @@ def server(input: Inputs, output: Outputs, session: Session):
         Returns:
             figure: A map graph of the flight to showcase on the UI
         """
-
         # Get the flight id
         flight_id = input.singular_flight_date()
-        
         # Call the graphing function to map the latitudes and longitudes
         figure, latitudes, longitudes = Graphing.create_mapbox_map_per_flight(flight_id)
-
         if (np.count_nonzero(np.isnan(latitudes)) == len(latitudes)) or (np.count_nonzero(np.isnan(longitudes)) == len(longitudes)):
             @output
             @render.text
@@ -1032,12 +1073,30 @@ def server(input: Inputs, output: Outputs, session: Session):
             @render.text
             def flight_gps_response_text():
                 return "The following graph shows the flight path of the Pipistrel Velis Electro plane for the date chosen."
-
         return figure
 
-  # Function -------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.text
+    @reactive.event(input.singular_flight_date)
+    def map_output_variability():
+
+        # Get the flight id and output based on its outcome
+        flight_id = input.singular_flight_date()
+
+        # If there is no flight, return statement to choose flight
+        if flight_id == "":
+            return div(HTML(f"""Please input a <span style="color: {red};">flight date</span> to view the flight map."""))
+        
+        # If there is flight, return statement of id
+        return div(HTML(f"""Your viewing flight with flight id: <span style="color: {blue};">{str(flight_id)}</span>."""))
+    
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
+    @output
+    @render.text
+    @reactive.event(input.singular_flight_date)
     def num_circuits():
         """
         Function uses a responsive text interface to show the number of circuits.
@@ -1049,11 +1108,14 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Get the flight id
         flight_id = input.singular_flight_date()
 
+        # If there is no flight, return statement to choose flight
+        if flight_id == "":
+            return div(HTML(f"""<span style="color: {red};">No Flight Date</span>"""))
+        
+        # If there is flight, return the number of circuits.
         query_conn = query_flights()
         query_result = query_conn.get_number_of_circuits(flight_id)
-
-        # return the number
-        return query_result
+        return div(HTML(f"""<span style="color: {blue};">{query_result}</span>"""))
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
@@ -1125,7 +1187,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the power vs. soc rate of change scatter plot
         return power_soc_rate_of_change_scatterplot
     
-     # Function -------------------------------------------------------------------------------------------------------------------------------------------
+
+    # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot(alt="An interactive plot")
     def soh_soc_rate_of_change_scatter_plot():
@@ -1143,6 +1206,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the soh vs. soc rate of change scatter plot
         return soh_soc_rate_of_change_scatterplot
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.plot(alt="An interactive plot")
@@ -1158,6 +1222,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Return the date vs. soh line plot
         return soh_plot
     
+
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
     @render.table
@@ -1523,9 +1588,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         manual_input = input.manual_model_input_switch()
 
         if manual_input == True:
-            return ui.input_numeric("altitude_chooser", f"Altitude (m) for {flight_activity}:", 0, min=-1000, max=1000)
+            return ui.input_numeric("altitude_chooser", f"Change in Altitude (ft) for {flight_activity}:", 0, min=-1000, max=1000)
         else:
-            return ui.input_slider("altitude_slider", "Change in Altitude (m)", min=-1000, max=1000, step=10, value=[400, 500])
+            return ui.input_slider("altitude_slider", "Change in Altitude (ft)", min=-1000, max=1000, step=10, value=[400, 500])
         
     
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1567,7 +1632,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         total_soc = sum(flight_operation_dictionary["SOC (%)"]) if len(flight_operation_dictionary["SOC (%)"]) != 0 else 0
         soc = round(float(100 - total_soc), 2)
         if total_soc >= 70:
-            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {red};">SOC: {soc}</span>.
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; border: 1px solid #DBDBDB; padding: 0px;">Total Remaining <span style="color: {red};">SOC: {soc}</span>.
                  You are below <span style="color: {red};">30 % threshold</span>. Adding additional activities <span style="color: {red};">impacts pilot safety</span>.</p>"""))
         else:
             return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.

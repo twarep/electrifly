@@ -522,6 +522,14 @@ class query_flights:
         Function that uses a flight id to get the soc rate of change and calculates its stats (min, max, mean, standard deviation, variance). 
         Then, returns the statistics in a dataframe.
         """
+
+        # Check if the flight_id exists and then run the code
+        if flight_id == "":
+            error_dict = {"Please input a flight date to view the soc roc table.": ["-"]}
+            error_df = pd.DataFrame(error_dict)
+            return error_df
+
+        # Get the engine UNLIMITED POWWWEEERRRRRR!
         engine = self.__connect()
 
         # Get the flight data
