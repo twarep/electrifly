@@ -612,7 +612,7 @@ app_ui = ui.page_fluid(
                                 width="90%",
                                 height='86%',
                             ),
-                            height='570px'
+                            height='840px'
                         ),
                     ),
 
@@ -628,7 +628,7 @@ app_ui = ui.page_fluid(
                                 width="90%",
                                 height='85%',
                             ),
-                            height='570px'
+                            height='840px'
                         ), 
                       )
                 )

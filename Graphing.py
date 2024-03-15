@@ -312,6 +312,7 @@ def soh_plot():
 
     # Plot the graph
     plt.plot(dates, soh, marker='o', linestyle='-')
+    plt.xticks(dates, rotation=45)
     plt.xlabel("Date (Year-Month)")
     plt.ylabel("SOH (%)")
     plt.title("Average SOH Per Month")
