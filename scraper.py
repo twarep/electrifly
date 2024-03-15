@@ -18,6 +18,7 @@ from transformation import transform_overview_data, weather_transformation
 from storage import table_exists, view_exists, db_connect, execute, select, push_flight_metadata, push_flight_data, push_scraper_runtime, relevant_weather
 import queries
 import platform
+import pytz
 
 # Path variables
 chromedriver_path = "./dependencies/chromedriver-win64/chromedriver.exe"
@@ -27,6 +28,14 @@ def log_last_run_time():
     if not table_exists('scraper_last_run', conn):
       execute(queries.SCRAPER_RUNTIME)
     current_time = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # Check the system timezone
+    system_timezone = dt.datetime.now(dt.timezone.utc).astimezone().tzinfo
+    if system_timezone != pytz.timezone('America/New_York'):
+        # Convert time to Eastern Time
+        wrong_tz = dt.datetime.now()
+        est_tz = pytz.timezone('America/New_York')
+        est_time = wrong_tz.astimezone(est_tz)
+        current_time = est_time.strftime('%Y-%m-%d %H:%M:%S')
     # insert the current time into table
     push_scraper_runtime(current_time)
 
