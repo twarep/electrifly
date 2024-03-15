@@ -501,30 +501,30 @@ app_ui = ui.page_fluid(
                         ui.panel_absolute(
                             ui.output_plot(
                                 "soc_time_graph",
-                                height='90%',
+                                height='100%',
                                 width='100%'
                             ), 
                             left="0px",
                             top="10%",
                             width="100%",
-                            height='100%',
+                            height='90%',
                         ),
-                        min_height="600px"
+                        min_height="700px"
                     ),
                     ui.card(
                         ui.card_header("Multi-Flight Power Setting vs. Time"),
                         ui.panel_absolute(
                             ui.output_plot(
                                 "power_time_graph",
-                                height='90%',
+                                height='100%',
                                 width='100%'
                             ),
                             left="0px",
                             top="10%",
                             width="100%",
-                            height='100%',
+                            height='90%',
                         ),
-                        min_height="600px"
+                        min_height="700px"
                     ),
                     col_widths=(6, 6)
                 ),  
@@ -571,9 +571,9 @@ app_ui = ui.page_fluid(
                             left="2%",
                             top="2%",
                             width="95%",
-                            height='100%',
+                            height='90%',
                         ),
-                        height='600px'
+                        height='685px'
                     ),
                     col_widths=(2, 2, 8)
                 )
@@ -592,7 +592,7 @@ app_ui = ui.page_fluid(
                 ui.input_selectize("statistical_time", "Choose Flight Date:", get_flights()),
                 ui.p("          "),
                 ui.row(
-                    ui.column(6,
+                    ui.column(5,
                         ui.input_selectize("select_activities", 
                             "Choose activities:", 
                             change_order(), 
@@ -602,12 +602,15 @@ app_ui = ui.page_fluid(
                         ),
                         div(HTML("<hr>")),
                         ui.card(
+                            ui.card_header("SOC Rate of Change Statistics By Activity"),
                             ui.output_table("soc_roc_table"), 
-                            max_height="450px"
+                            max_height="580px", 
+                            min_height="580px"
                         ),
                     ),
-                    ui.column(6,
+                    ui.column(7,
                         ui.card(
+                            ui.card_header("Power vs. SOC Rate of Change By Activity"),
                             ui.panel_absolute(
                                 ui.output_plot(
                                     "power_soc_rate_of_change_scatter_plot",
@@ -615,44 +618,47 @@ app_ui = ui.page_fluid(
                                     height='100%'
                                 ), 
                                 width="95%",
-                                height='100%',
+                                height='87%',
                             ),
-                            height='600px'
+                            height='708px'
                         ),
                     )
                 ),
+                div(HTML("<hr>")),
                 div(HTML("<h2> SOH Insights </h2>")),
                 div(HTML("<hr>")),
-                ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(), multiple=True),
+                ui.input_selectize("statistical_multi_time", "Choose Flight Date(s):", get_flights(), width="600px", multiple=True),
                 ui.p("          "),
                 ui.row(
                     ui.column(6,
                         ui.card(
+                            ui.card_header("Multi-Flight SOH vs. SOC Rate of Change"),
                             ui.panel_absolute(
                                 ui.output_plot(
                                     "soh_soc_rate_of_change_scatter_plot",
                                     width="100%",
-                                    height='100%'
+                                    height='95%'
                                 ), 
-                                width="95%",
-                                height='100%',
+                                width="90%",
+                                height='86%',
                             ),
-                            height='600px'
+                            height='840px'
                         ),
                     ),
 
                     ui.column(6,
                         ui.card(
+                            ui.card_header("Average SOH Per Month"),
                             ui.panel_absolute(
                                 ui.output_plot(
                                     "soh_scatter_plot",
                                     width="100%",
-                                    height='100%'
+                                    height='95%'
                                 ), 
-                                width="95%",
-                                height='100%',
+                                width="90%",
+                                height='85%',
                             ),
-                            height='600px'
+                            height='840px'
                         ), 
                       )
                 )
