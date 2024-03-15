@@ -464,7 +464,7 @@ app_ui = ui.page_fluid(
                         div(HTML("<hr>")),
                         ui.card(
                             ui.card_header("Weather Data for Selected Flight"),
-                            ui.output_table("weather_interactive"),
+                            ui.output_table("weather_interactive", align='center'),
                             min_height="450px"
                         ),
                     ),
@@ -808,7 +808,7 @@ app_ui = ui.page_fluid(
                     ),
                     ui.column(9,
                         ui.row(
-                            ui.column(8, ui.card(ui.output_ui("remaining_soc"), height="60px", style="background-color: #FFFFFF; border: 1px solid #000000; padding: 0px;")), 
+                            ui.column(8, ui.card(ui.output_ui("remaining_soc"), height="60px", style="background-color: #FFFFFF; border: 1px solid #DBDBDB; padding: 0px;")), 
                             ui.column(4,
                                 ui.row( 
                                     ui.layout_columns(
@@ -816,7 +816,7 @@ app_ui = ui.page_fluid(
                                             ui.input_action_button(
                                                 "add_activity", 
                                                 "Add activity", 
-                                                style="background-color: #3459e6; color: white; border: 1px solid #FFFFFF; cursor: pointer; padding: 17px",
+                                                style="background-color: #3459e6; color: white; border: 1px solid #DBDBDB; cursor: pointer; padding: 17px",
                                             ),
                                             "Add selected activity under the \'Flight Activity Selection\' setting"
                                         ),
@@ -824,7 +824,7 @@ app_ui = ui.page_fluid(
                                             ui.input_action_button(
                                                 "delete_selected_activity", 
                                                 "Delete activity", 
-                                                style="background-color: #e7e7e7; color: black; border: 1px solid #000000; cursor: pointer; padding: 17px",
+                                                style="background-color: #e7e7e7; color: black; border: 1px solid #DBDBDB; cursor: pointer; padding: 17px",
                                             ),
                                             "Delete any single selected row in the table below."
                                         ),
@@ -838,7 +838,7 @@ app_ui = ui.page_fluid(
                             ui.card(
                                 ui.output_data_frame("model_predict_output"), 
                                 height="660px",
-                                style="background-color: #FFFFFF; border: 1px solid #000000;"  
+                                style="background-color: #FFFFFF; border: 1px solid #DBDBDB;"  
                             )
                         )
                     ),
@@ -1514,7 +1514,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         total_soc = sum(flight_operation_dictionary["SOC (%)"]) if len(flight_operation_dictionary["SOC (%)"]) != 0 else 0
         soc = round(float(100 - total_soc), 2)
         if total_soc >= 70:
-            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {red};">SOC: {soc}</span>.
+            return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; border: 1px solid #DBDBDB; padding: 0px;">Total Remaining <span style="color: {red};">SOC: {soc}</span>.
                  You are below <span style="color: {red};">30 % threshold</span>. Adding additional activities <span style="color: {red};">impacts pilot safety</span>.</p>"""))
         else:
             return div(HTML(f"""<p style="font-weight: normal; font-size: 16px; padding: 0px;">Total Remaining <span style="color: {blue};">SOC: {soc}</span>.
