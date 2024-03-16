@@ -671,7 +671,7 @@ app_ui = ui.page_fluid(
                 div(HTML("<hr>")),
                 ui.card(
                     ui.card_header("Welcome to ElectriFly's Charging Graph Interface!", style="background-color: #3459e6; color: white; text-align: left;"),
-                    ui.p("Our charging graph tool enables you to visualize and selectively explore the charging data for all of the charging sessions."), min_height="130px"
+                    ui.p("Our charging graph tool enables you to visualize and selectively explore charging data across multiple sessions. Whether you prefer a dynamic line graph or a detailed scatterplot, our tool empowers you to make informed decisions and optimize your charging strategy like never before!"), min_height="130px"
                 ), 
                 div(HTML("<hr>")),
                 ui.layout_columns(
@@ -882,7 +882,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     def velis_img(): return {"src": "app_images/velis.webp", "width": "65%", "style": "border-radius: 22px;"}
 
     @render.image
-    def uw_logo(): return {"src": "app_images/uw.svg", "width": "100%", "height": "100%"}
+    def uw_logo(): return {"src": "app_images/uw.jpeg", "width": "100%", "height": "100%"}
 
     @render.image
     def wisa_logo(): return {"src": "app_images/wisa.svg", "width": "100%", "height": "100%"}
