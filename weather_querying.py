@@ -22,9 +22,19 @@ class query_weather:
     
 
     def get_weather_by_flight_id(self, flight_id):
+        """Gets the weather data based on the inputted ID.
+
+        Parameters: flight_id --> The id corresponding to the flight. Must be an integer number above 4 characters.
+
+        Returns: weather_flight_df --> A dataframe with the weather data. Or a statement saying. 
         """
-        
-        """
+
+        # Check if the flight_id exists and then run the code
+        if flight_id == "":
+            error_dict = {"Please input a flight date to view the flight map.": ["-"]}
+            error_df = pd.DataFrame(error_dict)
+            return error_df
+
         # Make database connection
         engine = self.__connect()
 
