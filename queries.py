@@ -147,6 +147,20 @@ union ALL
 SELECT flight_id, time_min FROM flightdata_5021
 union ALL
 SELECT flight_id, time_min FROM flightdata_5034;
+union ALL
+SELECT flight_id, time_min FROM flightdata_4636;
+union ALL
+SELECT flight_id, time_min FROM flightdata_4842;
+union ALL
+SELECT flight_id, time_min FROM flightdata_4868;
+union ALL
+SELECT flight_id, time_min FROM flightdata_4925;
+union ALL
+SELECT flight_id, time_min FROM flightdata_4978;
+union ALL
+SELECT flight_id, time_min FROM flightdata_5116;
+union ALL
+SELECT flight_id, time_min FROM flightdata_5362;
 """
 
 ADD_ACTIVITY_COLUMN = """
@@ -157,6 +171,7 @@ ADD COLUMN activity VARCHAR(255) DEFAULT 'NA';
 LABEL_4620 = """
 UPDATE flight_activities
 SET activity = CASE
+    WHEN flight_id = 4620 AND time_min < 13.5 THEN 'pre-flight'
     WHEN flight_id = 4620 AND (time_min BETWEEN 13.5 AND 14.5) THEN 'takeoff'
     WHEN flight_id = 4620 AND (time_min BETWEEN 14.6 AND 15.5) THEN 'climb'
     WHEN flight_id = 4620 AND (time_min BETWEEN 15.6 AND 16.9) THEN 'cruise'
@@ -184,6 +199,7 @@ SET activity = CASE
     WHEN flight_id = 4620 AND (time_min BETWEEN 43 AND 45.2) THEN 'cruise'
     WHEN flight_id = 4620 AND (time_min BETWEEN 45.3 AND 46.4) THEN 'descent'
     WHEN flight_id = 4620 AND (time_min BETWEEN 46.5 AND 48) THEN 'landing'
+    WHEN flight_id = 4620 AND time_min > 48 THEN 'post-flight'
     ELSE activity  -- Keep the existing value for other rows
 END
 WHERE flight_id = 4620;
@@ -192,11 +208,13 @@ WHERE flight_id = 4620;
 LABEL_4929 = """
 UPDATE flight_activities
 SET activity = CASE
+    WHEN flight_id = 4929 AND time_min < 7.65 THEN 'pre-flight'
     WHEN flight_id = 4929 AND (time_min BETWEEN 7.65 AND 8.5) THEN 'takeoff'
     WHEN flight_id = 4929 AND (time_min BETWEEN 8.6 AND 10.9) THEN 'climb'
     WHEN flight_id = 4929 AND (time_min BETWEEN 11 AND 28.8) THEN 'cruise'
     WHEN flight_id = 4929 AND (time_min BETWEEN 28.9 AND 30.4) THEN 'descent'
     WHEN flight_id = 4929 AND (time_min BETWEEN 30.5 AND 35) THEN 'landing'
+    WHEN flight_id = 4929 AND time_min > 35 THEN 'post-flight'
     ELSE activity  -- Keep the existing value for other rows
 END
 WHERE flight_id = 4929;
@@ -205,6 +223,7 @@ WHERE flight_id = 4929;
 LABEL_4940 = """
 UPDATE flight_activities
 SET activity = CASE
+    WHEN flight_id = '4940' AND time_min < 9.9 THEN 'pre-flight'
     WHEN flight_id = '4940' AND (time_min BETWEEN 9.9 AND 11) THEN 'takeoff'
     WHEN flight_id = '4940' AND (time_min BETWEEN 11.1 AND 16) THEN 'climb'
     WHEN flight_id = '4940' AND (time_min BETWEEN 16.1 AND 18.7) THEN 'cruise'
@@ -218,6 +237,7 @@ SET activity = CASE
     WHEN flight_id = '4940' AND (time_min BETWEEN 33.1 AND 35.9) THEN 'cruise'
     WHEN flight_id = '4940' AND (time_min BETWEEN 36 AND 38.4) THEN 'descent'
     WHEN flight_id = '4940' AND (time_min BETWEEN 38.5 AND 40.7) THEN 'landing'
+    WHEN flight_id = '4940' AND time_min > 40.7 THEN 'post-flight'
     ELSE activity  -- Keep the existing value for other rows
 END
 WHERE flight_id = '4940';
@@ -226,6 +246,7 @@ WHERE flight_id = '4940';
 LABEL_5019 = """
 UPDATE flight_activities
 SET activity = CASE
+    WHEN flight_id = '5019' AND time_min < 7.2 THEN 'pre-flight'
     WHEN flight_id = '5019' AND (time_min BETWEEN 7.2 AND 8) THEN 'takeoff'
     WHEN flight_id = '5019' AND (time_min BETWEEN 8.1 AND 10.5) THEN 'climb'
     WHEN flight_id = '5019' AND (time_min BETWEEN 10.6 AND 16.1) THEN 'cruise'
@@ -247,6 +268,7 @@ SET activity = CASE
     WHEN flight_id = '5019' AND (time_min BETWEEN 40.4 AND 41.1) THEN 'takeoff'
     WHEN flight_id = '5019' AND (time_min BETWEEN 41.1 AND 42.2) THEN 'climb'
     WHEN flight_id = '5019' AND (time_min BETWEEN 42.3 AND 45) THEN 'landing'
+    WHEN flight_id = '5019' AND time_min > 45 THEN 'post-flight'
     ELSE activity  -- Keep the existing value for other rows
 END
 WHERE flight_id = '5019';
@@ -255,6 +277,7 @@ WHERE flight_id = '5019';
 LABEL_5021 = """
 UPDATE flight_activities
 SET activity = CASE
+    WHEN flight_id = '5021' AND time_min < 10.2 THEN 'pre-flight'
     WHEN flight_id = '5021' AND (time_min BETWEEN 10.2 AND 11.1) THEN 'takeoff'
     WHEN flight_id = '5021' AND (time_min BETWEEN 11.2 AND 13.5) THEN 'climb'
     WHEN flight_id = '5021' AND (time_min BETWEEN 13.6 AND 20.9) THEN 'cruise'
@@ -269,6 +292,7 @@ SET activity = CASE
     WHEN flight_id = '5021' AND (time_min BETWEEN 36.1 AND 39.1) THEN 'cruise'
     WHEN flight_id = '5021' AND (time_min BETWEEN 39.2 AND 42) THEN 'descent'
     WHEN flight_id = '5021' AND (time_min BETWEEN 42.1 AND 47.2) THEN 'landing'
+    WHEN flight_id = '5021' AND time_min > 47.2 THEN 'post-flight'
     ELSE activity  -- Keep the existing value for other rows
 END
 WHERE flight_id = '5021';
@@ -277,6 +301,7 @@ WHERE flight_id = '5021';
 LABEL_5034 = """
 UPDATE flight_activities
 SET activity = CASE
+    WHEN flight_id = '5034' AND time_min < 17.9 THEN 'pre-flight'
     WHEN flight_id = '5034' AND (time_min BETWEEN 17.9 AND 19) THEN 'takeoff'
     WHEN flight_id = '5034' AND (time_min BETWEEN 19.1 AND 21.5) THEN 'climb'
     WHEN flight_id = '5034' AND (time_min BETWEEN 21.6 AND 26.2) THEN 'cruise'
@@ -295,9 +320,219 @@ SET activity = CASE
     WHEN flight_id = '5034' AND (time_min BETWEEN 44.1 AND 44.9) THEN 'climb'
     WHEN flight_id = '5034' AND (time_min BETWEEN 45 AND 46.2) THEN 'cruise'
     WHEN flight_id = '5034' AND (time_min BETWEEN 46.3 AND 50) THEN 'landing'
+    WHEN flight_id = '5034' AND time_min > 50 THEN 'post-flight'
     ELSE activity  -- Keep the existing value for other rows
 END
 WHERE flight_id = '5034';
+"""
+
+LABEL_4636 = """
+UPDATE flight_activities
+SET activity = CASE
+    WHEN flight_id = '4636' AND time_min < 13.8 THEN 'pre-flight'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 13.8 AND 14.44) THEN 'takeoff'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 14.45 AND 15.36) THEN 'climb'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 15.37 AND 17.25) THEN 'cruise'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 17.26 AND 19.08) THEN 'landing'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 19.09 AND 19.74) THEN 'takeoff'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 19.75 AND 20.4) THEN 'climb'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 20.41 AND 22.23) THEN 'cruise'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 22.24 AND 24.75) THEN 'landing'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 24.76 AND 25.46) THEN 'takeoff'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 25.47 AND 26.7) THEN 'climb'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 26.71 AND 27.82) THEN 'cruise'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 27.83 AND 30.22) THEN 'landing'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 30.24 AND 31.08) THEN 'takeoff'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 31.09 AND 31.98) THEN 'climb'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 31.99 AND 32.94) THEN 'cruise'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 32.95 AND 35.28) THEN 'landing'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 35.29 AND 36.2) THEN 'takeoff'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 36.21 AND 37.28) THEN 'climb'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 37.29 AND 38.54) THEN 'cruise'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 38.55 AND 40.98) THEN 'landing'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 40.99 AND 41.66) THEN 'takeoff'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 41.67 AND 42.78) THEN 'climb'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 42.79 AND 43.98) THEN 'cruise'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 43.99 AND 46.16) THEN 'landing'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 46.17 AND 46.92) THEN 'takeoff'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 46.93 AND 47.94) THEN 'climb'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 47.95 AND 49.62) THEN 'cruise'
+    WHEN flight_id = '4636' AND (time_min BETWEEN 49.63 AND 52.44) THEN 'landing'
+    WHEN flight_id = '4636' AND time_min >= 52.45 THEN 'post-flight'
+    ELSE activity  -- Keep the existing value for other rows
+END
+WHERE flight_id = '4636';
+"""
+
+LABEL_4842 = """
+UPDATE flight_activities
+SET activity = CASE
+    WHEN flight_id = '4842' AND  time_min < 14.06 THEN 'pre-flight'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 14.06 AND 14.90) THEN 'takeoff'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 14.90 AND 16.04) THEN 'climb'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 16.04 AND 17.21) THEN 'cruise'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 17.22 AND 18.96) THEN 'landing'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 19.02 AND 19.78) THEN 'takeoff'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 19.78 AND 21.54) THEN 'climb'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 21.54 AND 22.24) THEN 'cruise'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 22.24 AND 22.28) THEN 'landing'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 22.40 AND 24.58) THEN 'landing'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 24.58 AND 25.62) THEN 'takeoff'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 25.62 AND 26.84) THEN 'climb'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 26.84 AND 28.28) THEN 'cruise'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 28.28 AND 30.36) THEN 'landing'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 30.36 AND 31.18) THEN 'takeoff'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 31.18 AND 31.34) THEN 'climb'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 31.34 AND 31.46) THEN 'takeoff'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 31.46 AND 32.58) THEN 'climb'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 32.58 AND 34.44) THEN 'cruise'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 34.44 AND 37.14) THEN 'landing'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 37.14 AND 38.02) THEN 'takeoff'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 38.02 AND 39.26) THEN 'climb'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 39.26 AND 40.36) THEN 'cruise'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 40.36 AND 42.82) THEN 'landing'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 42.82 AND 43.84) THEN 'takeoff'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 43.84 AND 44.90) THEN 'climb'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 44.90 AND 45.84) THEN 'cruise'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 45.84 AND 45.88) THEN 'descent'
+    WHEN flight_id = '4842' AND (time_min BETWEEN 45.88 AND 49.68) THEN 'landing'
+    WHEN flight_id = '4842' AND  time_min >49.68 THEN 'post-flight'
+    ELSE activity  -- Keep the existing value for other rows
+END
+WHERE flight_id = '4842';
+"""
+LABEL_4868 = """
+UPDATE flight_activities
+SET activity = CASE
+    WHEN flight_id = '4868' AND (time_min < 11.12) THEN 'pre-flight'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 11.12 AND 12.04) THEN 'takeoff'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 12.06 AND 14.94) THEN 'climb'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 14.96 AND 20.62) THEN 'cruise'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 20.64 AND 21.82) THEN 'slow flight'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 21.84 AND 22.24) THEN 'power off stall'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 22.32 AND 22.62) THEN 'climb'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 22.64 AND 24.4) THEN 'cruise'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 24.5 AND 25) THEN 'steep turns'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 25.1 AND 31.30) THEN 'cruise'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 31.32 AND 34.30) THEN 'landing'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 34.32 AND 35.32) THEN 'takeoff'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 35.34 AND 36.42) THEN 'climb'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 36.44 AND 37.96) THEN 'cruise'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 37.98 AND 38.00) THEN 'descent'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 38.02 AND 40.54) THEN 'landing'
+    WHEN flight_id = '4868' AND (time_min BETWEEN 40.54 AND 56.00) THEN 'post-flight'
+    ELSE activity  -- Keep the existing value for other rows
+END
+WHERE flight_id = '4868';
+
+"""
+
+LABEL_4925 = """
+UPDATE flight_activities
+SET activity = CASE
+    WHEN flight_id = '4925' AND (time_min < 9.82) THEN 'pre-flight'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 9.82 AND 10.78) THEN 'takeoff'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 10.79 AND 11.75) THEN 'climb'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 11.76 AND 12.82) THEN 'cruise'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 12.83 AND 15.40) THEN 'landing'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 15.41 AND 16.07) THEN 'takeoff'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 16.08 AND 16.97) THEN 'climb'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 16.98 AND 18.04) THEN 'cruise'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 18.05 AND 20.20) THEN 'landing'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 20.21 AND 20.88) THEN 'takeoff'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 20.89 AND 21.82) THEN 'climb'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 21.83 AND 23.12) THEN 'cruise'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 23.13 AND 25.07) THEN 'landing'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 25.08 AND 25.76) THEN 'takeoff'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 25.77 AND 26.54) THEN 'climb'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 26.55 AND 27.56) THEN 'cruise'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 27.58 AND 29.74) THEN 'landing'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 29.75 AND 30.46) THEN 'takeoff'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 30.48 AND 31.21) THEN 'climb'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 31.22 AND 31.94) THEN 'cruise'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 31.95 AND 34.36) THEN 'landing'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 34.37 AND 35.12) THEN 'takeoff'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 35.13 AND 35.90) THEN 'climb'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 35.91 AND 36.80) THEN 'cruise'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 36.81 AND 36.98) THEN 'descent'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 36.99 AND 39.04) THEN 'landing'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 39.05 AND 39.74) THEN 'takeoff'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 39.75 AND 40.49) THEN 'climb'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 40.50 AND 41.34) THEN 'cruise'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 41.35 AND 41.62) THEN 'descent'
+    WHEN flight_id = '4925' AND (time_min BETWEEN 41.63 AND 43.90) THEN 'landing'
+    WHEN flight_id = '4925' AND (time_min > 43.91) THEN 'post-flight'
+    ELSE activity  -- Keep the existing value for other rows
+END
+WHERE flight_id = '4925';
+
+"""
+
+LABEL_4978 = """
+UPDATE flight_activities
+SET activity = CASE
+    WHEN flight_id = '4978' AND (time_min < 15.1 ) THEN 'pre-flight'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 15.2 AND 18) THEN 'takeoff'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 18.1 AND 24) THEN 'cruise'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 24.1 AND 27) THEN 'HASEL'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 27.1 AND 31) THEN 'slow flight'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 31.1 AND 34) THEN 'cruise'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 34.1 AND 36) THEN 'climb'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 36.1 AND 39) THEN 'cruise'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 39.1 AND 40.20) THEN 'descent'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 40.21 AND 42.44) THEN 'cruise'
+    WHEN flight_id = '4978' AND (time_min BETWEEN 42.45 AND 46) THEN 'landing'
+    WHEN flight_id = '4978' AND (time_min > 46) THEN 'post-flight'
+    ELSE activity  -- Keep the existing value for other rows
+END
+WHERE flight_id = '4978';
+
+"""
+
+LABEL_5116 = """
+UPDATE flight_activities
+SET activity = CASE
+    WHEN flight_id = '5116' AND (time_min < 12.24) THEN 'pre-flight'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 12.24 AND 12.94) THEN 'takeoff'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 12.95 AND 14.44) THEN 'climb'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 14.45 AND 28.01) THEN 'cruise'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 28.02 AND 28.76) THEN 'descent'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 28.77 AND 29.84) THEN 'landing'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 29.85 AND 30.39) THEN 'takeoff'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 30.40 AND 31.46) THEN 'climb'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 31.47 AND 32.19) THEN 'cruise'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 32.20 AND 33.03) THEN 'descent'
+    WHEN flight_id = '5116' AND (time_min BETWEEN 33.04 AND 34.98) THEN 'landing'
+    WHEN flight_id = '5116' AND (time_min > 34.98 ) THEN 'post-flight'
+    ELSE activity  -- Keep the existing value for other rows
+END
+WHERE flight_id = '5116';
+"""
+
+LABEL_5362 = """
+UPDATE flight_activities
+SET activity = CASE
+    WHEN flight_id = '5362' AND (time_min < 17.08) THEN 'pre-flight'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 17.08 AND 17.42) THEN 'takeoff'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 17.43 AND 20.8) THEN 'climb'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 20.81 AND 23.91) THEN 'cruise'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 23.92 AND 24.4) THEN 'descent'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 24.41 AND 25.42) THEN 'HASEL'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 25.43 AND 26.39) THEN 'steep turn'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 26.4 AND 27.35) THEN 'power off stall'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 27.36 AND 28.15) THEN 'slow flight'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 28.16 AND 28.81) THEN 'descent'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 28.82 AND 31.15) THEN 'cruise'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 31.16 AND 32.45) THEN 'descent'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 32.46 AND 34.01) THEN 'landing'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 34.02 AND 34.39) THEN 'takeoff'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 34.4 AND 35.79) THEN 'climb'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 35.8 AND 36.9) THEN 'cruise'
+    WHEN flight_id = '5362' AND (time_min BETWEEN 36.91 AND 38.75) THEN 'landing'
+    WHEN flight_id = '5362' AND (time_min > 38.76) THEN 'post-flight'
+    ELSE activity  -- Keep the existing value for other rows
+END
+WHERE flight_id = '5362';
 """
 
 LABELED_ACTIVITIES_VIEW = """
