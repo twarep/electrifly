@@ -69,8 +69,6 @@ def convert_str_to_datetime(str_datetime: str):
 
 # returns the relevant weather data for the given scraped flights
 def weather_data(date_list, ids_list, driver, download_dir):
-  # get the weather data
-  driver.get("https://mesonet.agron.iastate.edu/request/download.phtml?network=CA_ON_ASOS")
   # get the oldest date
   oldest_datetime = min(date_list)
   newest_date = max(date_list).date()
@@ -79,37 +77,33 @@ def weather_data(date_list, ids_list, driver, download_dir):
   year = oldest_datetime.strftime("%Y")
   month = oldest_datetime.strftime("%m")
   day = oldest_datetime.strftime("%d")
-  # find the relevant date dropdowns
-  year_select = Select(driver.find_element(By.NAME, "year1"))
-  month_select = Select(driver.find_element(By.NAME, "month1"))
-  day_select = Select(driver.find_element(By.NAME, "day1"))
-  time.sleep(3)
-  newest_day_select = Select(driver.find_element(By.NAME, "day2"))
-  # choose today's date plus 1 to include today
-  newest_day_select.select_by_value(str(date.today().day + 1))     
-  # select data from that oldest date
-  year_select.select_by_value(year)
-  if int(month) < 10:
-    month_select.select_by_value(month[1:])
-  else:
-    month_select.select_by_value(month)
-  if int(day) < 10:
-    day_select.select_by_value(day[1:])
-  else:
-    day_select.select_by_value(day)
-  # select the waterloo airport only (cykf)
-  time.sleep(3) # to prevent "Cannot locate option with value: CYKF;" error
-  waterloo_airport_option = Select(driver.find_element(By.ID, "stations_in"))
-  waterloo_airport_option.select_by_value("CYKF")
-  driver.find_element(By.ID, "stations_add").click()
-  # click on the correct download option
-  download_option = Select(driver.find_element(By.NAME, "direct"))
-  download_option.select_by_value("yes")
-  # click on the get data button
-  driver.find_element(By.XPATH, "/html/body/main/div/div[3]/div[2]/input[4]").click()
-  time.sleep(5)
+  # get the current date, add 1 day to include today
+  current_date = date.today()
+  current_year = current_date.year
+  current_month = current_date.month
+  current_day = current_date.day + 1
+  # dynamic download url
+  weather_download_url = (
+    f"https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?"
+    f"station=CYKF&data=all&year1={year}&month1={month}&day1={day}&"
+    f"year2={current_year}&month2={current_month}&day2={current_day}&"
+    f"tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=M&trace=T&direct=yes&"
+    f"report_type=3&report_type=4"
+  )
   # read the new data into pandas df
   weather_data_path = os.path.join(os.getcwd(),'temp','CYKF.csv')
+
+  # get the weather data
+  driver.get(weather_download_url)
+  time_counter = 0
+  time_to_wait = 15
+  # allow 15 seconds to download the weather csv
+  while not os.path.exists(weather_data_path):
+    time.sleep(1)
+    time_counter += 1
+    if time_counter > time_to_wait:
+      break
+
   df = pd.read_csv(weather_data_path)
   # transform the weather_data into DB format
   df = weather_transformation(df)
