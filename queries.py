@@ -146,19 +146,19 @@ SELECT flight_id, time_min FROM flightdata_5019
 union ALL
 SELECT flight_id, time_min FROM flightdata_5021
 union ALL
-SELECT flight_id, time_min FROM flightdata_5034;
+SELECT flight_id, time_min FROM flightdata_5034
 union ALL
-SELECT flight_id, time_min FROM flightdata_4636;
+SELECT flight_id, time_min FROM flightdata_4636
 union ALL
-SELECT flight_id, time_min FROM flightdata_4842;
+SELECT flight_id, time_min FROM flightdata_4842
 union ALL
-SELECT flight_id, time_min FROM flightdata_4868;
+SELECT flight_id, time_min FROM flightdata_4868
 union ALL
-SELECT flight_id, time_min FROM flightdata_4925;
+SELECT flight_id, time_min FROM flightdata_4925
 union ALL
-SELECT flight_id, time_min FROM flightdata_4978;
+SELECT flight_id, time_min FROM flightdata_4978
 union ALL
-SELECT flight_id, time_min FROM flightdata_5116;
+SELECT flight_id, time_min FROM flightdata_5116
 union ALL
 SELECT flight_id, time_min FROM flightdata_5362;
 """
