@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from shinywidgets import output_widget, render_widget
 import sqlalchemy as sa
 from datetime import datetime, timedelta
-import simulation
+from simulation import flight_scheduling_simulation
 import shiny.experimental as x
 import faicons as fa
 from model_querying import Model
@@ -1483,11 +1483,12 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # Function -------------------------------------------------------------------------------------------------------------------------------------------
     @output
-    @render.table(columns=["Forecast Time", simulation.first_date, simulation.second_date, simulation.third_date])
+    @render.table()
     def simulation_table(): 
         # Apply conditional formatting
-        zones = simulation.zones_table
-        explanations = simulation.explanations_table
+        sim_vars = flight_scheduling_simulation()
+        zones = sim_vars[0]
+        explanations = sim_vars[1]
         styled_data = zones.style.set_tooltips(explanations, props='visibility: hidden; position: absolute; z-index: 1; border: 1px solid #000066;'
                          'background-color: white; color: #000066; font-size: 0.8em;'
                          'transform: translate(0px, -24px); padding: 0.6em; border-radius: 0.5em;').applymap(style_cell).set_table_styles(
@@ -1523,7 +1524,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.table
     def flight_planning_table(): 
         # if the feasible_flights dataframe is empty
-        if simulation.feasible_flights.empty:
+        sim_vars = flight_scheduling_simulation()
+        if sim_vars[2].empty:
             # Return a DataFrame with the message
             message_df = pd.DataFrame({"Message": ["There are no flights available to be scheduled today due to weather conditions."]})
             message_df['Message'] = message_df['Message'].apply(lambda x: ' '.join(['<span style="{}">{}</span>'.format(colour_word(word), word) for word in x.split()])) # formats "no flights available" as red
@@ -1535,7 +1537,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                         ]) 
             return message_style
         else:
-            flight_plan = simulation.feasible_flights.style.hide(axis="index").set_table_styles([
+            flight_plan = sim_vars[2].style.hide(axis="index").set_table_styles([
                             {'selector': 'tr', 'props': [('height', '50px')]}, # make row height taller
                             {'selector': 'tr', 'props': [('box-shadow', '1px 1px 4px rgba(0, 0, 0, 0.1)')]},  # Add shadow box effect
                             {'selector': 'td', 'props': [('width', '450px')]}, # Set table width
