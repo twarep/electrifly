@@ -4,24 +4,11 @@ import pandas as pd
 from weather_forcast_querying import get_forecast_by_current_date
 
 def flight_scheduling_simulation():
-  # define global variables
-  global first_date, second_date, third_date, zones_table, explanations_table
-  # How long does 1 single flight take (on average: including time for inspection, flight, charging):
-  avg_inspection_time_before_flight = 7.41
-  avg_flight_time = 31.5
-  avg_charging_time = 58.56
-  total_flight_time = avg_inspection_time_before_flight + avg_flight_time + avg_charging_time
-
-  # Classify the weather data into zones (9 to 10 am -> green zone)
-  # Need to find a period of time for 30 minutes FOR flight but need 1.5 hours total for everything
-      #STRIP INTO TIME INTERVALS
 
   # pull in forecasted weather data (right now it's hardcoded)
   forecast_df = get_forecast_by_current_date()
   forecast_date = forecast_df["Forecast Date"]
   forecast_time_et = forecast_df["Forecast Time"]
-
-  explanations_mapping = {'red': [], 'yellow': [], 'green': []}
 
   # store explanations for zone reasoning
   explanation_df = pd.DataFrame({
@@ -54,9 +41,6 @@ def flight_scheduling_simulation():
           exp = "Visibility is clear"
           explanation_df.at[i, 'Explanation']['green'].append(exp)
       visability_zone_list.append(visability_zone)
-  # Create a new DataFrame
-
-  format = '%H:%M'
 
   #CLOUD (pulled from weathercode):
   cloud = forecast_df["Weathercode"]
@@ -321,7 +305,6 @@ def flight_scheduling_simulation():
                                   "Explanation 2", "index", formatted_third_date, "Explanation 3"]
   del zones_table['index']
   # separates the explanations from the zone colours
-  explanation_cols = ["Forecast Time", formatted_first_date, formatted_second_date, formatted_third_date]
   removal_cols = ["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]
   explanations_table = pd.DataFrame(data=zones_table[["Forecast Time", "Explanation 1", "Explanation 2", "Explanation 3"]], index=zones_table.index)
   explanations_table = explanations_table.rename(columns={"Explanation 1": formatted_first_date, "Explanation 2": formatted_second_date, "Explanation 3": formatted_third_date})
@@ -354,15 +337,8 @@ def flight_scheduling_simulation():
   start_times = []
   finish_times = []
 
-  countSafe = 0
-  countModSafe = 0
-  cellBlock = 0
-
   dayOne = zones_table.iloc[:, 0:2]
-  date = dayOne.iloc[:, 0]
-  colour = dayOne.iloc[:, 1]
 
-  consecutive = False
   number = 0
   number_ui = []
   # Assuming dayOne is a DataFrame with one column
@@ -371,34 +347,23 @@ def flight_scheduling_simulation():
       count = 0
       if (dayOne.iloc[i, 1] == 'green') and (i != numRows) and (i+1 != numRows) and (i+2 != numRows):
           count += 1
-          
           for j in range(i + 1, i + 3):
-              
               if dayOne.iloc[j, 1] == 'green': 
-                  
                   count += 1
                   if count == 3:
-                      consecutive = True
                       StartTime = dayOne.iloc[j-2, 0]
-                      
-
                       FinishTime = dayOne.iloc[j, 0]
-                      format = '%H:%M'
                       number += 1
-                      # StartTime = StartTime.strftime(format)
-                      # FinishTime = FinishTime.strftime(format)
-
                       start_times.append(StartTime)
                       finish_times.append(FinishTime)
                       number_ui.append(number)
                       count = 0
-
               else:
                   count = 0            
-                  consecutive = False
 
   feasible_flights = pd.DataFrame({
       "Flight No.": number_ui,
       "Start Time": start_times,
       "Finish Time": finish_times
   })
+  return zones_table, explanations_table, feasible_flights
