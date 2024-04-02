@@ -289,7 +289,7 @@ def scrape(driver, cur, download_dir):
         # transform the data into something to put into the database
         df = transform_overview_data(df)
         # push the flight data into the database
-        push_flight_data(df, current_flight_id)
+        push_flight_data(df, current_flight_id, current_flight_type)
         # delete the temp files from disk
         shutil.rmtree(download_dir, ignore_errors=True)
         driver.back()
