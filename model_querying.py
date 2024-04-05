@@ -18,6 +18,10 @@ class Model():
         model_filename = 'ML_model_outputs/prescription_xgboost_model.joblib'
         self.model = joblib.load(model_filename)
 
+        # Get the activity label model too
+        label_model_filename = 'ML_model_outputs/label_xgboost_model.joblib'
+        self.label_model = joblib.load(label_model_filename)
+
         # Initializae the engine string and make sure that the model table is in the db
         self.__engine_string = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
         self.fights = query_flights()
@@ -45,9 +49,9 @@ class Model():
     # Disconnect the given connection from the database
     def __disconnect(self, conn):
         conn.close()
-    
 
-    # Hidden Function -----------------------------------------------------------------------------
+
+    # Function -----------------------------------------------------------------------------
     # this function checks if the given table exists
     def table_exists(self, table):
 
@@ -56,7 +60,7 @@ class Model():
     
         # create a cursor object to interact with the database
         cursor = connection.cursor()
-        
+
         # check if the given table exists
         cursor.execute("""
             SELECT EXISTS (
@@ -74,7 +78,7 @@ class Model():
         self.__disconnect(connection)
         
         return exists
-    
+
 
     # Function ------------------------------------------------------------------------------------
     # Check if specific table exists if not, make it and add saved data in `ML_model_outputs/all_data.csv`

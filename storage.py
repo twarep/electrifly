@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import pandas as pd
+import joblib
 
 # this function creates and returns a connection to the database
 def db_connect():
@@ -120,8 +121,64 @@ def push_scraper_runtime(time):
   insert_query = f"INSERT INTO scraper_last_run (runtime) VALUES ('{time}')"
   execute(insert_query)
 
+# Predicts activity for specific columns
+def predict_activity(flight_id):
+  
+    # Get the activity label model too
+    label_model_filename = 'ML_model_outputs/label_xgboost_model.joblib'
+    label_model = joblib.load(label_model_filename)
+
+    # create sqlalchemy connection
+    engine_string = "postgresql+psycopg2" + os.getenv('DATABASE_URL')[8:]
+    engine = create_engine(engine_string)
+    # Make the query
+    query = f"""SELECT flight_id AS id, 
+                    time_min AS time,
+                    ((bat_1_soc + bat_2_soc) / 2) AS soc,
+                    motor_rpm AS motor_rpm, 
+                    ((bat_1_voltage + bat_2_voltage) / 2) AS voltage,
+                    motor_power AS motor_power,
+                    pressure_alt AS pressure_altitude,
+                    ground_speed AS ground_speed,
+                    pitch AS pitch,
+                    roll AS roll,
+                    activity AS exercise, 
+                    ias AS ias, 
+                    ((bat_1_soh + bat_2_soh) / 2) AS soh, 
+                    stall_warn_active AS stall_warn_active,
+                    requested_torque AS torque,
+                    heading AS heading, 
+                    qng AS qng
+                FROM labeled_activities_view
+                WHERE flight_id={flight_id}"""
+    # Select the data based on the query
+    flight_data = pd.read_sql_query(query, engine).dropna() 
+
+    # now predict:
+    id_col = flight_data["id"]
+    flight_data.drop(columns=["id"], inplace=True)
+    predictions = label_model.predict(flight_data)
+
+    # insert the predicted values back into the x dataframe
+    flight_data['activity'] = predictions
+    flight_data['flight_id'] = id_col
+
+    # convert labels
+    labels = ['HASEL', 'NA', 'climb', 'cruise', 'descent', 'landing', 'post-flight',
+          'power off stall', 'power on stall', 'pre-flight', 'slow flight',
+          'steep turn', 'steep turns', 'takeoff']
+    flight_data['activity'] = flight_data['activity'].map(lambda x: labels[x])
+
+    # trim all columns except for the ones in flight_activities table
+    flight_activities_data = flight_data[['flight_id', 'time', 'activity']]
+    flight_activities_data = flight_activities_data.rename(columns={"time": "time_min"})
+    flight_activities_data.to_sql('flight_activities', engine, if_exists='append', index=False)
+
+    # Dispose of the connection, so we don't overuse it.
+    engine.dispose()
+
 # takes in flight data df, and pushes it to its own data table
-def push_flight_data(df, flight_id):
+def push_flight_data(df, flight_id, flight_type):
   columns = list(df.columns.values)
   # lowercase and underscore the spaces
   modified_columns = [col.replace(" ", "_").lower() for col in columns]
@@ -161,7 +218,9 @@ def push_flight_data(df, flight_id):
                       'oat': Float()}
   # add new table to db
   downsampled_df.to_sql(table_name, engine, if_exists="fail", index=False, dtype=explicit_columns)
-  engine.dispose()  
+  engine.dispose()
+  if flight_type == "Flight test":
+    predict_activity(flight_id)  
 
 # query weather df for all records in between the given times
 def query_weather_df(df, date, start_time, end_time):
